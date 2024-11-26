@@ -4,6 +4,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import { BrowserRouter as HashRouter, Routes, Route } from 'react-router-dom';
 import SignIn from './components/Auth/SignIn';
 import SignUp from './components/Auth/SignUp';
+import Navbar from './components/Navbar';
 import AdviserDashboard from './components/Adviser/Dashboard';
 import CreateClient from './components/Adviser/CreateClient';
 import ClientDashboard from './components/Client/Dashboard';
@@ -21,6 +22,7 @@ const App: React.FC = () => {
   return (
     <AuthProvider>
       <HashRouter>
+        <Navbar />
         <Routes>
           <Route path="/" element={<SignIn />} />
           <Route path="/signup" element={<SignUp />} />
