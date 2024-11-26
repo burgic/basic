@@ -8,7 +8,12 @@ interface IncomeEntry {
   frequency: string;
 }
 
-// Fetch existing incomes in useEffect
+const IncomeForm: React.FC = () => {
+  const [incomeEntries, setIncomeEntries] = useState<IncomeEntry[]>([
+    { type: '', amount: 0, frequency: '' },
+  ]);
+
+  // Fetch existing incomes in useEffect
 useEffect(() => {
     const fetchIncomes = async () => {
     const { data: user } = await supabase.auth.getUser();
@@ -21,12 +26,6 @@ useEffect(() => {
 
     fetchIncomes();
 }, []);
-
-
-const IncomeForm: React.FC = () => {
-  const [incomeEntries, setIncomeEntries] = useState<IncomeEntry[]>([
-    { type: '', amount: 0, frequency: '' },
-  ]);
 
   const handleAddEntry = () => {
     setIncomeEntries([...incomeEntries, { type: '', amount: 0, frequency: '' }]);
