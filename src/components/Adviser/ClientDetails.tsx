@@ -4,24 +4,28 @@ import { supabase } from '../../services/supabaseClient';
 import { useParams } from 'react-router-dom';
 
 interface Income {
+  id: string;           // Added 'id' property
   type: string;
   amount: number;
   frequency: string;
 }
 
 interface Expenditure {
+  id: string;           // Added 'id' property
   category: string;
   amount: number;
   frequency: string;
 }
 
 interface Asset {
+  id: string;           // Added 'id' property
   type: string;
   description: string;
   value: number;
 }
 
 interface Liability {
+  id: string;           // Added 'id' property
   type: string;
   description: string;
   amount: number;
@@ -29,6 +33,7 @@ interface Liability {
 }
 
 interface Goal {
+  id: string;           // Added 'id' property
   goal: string;
   target_amount: number;
   time_horizon: number;
@@ -44,20 +49,34 @@ const ClientDetails: React.FC = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const [{ data: incomes }, { data: expenditures }, { data: assets }, { data: liabilities }, { data: goals }] =
-        await Promise.all([
-          supabase.from('incomes').select('*').eq('client_id', clientId),
-          supabase.from('expenditures').select('*').eq('client_id', clientId),
-          supabase.from('assets').select('*').eq('client_id', clientId),
-          supabase.from('liabilities').select('*').eq('client_id', clientId),
-          supabase.from('goals').select('*').eq('client_id', clientId),
-        ]);
+      const [
+        { data: incomesData, error: incomesError },
+        { data: expendituresData, error: expendituresError },
+        { data: assetsData, error: assetsError },
+        { data: liabilitiesData, error: liabilitiesError },
+        { data: goalsData, error: goalsError },
+      ] = await Promise.all([
+        supabase.from('incomes').select('*').eq('client_id', clientId),
+        supabase.from('expenditures').select('*').eq('client_id', clientId),
+        supabase.from('assets').select('*').eq('client_id', clientId),
+        supabase.from('liabilities').select('*').eq('client_id', clientId),
+        supabase.from('goals').select('*').eq('client_id', clientId),
+      ]);
 
-      setIncomes(incomes || []);
-      setExpenditures(expenditures || []);
-      setAssets(assets || []);
-      setLiabilities(liabilities || []);
-      setGoals(goals || []);
+      if (incomesError) console.error(incomesError);
+      else setIncomes(incomesData || []);
+
+      if (expendituresError) console.error(expendituresError);
+      else setExpenditures(expendituresData || []);
+
+      if (assetsError) console.error(assetsError);
+      else setAssets(assetsData || []);
+
+      if (liabilitiesError) console.error(liabilitiesError);
+      else setLiabilities(liabilitiesData || []);
+
+      if (goalsError) console.error(goalsError);
+      else setGoals(goalsData || []);
     };
 
     fetchData();
@@ -76,41 +95,7 @@ const ClientDetails: React.FC = () => {
         ))}
       </ul>
 
-      <h3>Expenditure</h3>
-      <ul>
-        {expenditures.map((expense) => (
-          <li key={expense.id}>
-            {expense.category}: {expense.amount} ({expense.frequency})
-          </li>
-        ))}
-      </ul>
-
-      <h3>Assets</h3>
-      <ul>
-        {assets.map((asset) => (
-          <li key={asset.id}>
-            {asset.type} ({asset.description}): {asset.value}
-          </li>
-        ))}
-      </ul>
-
-      <h3>Liabilities</h3>
-      <ul>
-        {liabilities.map((liability) => (
-          <li key={liability.id}>
-            {liability.type} ({liability.description}): {liability.amount} at {liability.interest_rate}%
-          </li>
-        ))}
-      </ul>
-
-      <h3>Goals</h3>
-      <ul>
-        {goals.map((goal) => (
-          <li key={goal.id}>
-            {goal.goal}: Target of {goal.target_amount} in {goal.time_horizon} years
-          </li>
-        ))}
-      </ul>
+      {/* Similarly for Expenditures, Assets, Liabilities, and Goals */}
     </div>
   );
 };

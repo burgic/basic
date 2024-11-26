@@ -2,47 +2,61 @@
 import React, { useState } from 'react';
 import { supabase } from '../../services/supabaseClient';
 
-await supabase.auth.signUp(
-    { email, password },
-    { data: { role: 'adviser' } } // or 'client'
-);
-
-// During sign-up
-await supabase.auth.signUp(
-    { email, password },
-    { data: { role: 'client' } } // or 'client'
-);
-
 const SignUp: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState<'adviser' | 'client'>('client'); // Default to 'client'
 
   const handleSignUp = async () => {
-    const { error } = await supabase.auth.signUp({ email, password });
-    if (error) alert(error.message);
-    else alert('Check your email for the confirmation link.');
-  };
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { role }, // Assign 'adviser' or 'client'
+      },
+    });
 
-  // During sign-up
-    
-  
-  
+    if (error) {
+      console.error('Error signing up:', error);
+      alert(`Error: ${error.message}`);
+    } else {
+      console.log('Sign-up successful:', data);
+      alert('Sign-up successful! Please check your email to confirm your account.');
+      // Optionally, redirect the user or perform additional actions
+    }
+  };
 
   return (
     <div>
       <h2>Sign Up</h2>
-      <input
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
+      <label>
+        Email:
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+      </label>
+      <br />
+      <label>
+        Password:
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+      </label>
+      <br />
+      <label>
+        Role:
+        <select value={role} onChange={(e) => setRole(e.target.value as 'adviser' | 'client')}>
+          <option value="client">Client</option>
+          <option value="adviser">Adviser</option>
+        </select>
+      </label>
+      <br />
       <button onClick={handleSignUp}>Sign Up</button>
     </div>
   );

@@ -1,5 +1,7 @@
-    // Fetch all clients for an adviser
-    const fetchClients = async (adviserId: string) => {
+import { supabase } from './supabaseClient'; 
+
+// Fetch all clients for an adviser
+    export const fetchClients = async (adviserId: string) => {
         const { data, error } = await supabase
         .from('clients')
         .select('*')
@@ -10,7 +12,7 @@
     };
     
     // Fetch client data
-    const fetchClientData = async (clientId: string) => {
+    export const fetchClientData = async (clientId: string) => {
         const { data, error } = await supabase
         .from('client_data')
         .select('*')
@@ -22,7 +24,7 @@
     };
 
     // Insert new client
-    const insertClient = async (client: {
+    export const insertClient = async (client: {
         name: string;
         email: string;
         adviser_id: string;
@@ -32,7 +34,7 @@
     };
   
     // Insert client financial data
-    const insertClientData = async (data: {
+    export const insertClientData = async (data: {
         client_id: string;
         income: number;
         expenses: number;
@@ -45,7 +47,7 @@
     };
   
   // Update client data
-    const updateClientData = async (
+  export const updateClientData = async (
         clientId: string,
         updatedData: Partial<{
         income: number;
@@ -64,13 +66,13 @@
     };
 
 // Delete a client
-    const deleteClient = async (clientId: string) => {
+    export const deleteClient = async (clientId: string) => {
         const { error } = await supabase.from('clients').delete().eq('id', clientId);
         if (error) throw error;
     };
     
     // Delete client data
-    const deleteClientData = async (clientId: string) => {
+    export const deleteClientData = async (clientId: string) => {
         const { error } = await supabase.from('client_data').delete().eq('client_id', clientId);
         if (error) throw error;
     };

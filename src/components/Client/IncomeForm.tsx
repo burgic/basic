@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabaseClient';
 
 interface IncomeEntry {
+    id?: string;
   type: string;
   amount: number;
   frequency: string;
@@ -10,7 +11,7 @@ interface IncomeEntry {
 
 const IncomeForm: React.FC = () => {
   const [incomeEntries, setIncomeEntries] = useState<IncomeEntry[]>([
-    { type: '', amount: 0, frequency: '' },
+    { id: '', type: '', amount: 0, frequency: '' },
   ]);
 
   // Fetch existing incomes in useEffect
@@ -28,7 +29,7 @@ useEffect(() => {
 }, []);
 
   const handleAddEntry = () => {
-    setIncomeEntries([...incomeEntries, { type: '', amount: 0, frequency: '' }]);
+    setIncomeEntries([...incomeEntries, { id: '', type: '', amount: 0, frequency: '' }]);
   };
 
   const handleChange = (index: number, field: string, value: any) => {
@@ -38,22 +39,46 @@ useEffect(() => {
   };
 
   const handleSubmit = async () => {
-    const { data: user } = await supabase.auth.getUser();
-    const clientId = user.user?.id;
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    const clientId = userData?.user?.id;
+  
+    if (!clientId) {
+      alert('User not authenticated');
+      return;
+    }
   
     for (const entry of incomeEntries) {
+      let error;
       if (entry.id) {
         // Update existing entry
-        await supabase.from('incomes').update(entry).eq('id', entry.id);
+        const { error: updateError } = await supabase
+          .from('incomes')
+          .update({
+            type: entry.type,
+            amount: entry.amount,
+            frequency: entry.frequency,
+          })
+          .eq('id', entry.id);
+  
+        if (updateError) {
+          alert(`Error updating entry: ${updateError.message}`);
+          return;
+        }
       } else {
         // Insert new entry
-        await supabase.from('incomes').insert({ ...entry, client_id: clientId });
+        const { error: insertError } = await supabase.from('incomes').insert({
+          ...entry,
+          client_id: clientId,
+        });
+  
+        if (insertError) {
+          alert(`Error inserting entry: ${insertError.message}`);
+          return;
+        }
       }
     }
-    if (Error) alert(Error.message);
-    else alert('Income data submitted successfully!');
+    alert('Income data submitted successfully!');
   };
-
   // Handler function
     const handleDeleteEntry = async (index: number) => {
         const entries = [...incomeEntries];
@@ -72,7 +97,7 @@ useEffect(() => {
     <div>
       <h2>Income Details</h2>
       {incomeEntries.map((entry, index) => (
-        <div key={index}>
+        <div key={entry.id || index}>
           <select
             value={entry.type}
             onChange={(e) => handleChange(index, 'type', e.target.value)}
@@ -97,11 +122,12 @@ useEffect(() => {
             <option value="Monthly">Monthly</option>
             <option value="Annually">Annually</option>
           </select>
+          <button onClick={() => handleDeleteEntry(index)}>Delete</button>
         </div>
       ))}
       <button onClick={handleAddEntry}>Add Another Income Source</button>
       <button onClick={handleSubmit}>Submit Income Data</button>
-      <button onClick={() => handleDeleteEntry(index)}>Delete</button>
+      
     </div>
   );
 };
