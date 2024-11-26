@@ -26,9 +26,9 @@ const App: React.FC = () => {
         <Routes>
           <Route path="/" element={<SignIn />} />
           <Route path="/signup" element={<SignUp />} />
-          <Route path="/adviser/dashboard" element={<ProtectedRoute requiredRole = "adviser"> <AdviserDashboard /> </ProtectedRoute>} />
+          <Route path="/adviser/adviser-dashboard" element={<ProtectedRoute requiredRole = "adviser"> <AdviserDashboard /> </ProtectedRoute>} />
           <Route path="/adviser/create-client" element={<ProtectedRoute requiredRole = "adviser"> <CreateClient /></ProtectedRoute>} />
-          <Route path="/client/dashboard" element={<ProtectedRoute requiredRole = "client"><ClientDashboard /></ProtectedRoute>} />
+          <Route path="/client/client-dashboard" element={<ProtectedRoute requiredRole = "client"><ClientDashboard /></ProtectedRoute>} />
           <Route
                 path="/client/income"
                 element={
