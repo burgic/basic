@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabaseClient';
+import { useNavigate } from 'react-router-dom';
 
 interface Adviser {
   id: string;
@@ -16,6 +17,7 @@ const SignUp: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [advisers, setAdvisers] = useState<Adviser[]>([]);
+  const navigate = useNavigate();
 
   // Fetch advisers when component mounts
   useEffect(() => {
@@ -88,6 +90,12 @@ const SignUp: React.FC = () => {
         console.error('Error creating profile:', profileError);
         await supabase.auth.signOut();
         throw new Error('Failed to create user profile');
+      }
+
+      if (role === 'adviser') {
+        navigate('/adviser/adviser-dashboard');
+      } else {
+        navigate('/client/client-dashboard');
       }
   
       console.log('Sign-up and profile creation successful:', data);

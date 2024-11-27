@@ -77,6 +77,14 @@ const App: React.FC = () => {
                   </ProtectedRoute>
                 }
               />
+              <Route 
+                  path="/adviser/create-client" 
+                  element={
+                    <ProtectedRoute requiredRole="adviser">
+                      <CreateClient />
+                    </ProtectedRoute>
+                  } 
+                />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

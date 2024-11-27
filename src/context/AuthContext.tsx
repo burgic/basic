@@ -1,45 +1,50 @@
 // src/context/AuthContext.tsx
 import React, { createContext, useEffect, useState } from 'react';
 import { supabase } from '../services/supabaseClient';
-import { User } from '@supabase/supabase-js';
+import { AuthSession, User } from '@supabase/supabase-js';
 
 interface AuthContextProps {
     user: User | null;
+    session: AuthSession | null;
 }
 
-export const AuthContext = createContext<AuthContextProps>({ user: null });
+const initialState: AuthContextProps = {
+    user: null,
+    session: null
+};
+
+export const AuthContext = createContext<AuthContextProps>(initialState);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
+    const [session, setSession] = useState<AuthSession | null>(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-      // Define an async function
-      const fetchSession = async () => {
-        const { data, error } = await supabase.auth.getSession();
-  
-        if (error) {
-          console.error('Error fetching session:', error);
-          return;
-        }
-  
-        setUser(data.session?.user ?? null);
-      };
-  
-      // Call the async function
-      fetchSession();
-  
-      // Set up the auth state change listener
-      const {
-        data: { subscription },
-      } = supabase.auth.onAuthStateChange((_event, session) => {
-        setUser(session?.user ?? null);
-      });
-  
-      // Clean up the listener on component unmount
-      return () => {
-        subscription.unsubscribe();
-      };
+        // Get initial session
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            setSession(session);
+            setUser(session?.user ?? null);
+            setLoading(false);
+        });
+
+        // Listen for changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            setSession(session);
+            setUser(session?.user ?? null);
+            setLoading(false);
+        });
+
+        return () => subscription.unsubscribe();
     }, []);
 
-  return <AuthContext.Provider value={{ user }}>{children}</AuthContext.Provider>;
+    if (loading) {
+        return <div>Loading...</div>; // Or your loading component
+    }
+
+    return (
+        <AuthContext.Provider value={{ user, session }}>
+            {children}
+        </AuthContext.Provider>
+    );
 };

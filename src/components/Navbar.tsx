@@ -41,6 +41,13 @@ const Navbar: React.FC = () => {
               </Link>
             </li>
           )}
+          {user && user.user_metadata.role === 'adviser' && (
+            <li className="navbar-item">
+              <Link to="/adviser/create-client" className="navbar-link">
+                Adviser
+              </Link>
+            </li>
+          )}
           {!user ? (
             <li className="navbar-item">
               <Link to="/" className="navbar-link">
