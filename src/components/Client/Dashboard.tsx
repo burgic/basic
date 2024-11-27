@@ -1,7 +1,7 @@
 // src/components/Client/Dashboard.tsx
 
 import React, { useEffect, useState, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../../services/supabaseClient';
 import { Pie, Bar } from 'react-chartjs-2';
 import { AuthContext } from '../../context/AuthContext';
