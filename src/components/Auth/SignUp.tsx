@@ -42,27 +42,16 @@ const SignUp: React.FC = () => {
       setError('Please fill in all fields');
       return;
     }
-
+  
     if (role === 'client' && !adviserId) {
       setError('Please select an adviser');
       return;
     }
-
+  
     setLoading(true);
     setError(null);
-
+  
     try {
-      // Check if email already exists
-      const { data: existingProfile } = await supabase
-        .from('profiles')
-        .select('email')
-        .eq('email', email)
-        .single();
-
-      if (existingProfile) {
-        throw new Error('An account with this email already exists');
-      }
-
       // Sign up user
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -71,31 +60,38 @@ const SignUp: React.FC = () => {
           data: { role },
         },
       });
-
+  
       if (error) throw error;
-
-      // Create profile
-      if (data.user) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: data.user.id,
-            email: data.user.email,
-            name,
-            role,
-            adviser_id: role === 'client' ? adviserId : null,
-            created_at: new Date().toISOString(),
-          });
-
-        if (profileError) {
-          console.error('Error creating profile:', profileError);
-          await supabase.auth.signOut();
-          throw new Error('Failed to create user profile');
-        }
-
-        console.log('Sign-up and profile creation successful:', data);
-        alert('Sign-up successful! Please check your email to confirm your account.');
+  
+      // Verify we have a user ID
+      if (!data.user?.id) {
+        throw new Error('No user ID received from signup');
       }
+  
+      // Create profile with proper null handling for adviser_id
+      const profileData = {
+        id: data.user.id,
+        email: data.user.email,
+        name,
+        role,
+        adviser_id: role === 'client' ? adviserId : null,
+        created_at: new Date().toISOString(),
+      };
+  
+      console.log('Creating profile with data:', profileData); // For debugging
+  
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert([profileData]);
+  
+      if (profileError) {
+        console.error('Error creating profile:', profileError);
+        await supabase.auth.signOut();
+        throw new Error('Failed to create user profile');
+      }
+  
+      console.log('Sign-up and profile creation successful:', data);
+      alert('Sign-up successful! Please check your email to confirm your account.');
     } catch (error: any) {
       console.error('Error in signup process:', error);
       setError(error.message);
