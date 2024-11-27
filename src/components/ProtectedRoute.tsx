@@ -12,11 +12,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRole 
   const { user } = useContext(AuthContext);
 
   if (!user) {
-    return <Navigate to="/" />;
+    return <Navigate to="/" replace />;
   }
 
   if (requiredRole && user.user_metadata.role !== requiredRole) {
-    return <Navigate to="/" />;
+    return <Navigate to="/" replace/>;
   }
 
   return <>{children}</>; // Use fragment to wrap children

@@ -16,7 +16,7 @@ const Navbar: React.FC = () => {
       console.error('Error signing out:', error.message);
       alert('Failed to sign out. Please try again.');
     } else {
-      navigate('/signin');
+      navigate('/');
     }
   };
 
@@ -24,15 +24,17 @@ const Navbar: React.FC = () => {
     <nav className="navbar">
       <div className="navbar-container">
         <Link to="/" className="navbar-logo">
-          FinancialApp
+          Workflow
         </Link>
         <ul className="navbar-menu">
+        {user && user.user_metadata.role === 'client' && (
           <li className="navbar-item">
-            <Link to="/dashboard" className="navbar-link">
+            <Link to="/client/client-dashboard" className="navbar-link">
               Dashboard
             </Link>
           </li>
-          {user && user.role === 'adviser' && (
+          )}
+          {user && user.user_metadata.role === 'adviser' && (
             <li className="navbar-item">
               <Link to="/adviser" className="navbar-link">
                 Adviser
@@ -41,7 +43,7 @@ const Navbar: React.FC = () => {
           )}
           {!user ? (
             <li className="navbar-item">
-              <Link to="/signin" className="navbar-link">
+              <Link to="/" className="navbar-link">
                 Sign In
               </Link>
             </li>

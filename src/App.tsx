@@ -1,7 +1,7 @@
 // src/App.tsx
 import React from 'react';
 import ProtectedRoute from './components/ProtectedRoute';
-import { BrowserRouter as HashRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import SignIn from './components/Auth/SignIn';
 import SignUp from './components/Auth/SignUp';
 import Navbar from './components/Navbar';
@@ -21,7 +21,7 @@ import './styles.css';
 const App: React.FC = () => {
   return (
     <AuthProvider>
-      <HashRouter>
+      <BrowserRouter>
         <Navbar />
         <Routes>
           <Route path="/" element={<SignIn />} />
@@ -78,7 +78,7 @@ const App: React.FC = () => {
                 }
               />
         </Routes>
-      </HashRouter>
+      </BrowserRouter>
     </AuthProvider>
   );
 };
