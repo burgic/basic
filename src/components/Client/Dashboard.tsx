@@ -89,7 +89,11 @@ const ClientDashboard: React.FC = () => {
   if (!financialData) {
     return <div className="container"><p>No financial data available.</p></div>;
   }
-
+  const NoDataPrompt = ({ type, url }: { type: string, url: string }) => (
+    <div className="p-4 border rounded">
+      <p>No {type} data available. <Link to={url}>Click here to add your {type}</Link></p>
+    </div>
+  );
   const totalExpenditure = financialData.expenditure.reduce(
     (sum, item) => sum + item.amount,
     0
@@ -134,27 +138,42 @@ const ClientDashboard: React.FC = () => {
 
       <main className="flex flex-column align-center">
         <section className="card">
-          <h2>Income vs. Expenditure</h2>
-          <p><strong>Total Income:</strong> ${financialData.income.toFixed(2)}</p>
-          <p><strong>Total Expenditure:</strong> ${totalExpenditure.toFixed(2)}</p>
-          <p><strong>Remaining Income:</strong> ${remainingIncome.toFixed(2)}</p>
+        <h2>Income vs. Expenditure</h2>
+          {financialData?.income ? (
+            <>
+              <p><strong>Total Income:</strong> ${financialData.income.toFixed(2)}</p>
+              <p><strong>Total Expenditure:</strong> ${totalExpenditure.toFixed(2)}</p>
+              <p><strong>Remaining Income:</strong> ${remainingIncome.toFixed(2)}</p>
+            </>
+          ) : (
+            <NoDataPrompt type="income" url="/client/income" />
+          )}
         </section>
 
         <section className="card">
           <h2>Expenditure Breakdown</h2>
-          {financialData.expenditure.length > 0 ? (
+          {financialData?.expenditure.length > 0 ? (
             <Pie data={expenditureChartData} />
           ) : (
-            <p>No expenditure data available.</p>
+            <NoDataPrompt type="expenditure" url="/client/expenditure" />
           )}
         </section>
 
         <section className="card">
           <h2>Assets and Liabilities</h2>
-          <p><strong>Total Assets:</strong> ${financialData.assets.toFixed(2)}</p>
-          <p><strong>Total Liabilities:</strong> ${financialData.liabilities.toFixed(2)}</p>
-          <p><strong>Net Worth:</strong> ${netWorth.toFixed(2)}</p>
-          <Bar data={assetsLiabilitiesChartData} />
+          {financialData?.assets || financialData?.liabilities ? (
+            <>
+              <p><strong>Total Assets:</strong> ${financialData.assets.toFixed(2)}</p>
+              <p><strong>Total Liabilities:</strong> ${financialData.liabilities.toFixed(2)}</p>
+              <p><strong>Net Worth:</strong> ${netWorth.toFixed(2)}</p>
+              <Bar data={assetsLiabilitiesChartData} />
+            </>
+          ) : (
+            <div>
+              <NoDataPrompt type="assets" url="/client/assets" />
+              <NoDataPrompt type="liabilities" url="/client/liabilities" />
+            </div>
+          )}
         </section>
 
         <section className="card">
