@@ -34,6 +34,50 @@ const ClientDashboard: React.FC = () => {
       const clientId = user.id;
       console.log(`Fetching data for client ID: ${clientId}`);
 
+      // Insert the new code here
+    try {
+      const incomesRes = await supabase
+        .from('incomes')
+        .select('amount, type, frequency')
+        .eq('client_id', clientId);
+
+      console.log('Raw income response:', incomesRes);
+      
+      if (incomesRes.error) {
+        console.error('Income query error:', incomesRes.error);
+        throw new Error(`Income query failed: ${incomesRes.error.message}`);
+      }
+
+      if (!incomesRes.data || incomesRes.data.length === 0) {
+        console.log('No income data found for this client');
+        setFinancialData({
+          income: 0,
+          expenditure: [],
+          assets: 0,
+          liabilities: 0
+        });
+      } else {
+        const totalIncome = incomesRes.data.reduce((sum, item) => sum + Number(item.amount), 0);
+        setFinancialData({
+          income: totalIncome,
+          expenditure: [],
+          assets: 0,
+          liabilities: 0
+        });
+      }
+
+      setLoading(false);
+    } catch (err) {
+      console.error('Detailed fetch error:', err);
+      setError('Unable to fetch income data. Please try again later.');
+      setLoading(false);
+    }
+  };
+
+      fetchFinancialData();
+    }, [user]);
+
+      /*
       try {
         const [incomesRes, expendituresRes, assetsRes, liabilitiesRes] = await Promise.all([
           supabase.from('incomes').select('amount').eq('client_id', clientId),
@@ -77,7 +121,7 @@ const ClientDashboard: React.FC = () => {
 
     fetchFinancialData();
   }, [user]);
-
+*/
   if (loading) {
     return <div className="container"><p>Loading...</p></div>;
   }
@@ -89,6 +133,7 @@ const ClientDashboard: React.FC = () => {
   if (!financialData) {
     return <div className="container"><p>No financial data available.</p></div>;
   }
+
   const NoDataPrompt = ({ type, url }: { type: string, url: string }) => (
     <div className="p-4 border rounded">
       <p>No {type} data available. <Link to={url}>Click here to add your {type}</Link></p>
