@@ -7,6 +7,14 @@ import { Pie, Bar } from 'react-chartjs-2';
 import { AuthContext } from '../../context/AuthContext';
 import 'chart.js/auto';
 
+interface Income {
+  id: string;
+  client_id: string;
+  type: string;
+  amount: number;
+  frequency: string;
+}
+
 interface FinancialData {
   income: number;
   expenditure: { category: string; amount: number }[];
@@ -31,51 +39,58 @@ const ClientDashboard: React.FC = () => {
         return;
       }
 
-      const clientId = user.id;
-      console.log(`Fetching data for client ID: ${clientId}`);
-
       // Insert the new code here
-    try {
-      const incomesRes = await supabase
-        .from('incomes')
-        .select('amount, type, frequency')
-        .eq('client_id', clientId);
+      try {
+        // Fetch incomes with proper type casting and null checks
+        const { data: incomesData, error: incomesError } = await supabase
+          .from('incomes')
+          .select('*')
+          .eq('client_id', user.id);
 
-      console.log('Raw income response:', incomesRes);
-      
-      if (incomesRes.error) {
-        console.error('Income query error:', incomesRes.error);
-        throw new Error(`Income query failed: ${incomesRes.error.message}`);
-      }
+        if (incomesError) {
+          throw new Error(`Failed to fetch incomes: ${incomesError.message}`);
+        }
 
-      if (!incomesRes.data || incomesRes.data.length === 0) {
-        console.log('No income data found for this client');
-        setFinancialData({
-          income: 0,
-          expenditure: [],
-          assets: 0,
-          liabilities: 0
-        });
-      } else {
-        const totalIncome = incomesRes.data.reduce((sum, item) => sum + Number(item.amount), 0);
+        // Fetch expenditures
+        const { data: expendituresData, error: expendituresError } = await supabase
+          .from('expenditures')
+          .select('*')
+          .eq('client_id', user.id);
+
+        if (expendituresError) {
+          throw new Error(`Failed to fetch expenditures: ${expendituresError.message}`);
+        }
+
+        // Calculate total income, properly handling monthly vs annual frequencies
+        const totalIncome = (incomesData || []).reduce((sum, income: Income) => {
+          const amount = Number(income.amount) || 0;
+          return sum + (income.frequency === 'Monthly' ? amount * 12 : amount);
+        }, 0);
+
+        // Transform expenditure data
+        const expenditures = (expendituresData || []).map(exp => ({
+          category: exp.category,
+          amount: Number(exp.amount) || 0
+        }));
+
+        // Update financial data state
         setFinancialData({
           income: totalIncome,
-          expenditure: [],
-          assets: 0,
-          liabilities: 0
+          expenditure: expenditures,
+          assets: 0, // Add assets fetch when implementing that feature
+          liabilities: 0 // Add liabilities fetch when implementing that feature
         });
+
+      } catch (err) {
+        console.error('Error fetching financial data:', err);
+        setError(err instanceof Error ? err.message : 'Failed to fetch financial data');
+      } finally {
+        setLoading(false);
       }
+    };
 
-      setLoading(false);
-    } catch (err) {
-      console.error('Detailed fetch error:', err);
-      setError('Unable to fetch income data. Please try again later.');
-      setLoading(false);
-    }
-  };
-
-      fetchFinancialData();
-    }, [user]);
+    fetchFinancialData();
+  }, [user]);
 
       /*
       try {
@@ -122,17 +137,33 @@ const ClientDashboard: React.FC = () => {
     fetchFinancialData();
   }, [user]);
 */
-  if (loading) {
-    return <div className="container"><p>Loading...</p></div>;
-  }
 
-  if (error) {
-    return <div className="container"><p>Error: {error}</p></div>;
-  }
+if (loading) {
+  return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
+}
 
-  if (!financialData) {
-    return <div className="container"><p>No financial data available.</p></div>;
-  }
+if (error) {
+  return (
+    <div className="flex justify-center items-center min-h-screen text-red-600">
+      Error: {error}
+    </div>
+  );
+}
+
+if (!financialData) {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen">
+      <p className="mb-4">No financial data available.</p>
+      <button
+        onClick={() => navigate('/client/income')}
+        className="bg-blue-500 text-white px-4 py-2 rounded"
+      >
+        Add Income Data
+      </button>
+    </div>
+  );
+}
+
 
   const NoDataPrompt = ({ type, url }: { type: string, url: string }) => (
     <div className="p-4 border rounded">
@@ -176,23 +207,18 @@ const ClientDashboard: React.FC = () => {
   };
 
   return (
-    <div className="container">
-      <header>
-        <h1>Your Financial Dashboard</h1>
+    <div className="container mx-auto px-4 py-8">
+      <header className="mb-8">
+        <h1 className="text-2xl font-bold">Your Financial Dashboard</h1>
       </header>
 
-      <main className="flex flex-column align-center">
-        <section className="card">
-        <h2>Income vs. Expenditure</h2>
-          {financialData?.income ? (
-            <>
-              <p><strong>Total Income:</strong> ${financialData.income.toFixed(2)}</p>
-              <p><strong>Total Expenditure:</strong> ${totalExpenditure.toFixed(2)}</p>
-              <p><strong>Remaining Income:</strong> ${remainingIncome.toFixed(2)}</p>
-            </>
-          ) : (
-            <NoDataPrompt type="income" url="/client/income" />
-          )}
+      <main className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <section className="bg-white p-6 rounded-lg shadow">
+          <h2 className="text-xl font-semibold mb-4">Income Overview</h2>
+          <div className="space-y-2">
+            <p>Annual Income: ${financialData.income.toLocaleString()}</p>
+            <p>Monthly Average: ${(financialData.income / 12).toLocaleString()}</p>
+          </div>
         </section>
 
         <section className="card">
