@@ -73,12 +73,32 @@ const ClientDashboard: React.FC = () => {
           amount: Number(exp.amount) || 0
         }));
 
+              // Fetch assets
+          const { data: assetsData, error: assetsError } = await supabase
+          .from('assets')
+          .select('*')
+          .eq('client_id', user.id);
+
+        if (assetsError) throw new Error(`Failed to fetch assets: ${assetsError.message}`);
+
+        // Fetch liabilities
+        const { data: liabilitiesData, error: liabilitiesError } = await supabase
+          .from('liabilities')
+          .select('*')
+          .eq('client_id', user.id);
+
+        if (liabilitiesError) throw new Error(`Failed to fetch liabilities: ${liabilitiesError.message}`);
+
+        const totalAssets = assetsData?.reduce((sum, asset) => sum + (asset.value || 0), 0) || 0;
+        const totalLiabilities = liabilitiesData?.reduce((sum, liability) => sum + (liability.amount || 0), 0) || 0;
+
+
         // Update financial data state
         setFinancialData({
           income: totalIncome,
           expenditure: expenditures,
-          assets: 0, // Add assets fetch when implementing that feature
-          liabilities: 0 // Add liabilities fetch when implementing that feature
+          assets: totalAssets, // Add assets fetch when implementing that feature
+          liabilities: totalExpenditure // Add liabilities fetch when implementing that feature
         });
 
       } catch (err) {
