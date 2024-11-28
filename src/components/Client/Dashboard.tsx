@@ -252,7 +252,7 @@ if (!financialData) {
 
         <section className="card">
           <h2>Assets and Liabilities</h2>
-          {financialData?.assets || financialData?.liabilities ? (
+          {financialData.assets > 0 || financialData?.liabilities > 0 ? (
             <>
               <p><strong>Total Assets:</strong> ${financialData.assets.toFixed(2)}</p>
               <p><strong>Total Liabilities:</strong> ${financialData.liabilities.toFixed(2)}</p>
