@@ -98,7 +98,7 @@ const ClientDashboard: React.FC = () => {
           income: totalIncome,
           expenditure: expenditures,
           assets: totalAssets, // Add assets fetch when implementing that feature
-          liabilities: totalExpenditure // Add liabilities fetch when implementing that feature
+          liabilities: totalLiabilities // Add liabilities fetch when implementing that feature
         });
 
       } catch (err) {
