@@ -1,6 +1,6 @@
 // src/components/Adviser/Dashboard.tsx
 import React from 'react';
-import ClientsList from './ClientList';
+// import ClientsList from './ClientList';
 import { useNavigate } from 'react-router-dom';
 
 
@@ -10,23 +10,28 @@ const AdviserDashboard: React.FC = () => {
 
   
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-semibold">Adviser Dashboard</h1>
-        <button
-          onClick={() => navigate('/adviser/create-client')}
-          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-        >
-          Add New Client
-        </button>
-      </div>
-      
-      <div>
-      <button onClick={() => navigate('/create-client')} 
-      className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">Add New Client</button>
-      <ClientsList />
-    </div>
-    
+    <div className="min-h-screen bg-white">
+      {/* Header */}
+      <header className="border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <h1 className="text-xl font-semibold text-gray-900">
+              Adviser Dashboard
+            </h1>
+            <button
+              onClick={() => navigate('/adviser/create-client')}
+              className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors"
+            >
+              Add New Client
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Your dashboard content here */}
+      </main>
     </div>
   );
 };
