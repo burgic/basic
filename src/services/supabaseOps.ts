@@ -1,3 +1,4 @@
+// supabaseOps.ts
 import { supabase } from './supabaseClient'; 
 
 // Fetch all clients for an adviser
