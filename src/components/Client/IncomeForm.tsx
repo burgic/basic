@@ -40,32 +40,31 @@ const IncomeForm = () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      {/* Progress Bar */}
-      <div className="mb-8">
-        <div className="flex justify-between text-sm text-gray-600 mb-2">
-          <span>Income Details</span>
-          <span>Step 1 of 4</span>
+    <div className="w-full max-w-3xl mx-auto p-4">
+      <div className="mb-6">
+        <div className="flex justify-between mb-2">
+          <span className="text-sm text-gray-600">Income Details</span>
+          <span className="text-sm text-gray-600">Step 1 of 4</span>
         </div>
-        <div className="h-2 bg-gray-200 rounded-full">
+        <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
           <div 
-            className="h-full bg-blue-600 rounded-full transition-all duration-300"
+            className="h-full bg-blue-500 transition-all duration-300"
             style={{ width: `${calculateProgress()}%` }}
           />
         </div>
       </div>
 
       {/* Form */}
-      <div className="space-y-6">
+      <div className="space-y-4">
         {incomes.map((income, index) => (
           <div key={income.type} className="p-4 bg-white rounded-lg shadow">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               {income.type} Income
             </label>
             <div className="flex gap-4">
-              <div className="flex-1">
+              <div className="flex-1 relative">
                 <div className="relative rounded-md shadow-sm">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
                     <span className="text-gray-500 sm:text-sm">$</span>
                   </div>
                   <input
