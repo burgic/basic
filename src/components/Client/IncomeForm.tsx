@@ -1,3 +1,126 @@
+// IncomeForm.tsx
+
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+const IncomeForm = () => {
+  const navigate = useNavigate();
+  const [incomes, setIncomes] = useState([
+    { type: 'Salary', amount: '', frequency: 'Monthly' },
+    { type: 'Investment', amount: '', frequency: 'Monthly' },
+    { type: 'Rental', amount: '', frequency: 'Monthly' },
+    { type: 'Business', amount: '', frequency: 'Monthly' },
+    { type: 'Other', amount: '', frequency: 'Monthly' }
+  ]);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleAmountChange = (index: number, value: string) => {
+    const newIncomes = [...incomes];
+    newIncomes[index].amount = value;
+    setIncomes(newIncomes);
+  };
+
+  const handleFrequencyChange = (index: number, value: string) => {
+    const newIncomes = [...incomes];
+    newIncomes[index].frequency = value;
+    setIncomes(newIncomes);
+  };
+
+  const calculateProgress = () => {
+    const filledIncomes = incomes.filter(income => income.amount !== '');
+    return (filledIncomes.length / incomes.length) * 100;
+  };
+
+  const handleSubmit = async () => {
+    setIsSaving(true);
+    // Your supabase logic here
+    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulated save
+    setIsSaving(false);
+    navigate('/expenditure'); // Navigate to expenditure form
+  };
+
+  return (
+    <div className="max-w-2xl mx-auto p-6">
+      {/* Progress Bar */}
+      <div className="mb-8">
+        <div className="flex justify-between text-sm text-gray-600 mb-2">
+          <span>Income Details</span>
+          <span>Step 1 of 4</span>
+        </div>
+        <div className="h-2 bg-gray-200 rounded-full">
+          <div 
+            className="h-full bg-blue-600 rounded-full transition-all duration-300"
+            style={{ width: `${calculateProgress()}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Form */}
+      <div className="space-y-6">
+        {incomes.map((income, index) => (
+          <div key={income.type} className="p-4 bg-white rounded-lg shadow">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {income.type} Income
+            </label>
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <div className="relative rounded-md shadow-sm">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <span className="text-gray-500 sm:text-sm">$</span>
+                  </div>
+                  <input
+                    type="number"
+                    value={income.amount}
+                    onChange={(e) => handleAmountChange(index, e.target.value)}
+                    placeholder="0"
+                    className="block w-full pl-7 pr-12 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+              <select
+                value={income.frequency}
+                onChange={(e) => handleFrequencyChange(index, e.target.value)}
+                className="block w-1/3 rounded-md border border-gray-300 py-2 pl-3 pr-10 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="Monthly">Monthly</option>
+                <option value="Annual">Annual</option>
+              </select>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Navigation */}
+      <div className="mt-8 flex justify-between">
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
+        >
+          Back
+        </button>
+        <button
+          onClick={handleSubmit}
+          disabled={isSaving || calculateProgress() === 0}
+          className={`
+            px-6 py-2 rounded-md text-white font-medium
+            ${isSaving || calculateProgress() === 0 
+              ? 'bg-gray-400 cursor-not-allowed' 
+              : 'bg-blue-600 hover:bg-blue-700'}
+          `}
+        >
+          {isSaving ? 'Saving...' : 'Continue to Expenditure'}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default IncomeForm;
+
+
+/*
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabaseClient';
 
@@ -113,9 +236,6 @@ const IncomeForm: React.FC<IncomeFormProps> = ({ onComplete }) => {
 export default IncomeForm;
 
 
-
-
-/*
 
 // src/components/Client/IncomeForm.tsx
 import React, { useState, useEffect } from 'react';
