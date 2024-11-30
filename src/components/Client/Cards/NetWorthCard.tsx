@@ -18,7 +18,7 @@ const NetWorthCard: React.FC<NetWorthCardProps> = ({ assets, liabilities }) => {
   };
 
   return (
-    <div className="bg-[#111111] rounded-2xl p-8">
+    <div className="bg-gray-900 rounded-2xl p-8 text-white shadow-xl">
       <h2 className="text-2xl font-bold text-white mb-12">Net Worth Summary</h2>
       
       <div className="grid grid-cols-3 gap-8">
