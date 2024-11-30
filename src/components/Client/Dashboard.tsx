@@ -6,6 +6,7 @@ import { supabase } from '../../services/supabaseClient';
 import { Pie, Bar } from 'react-chartjs-2';
 import { AuthContext } from '../../context/AuthContext';
 import 'chart.js/auto';
+import NetWorthCard from './Cards/NetWorthCard';
 
 interface Income {
   id: string;
@@ -231,6 +232,13 @@ if (!financialData) {
       <header className="mb-8">
         <h1 className="text-2xl font-bold">Your Financial Dashboard</h1>
       </header>
+
+      <div className="space-y-6">
+    <NetWorthCard 
+      assets={financialData.assets}
+      liabilities={financialData.liabilities}
+    />
+      </div>
 
       <main className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <section className="bg-white p-6 rounded-lg shadow">
