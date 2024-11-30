@@ -40,7 +40,7 @@ const IncomeForm = () => {
   };
 
   return (
-    <div className="w-full max-w-3xl mx-auto p-4">
+    <div className="w-full max-w-3xl mx-auto p-4 space-y-6 bg-gray-50 rounded-lg shadow-lg">
       <div className="mb-6">
         <div className="flex justify-between mb-2">
           <span className="text-sm text-gray-600">Income Details</span>
@@ -62,7 +62,7 @@ const IncomeForm = () => {
               {income.type} Income
             </label>
             <div className="flex gap-4">
-              <div className="flex-1 relative">
+              <div className="relative w-2/3">
                 <div className="relative rounded-md shadow-sm">
                   <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
                     <span className="text-gray-500 sm:text-sm">$</span>
@@ -71,7 +71,7 @@ const IncomeForm = () => {
                     type="number"
                     value={income.amount}
                     onChange={(e) => handleAmountChange(index, e.target.value)}
-                    className="w-1/3 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="block w-full px-10 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
               </div>
