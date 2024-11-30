@@ -244,8 +244,8 @@ if (!financialData) {
         <section className="bg-white p-6 rounded-lg shadow">
           <h2 className="text-xl font-semibold mb-4">Income Overview</h2>
           <div className="space-y-2">
-            <p>Annual Income: ${financialData.income.toLocaleString()}</p>
-            <p>Monthly Average: ${(financialData.income / 12).toLocaleString()}</p>
+            <p>Annual Income: £{financialData.income.toLocaleString()}</p>
+            <p>Monthly Average: £{(financialData.income / 12).toLocaleString()}</p>
           </div>
         </section>
 
@@ -262,9 +262,9 @@ if (!financialData) {
           <h2>Assets and Liabilities</h2>
           {financialData.assets > 0 || financialData?.liabilities > 0 ? (
             <>
-              <p><strong>Total Assets:</strong> ${financialData.assets.toFixed(2)}</p>
-              <p><strong>Total Liabilities:</strong> ${financialData.liabilities.toFixed(2)}</p>
-              <p><strong>Net Worth:</strong> ${netWorth.toFixed(2)}</p>
+              <p><strong>Total Assets:</strong> £{financialData.assets.toFixed(2)}</p>
+              <p><strong>Total Liabilities:</strong> £{financialData.liabilities.toFixed(2)}</p>
+              <p><strong>Net Worth:</strong> £{netWorth.toFixed(2)}</p>
               <Bar data={assetsLiabilitiesChartData} />
             </>
           ) : (
