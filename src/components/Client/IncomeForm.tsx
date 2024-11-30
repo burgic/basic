@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../../services/supabaseClient';
 
 const IncomeForm: React.FC = () => {
   const navigate = useNavigate();
@@ -38,15 +39,38 @@ const IncomeForm: React.FC = () => {
   const handleSubmit = async () => {
     setIsSaving(true);
     try {
-      // Add your supabase save logic here
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulated save
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No user found');
+
+      // Filter out empty income entries
+      const validIncomes = incomes.filter(income => income.amount !== '');
+
+      // Prepare income data with client_id
+      const incomesToSave = validIncomes.map(income => ({
+        client_id: user.id,
+        type: income.type,
+        amount: parseFloat(income.amount),
+        frequency: income.frequency
+      }));
+
+      // Save to Supabase
+      const { error } = await supabase
+        .from('incomes')
+        .insert(incomesToSave);
+
+      if (error) throw error;
+
+      // If successful, navigate to next page
       navigate('/client/expenditure');
     } catch (error) {
       console.error('Error saving income:', error);
+      alert('Failed to save income data. Please try again.');
     } finally {
       setIsSaving(false);
     }
   };
+
 
   return (
     <div className="w-full max-w-md mx-auto p-6 bg-gray-800 rounded-lg shadow-md">
