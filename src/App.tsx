@@ -18,7 +18,19 @@ import ClientDetails from './components/Adviser/ClientDetails';
 import './styles.css';
 
 
+
   const App: React.FC = () => {
+      const navigate = useNavigate();
+    
+      const handleNavigation = (direction: 'next' | 'back') => {
+        if (direction === 'next') {
+          navigate('/expenditure');
+        } else {
+          navigate(-1);
+        }
+      };
+
+
     return (
       <AuthProvider>
         <BrowserRouter>
@@ -33,7 +45,7 @@ import './styles.css';
               path="/client/income"
               element={
                 <ProtectedRoute requiredRole="client">
-                  <IncomeForm />
+                  <IncomeForm onNavigate={handleNavigation}/>
                 </ProtectedRoute>
               }
             />
@@ -77,10 +89,11 @@ import './styles.css';
                 </ProtectedRoute>
               }
             />
+
           </Routes>
         </BrowserRouter>
       </AuthProvider>
     );
   };
-  
+
   export default App;

@@ -3,8 +3,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const IncomeForm = () => {
-  const navigate = useNavigate();
+interface Props {
+  onNavigate: (direction: 'next' | 'back') => void;
+}
+
+const IncomeForm: React.FC<Props> = ({ onNavigate }) => {
   const [incomes, setIncomes] = useState([
     { type: 'Salary', amount: '', frequency: 'Monthly' },
     { type: 'Investment', amount: '', frequency: 'Monthly' },
@@ -26,6 +29,10 @@ const IncomeForm = () => {
     setIncomes(newIncomes);
   };
 
+  const handleAddIncome = () => {
+    setIncomes([...incomes, { type: 'Other', amount: '', frequency: 'Monthly' }]);
+  };
+
   const calculateProgress = () => {
     const filledIncomes = incomes.filter(income => income.amount !== '');
     return (filledIncomes.length / incomes.length) * 100;
@@ -36,17 +43,58 @@ const IncomeForm = () => {
     // Your supabase logic here
     await new Promise(resolve => setTimeout(resolve, 1000)); // Simulated save
     setIsSaving(false);
-    navigate('/expenditure'); // Navigate to expenditure form
+    onNavigate('next');
   };
 
   return (
-        <div className="w-full max-w-md mx-auto p-6 bg-gray-800 rounded-lg shadow-md">
-      <h1 className="text-2xl font-semibold text-gray-100 mb-6">Income Details</h1>
+    <div className="w-full max-w-md mx-auto p-6 bg-gray-800 rounded-lg shadow-md">
+      {/* Progress Section */}
+      <div className="mb-6">
+        <div className="flex justify-between items-center mb-2">
+          <h1 className="text-2xl font-semibold text-gray-100">Income Details</h1>
+          <span className="text-sm text-gray-400">Step 1 of 4</span>
+        </div>
+        <div className="w-full h-2 bg-gray-700 rounded-full overflow-hidden">
+          <div 
+            className="h-full bg-blue-500 transition-all duration-300"
+            style={{ width: `${calculateProgress()}%` }}
+          />
+        </div>
+        <div className="mt-2 text-sm text-gray-400 text-right">
+          {Math.round(calculateProgress())}% Complete
+        </div>
+      </div>
+
+      {/* Progress Checklist */}
+      <div className="mb-6 bg-gray-700 p-4 rounded-lg">
+        <div className="text-sm text-gray-300 space-y-2">
+          <div className="flex items-center">
+            <div className={`w-4 h-4 rounded-full mr-2 flex items-center justify-center ${calculateProgress() > 0 ? 'bg-blue-500' : 'bg-gray-600'}`}>
+              {calculateProgress() > 0 && (
+                <span className="text-white text-xs">✓</span>
+              )}
+            </div>
+            <span>Income Information</span>
+          </div>
+          <div className="flex items-center opacity-50">
+            <div className="w-4 h-4 rounded-full mr-2 bg-gray-600" />
+            <span>Expenditure</span>
+          </div>
+          <div className="flex items-center opacity-50">
+            <div className="w-4 h-4 rounded-full mr-2 bg-gray-600" />
+            <span>Assets</span>
+          </div>
+          <div className="flex items-center opacity-50">
+            <div className="w-4 h-4 rounded-full mr-2 bg-gray-600" />
+            <span>Liabilities</span>
+          </div>
+        </div>
+      </div>
 
       {/* Form */}
       <div className="space-y-4">
         {incomes.map((income, index) => (
-          <div key={income.type} className="space-y-2">
+          <div key={`${income.type}-${index}`} className="space-y-2">
             <label className="block text-sm font-medium text-gray-300">
               {income.type} Income
             </label>
@@ -71,26 +119,33 @@ const IncomeForm = () => {
         ))}
       </div>
 
-      {/* Buttons */}
+      {/* Navigation */}
       <div className="mt-6 flex justify-between">
         <button
-          type="button"
-          onClick={() => navigate(-1)}
+          onClick={handleAddIncome}
           className="px-4 py-2 text-sm font-medium bg-gray-600 text-gray-300 rounded-lg hover:bg-gray-500"
         >
           + Add Income Source
         </button>
-        <button
-          onClick={handleSubmit}
-          disabled={isSaving || calculateProgress() === 0}
-          className={`px-6 py-2 text-sm font-medium rounded-lg focus:outline-none ${
-            isSaving || calculateProgress() === 0
-              ? "bg-gray-500 text-gray-400 cursor-not-allowed"
-              : "bg-blue-500 text-gray-100 hover:bg-blue-600"
-          }`}
-        >
-          {isSaving ? "Saving..." : "Save Income Details"}
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={() => onNavigate && onNavigate('back')}
+            className="px-4 py-2 text-sm font-medium bg-gray-600 text-gray-300 rounded-lg hover:bg-gray-500"
+          >
+            Back
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={isSaving || calculateProgress() === 0}
+            className={`px-6 py-2 text-sm font-medium rounded-lg focus:outline-none ${
+              isSaving || calculateProgress() === 0
+                ? "bg-gray-500 text-gray-400 cursor-not-allowed"
+                : "bg-blue-500 text-gray-100 hover:bg-blue-600"
+            }`}
+          >
+            {isSaving ? "Saving..." : "Continue"}
+          </button>
+        </div>
       </div>
     </div>
   );
