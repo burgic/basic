@@ -71,8 +71,7 @@ const IncomeForm = () => {
                     type="number"
                     value={income.amount}
                     onChange={(e) => handleAmountChange(index, e.target.value)}
-                    placeholder="0"
-                    className="block w-full pl-7 pr-12 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-1/3 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
               </div>
@@ -90,7 +89,7 @@ const IncomeForm = () => {
       </div>
 
       {/* Navigation */}
-      <div className="mt-8 flex justify-between">
+      <div className="mt-8 flex justify-between items-center">
         <button
           type="button"
           onClick={() => navigate(-1)}
