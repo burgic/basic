@@ -1,3 +1,122 @@
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../../services/supabaseClient';
+
+interface IncomeFormProps {
+  onComplete?: () => void;
+}
+
+const IncomeForm: React.FC<IncomeFormProps> = ({ onComplete }) => {
+  const [incomeEntries, setIncomeEntries] = useState([
+    { type: '', amount: 0, frequency: '' }
+  ]);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSubmit = async () => {
+    setIsSaving(true);
+    try {
+      const { data: user } = await supabase.auth.getUser();
+      const clientId = user.user?.id;
+
+      if (!clientId) {
+        throw new Error('No user found');
+      }
+
+      const { error } = await supabase.from('incomes').insert(
+        incomeEntries.map(entry => ({
+          ...entry,
+          client_id: clientId
+        }))
+      );
+
+      if (error) throw error;
+      
+      // Call onComplete to move to next step
+      if (onComplete) { 
+        onComplete();
+      }
+    } catch (error) {
+      console.error('Error saving income:', error);
+      alert('Failed to save income data');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      {incomeEntries.map((entry, index) => (
+        <div key={index} className="grid grid-cols-3 gap-4">
+          <select
+            value={entry.type}
+            onChange={(e) => {
+              const newEntries = [...incomeEntries];
+              newEntries[index].type = e.target.value;
+              setIncomeEntries(newEntries);
+            }}
+            className="rounded-lg border-gray-300"
+          >
+            <option value="">Select Type</option>
+            <option value="Salary">Salary</option>
+            <option value="Business">Business Income</option>
+            <option value="Investment">Investment Income</option>
+            <option value="Other">Other</option>
+          </select>
+
+          <input
+            type="number"
+            value={entry.amount}
+            onChange={(e) => {
+              const newEntries = [...incomeEntries];
+              newEntries[index].amount = Number(e.target.value);
+              setIncomeEntries(newEntries);
+            }}
+            placeholder="Amount"
+            className="rounded-lg border-gray-300"
+          />
+
+          <select
+            value={entry.frequency}
+            onChange={(e) => {
+              const newEntries = [...incomeEntries];
+              newEntries[index].frequency = e.target.value;
+              setIncomeEntries(newEntries);
+            }}
+            className="rounded-lg border-gray-300"
+          >
+            <option value="">Select Frequency</option>
+            <option value="Monthly">Monthly</option>
+            <option value="Annual">Annual</option>
+          </select>
+        </div>
+      ))}
+
+      <div className="flex justify-between pt-4">
+        <button
+          onClick={() => setIncomeEntries([...incomeEntries, { type: '', amount: 0, frequency: '' }])}
+          className="text-blue-600 hover:text-blue-700"
+        >
+          + Add Another Income
+        </button>
+
+        <button
+          onClick={handleSubmit}
+          disabled={isSaving}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+        >
+          {isSaving ? 'Saving...' : 'Save & Continue'}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default IncomeForm;
+
+
+
+
+/*
+
 // src/components/Client/IncomeForm.tsx
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabaseClient';
@@ -175,7 +294,7 @@ useEffect(() => {
 
 
 
-  /*
+
   // src/components/Client/IncomeForm.tsx
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabaseClient';

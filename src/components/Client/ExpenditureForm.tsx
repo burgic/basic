@@ -8,6 +8,10 @@ interface ExpenditureEntry {
   frequency: string;
 }
 
+interface ExpenditureFormProps {
+  onComplete?: () => void;
+}
+
 const ExpenditureForm: React.FC = () => {
   const [expenditureEntries, setExpenditureEntries] = useState<ExpenditureEntry[]>([
     { category: '', amount: 0, frequency: '' },
