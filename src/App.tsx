@@ -20,16 +20,6 @@ import './styles.css';
 
 
   const App: React.FC = () => {
-      const navigate = useNavigate();
-    
-      const handleNavigation = (direction: 'next' | 'back') => {
-        if (direction === 'next') {
-          navigate('/expenditure');
-        } else {
-          navigate(-1);
-        }
-      };
-
 
     return (
       <AuthProvider>
@@ -45,7 +35,7 @@ import './styles.css';
               path="/client/income"
               element={
                 <ProtectedRoute requiredRole="client">
-                  <IncomeForm onNavigate={handleNavigation}/>
+                  <IncomeForm />
                 </ProtectedRoute>
               }
             />

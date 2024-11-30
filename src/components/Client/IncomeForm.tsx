@@ -3,11 +3,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-interface Props {
-  onNavigate: (direction: 'next' | 'back') => void;
-}
-
-const IncomeForm: React.FC<Props> = ({ onNavigate }) => {
+const IncomeForm: React.FC = () => {
+  const navigate = useNavigate();
   const [incomes, setIncomes] = useState([
     { type: 'Salary', amount: '', frequency: 'Monthly' },
     { type: 'Investment', amount: '', frequency: 'Monthly' },
@@ -40,10 +37,15 @@ const IncomeForm: React.FC<Props> = ({ onNavigate }) => {
 
   const handleSubmit = async () => {
     setIsSaving(true);
-    // Your supabase logic here
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulated save
-    setIsSaving(false);
-    onNavigate('next');
+    try {
+      // Add your supabase save logic here
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulated save
+      navigate('/client/expenditure');
+    } catch (error) {
+      console.error('Error saving income:', error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -129,7 +131,7 @@ const IncomeForm: React.FC<Props> = ({ onNavigate }) => {
         </button>
         <div className="flex gap-3">
           <button
-            onClick={() => onNavigate && onNavigate('back')}
+            onClick={() => navigate(-1)}
             className="px-4 py-2 text-sm font-medium bg-gray-600 text-gray-300 rounded-lg hover:bg-gray-500"
           >
             Back
