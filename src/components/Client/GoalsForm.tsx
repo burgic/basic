@@ -26,8 +26,8 @@ const GoalsForm: React.FC = () => {
       ]}
       defaultEntry={{
         goal: '',
-        target_amount: 0,
-        time_horizon: 0
+        target_amount: '',
+        time_horizon: ''
       }}
     />
   );

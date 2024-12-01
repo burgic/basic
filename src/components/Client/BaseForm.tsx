@@ -10,7 +10,7 @@ interface FormEntry {
 }
 
 interface FinancialFormProps {
-  formType: 'expenditures' | 'assets' | 'goals';
+  formType: 'expenditures' | 'assets' | 'goals' | 'liabilities';
   nextRoute: string;
   stepNumber: number;
   fields: {
