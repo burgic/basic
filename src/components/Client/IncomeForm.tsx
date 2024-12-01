@@ -1,49 +1,59 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../services/supabaseClient';
+import { AuthContext } from '../../context/AuthContext';
 
 interface Income {
+  id: string;
+  client_id: string;
   type: string;
   amount: string;
   frequency: string;
-  id?: string;
+}
+
+interface User {
+  id: string;
 }
 
 const IncomeForm: React.FC = () => {
   const navigate = useNavigate();
+  const {user} = React.useContext(AuthContext);
   const [incomes, setIncomes] = useState<Income[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch existing income data
-  useEffect(() => {
+  React.useEffect(() => {
     const fetchIncomes = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error('No user found');
+      if (!user) {
+        console.warn('No user found in AuthContext.');
+        setIsLoading(false);
+        return;
+      }
 
-        const { data, error } = await supabase
+      try {
+        const { data: incomesData, error: incomesError } = await supabase
           .from('incomes')
           .select('*')
           .eq('client_id', user.id);
 
-        if (error) throw error;
+        if (incomesError) {
+          throw new Error(`Failed to fetch incomes: ${incomesError.message}`);
+        }
 
-        if (data && data.length > 0) {
-          // Convert amounts to strings for input fields
-          const formattedData = data.map(income => ({
+        if (incomesData && incomesData.length > 0) {
+          const formattedIncomes = incomesData.map(income => ({
             ...income,
             amount: income.amount.toString()
           }));
-          setIncomes(formattedData);
+          setIncomes(formattedIncomes);
         } else {
-          // Initialize with default empty fields if no data exists
+          // Set default income types if no data exists
           setIncomes([
-            { type: 'Salary', amount: '', frequency: 'Monthly' },
-            { type: 'Investment', amount: '', frequency: 'Monthly' },
-            { type: 'Rental', amount: '', frequency: 'Monthly' },
-            { type: 'Business', amount: '', frequency: 'Monthly' },
-            { type: 'Other', amount: '', frequency: 'Monthly' }
+            { id: '', client_id: user.id, type: 'Salary', amount: '', frequency: 'Monthly' },
+            { id: '', client_id: user.id, type: 'Investment', amount: '', frequency: 'Monthly' },
+            { id: '', client_id: user.id, type: 'Rental', amount: '', frequency: 'Monthly' },
+            { id: '', client_id: user.id, type: 'Business', amount: '', frequency: 'Monthly' },
+            { id: '', client_id: user.id, type: 'Other', amount: '', frequency: 'Monthly' }
           ]);
         }
       } catch (error) {
@@ -55,7 +65,7 @@ const IncomeForm: React.FC = () => {
     };
 
     fetchIncomes();
-  }, []);
+  }, [user]);
 
   const handleAmountChange = (index: number, value: string) => {
     const newIncomes = [...incomes];
@@ -70,7 +80,18 @@ const IncomeForm: React.FC = () => {
   };
 
   const handleAddIncome = () => {
-    setIncomes([...incomes, { type: 'Other', amount: '', frequency: 'Monthly' }]);
+    if (!user) {
+      console.warn('No user found');
+      return;
+    }
+    
+    setIncomes([...incomes, {
+      id: '',
+      client_id: user.id,
+      type: 'Other',
+      amount: '',
+      frequency: 'Monthly'
+    }]);
   };
 
   const calculateProgress = () => {
@@ -79,25 +100,23 @@ const IncomeForm: React.FC = () => {
   };
 
   const handleSubmit = async () => {
+    if (!user) {
+      alert('No user found');
+      return;
+    }
+
     setIsSaving(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('No user found');
-
-      // Filter out empty income entries
-      const validIncomes = incomes.filter(income => income.amount !== '');
-
-      // Separate existing and new incomes
+      const validIncomes = incomes.filter(income => income.amount > '');
+      
+      // Handle existing incomes
       const existingIncomes = validIncomes.filter(income => income.id);
-      const newIncomes = validIncomes.filter(income => !income.id);
-
-      // Update existing incomes
       for (const income of existingIncomes) {
         const { error } = await supabase
           .from('incomes')
           .update({
             type: income.type,
-            amount: parseFloat(income.amount),
+            amount: parseFloat(income.amount) || 0,
             frequency: income.frequency
           })
           .eq('id', income.id);
@@ -105,16 +124,19 @@ const IncomeForm: React.FC = () => {
         if (error) throw error;
       }
 
-      // Insert new incomes
+      // Handle new incomes
+      const newIncomes = validIncomes
+        .filter(income => !income.id)
+        .map(({ id, ...income }) => ({
+          ...income,
+      amount: parseFloat(income.amount) || 0,
+      client_id: user.id
+    })); // Remove empty id field
+
       if (newIncomes.length > 0) {
         const { error } = await supabase
           .from('incomes')
-          .insert(newIncomes.map(income => ({
-            client_id: user.id,
-            type: income.type,
-            amount: parseFloat(income.amount),
-            frequency: income.frequency
-          })));
+          .insert(newIncomes);
 
         if (error) throw error;
       }
