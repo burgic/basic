@@ -16,6 +16,7 @@ import LiabilitiesForm from './components/Client/LiabilitiesForm';
 import GoalsForm from './components/Client/GoalsForm';
 import ClientDetails from './components/Adviser/ClientDetails';
 import './styles.css';
+import './styles/globals.css';
 
 
 

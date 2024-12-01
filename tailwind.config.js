@@ -48,7 +48,12 @@ module.exports = {
         // Box shadows
         boxShadow: {
           'card': '0 0 0 1px rgba(0, 0, 0, 0.05), 0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-        }
+        },
+        extend: {
+          backgroundImage: {
+            'gradient-linear': 'linear-gradient(to right, var(--tw-gradient-stops))',
+          },
+        },
       },
     },
     plugins: [
