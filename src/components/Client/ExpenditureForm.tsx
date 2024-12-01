@@ -5,7 +5,7 @@ import FinancialForm from './BaseForm';
 const ExpenditureForm: React.FC = () => {
   return (
     <FinancialForm
-      formType="expenditure"
+      formType="expenditures"
       nextRoute="/client/assets"
       stepNumber={2}
       fields={[
