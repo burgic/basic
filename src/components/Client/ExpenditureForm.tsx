@@ -1,3 +1,55 @@
+// ExpenditureForm.tsx
+import React from 'react';
+import FinancialForm from './BaseForm';
+
+const ExpenditureForm: React.FC = () => {
+  return (
+    <FinancialForm
+      formType="expenditure"
+      nextRoute="/client/assets"
+      stepNumber={2}
+      fields={[
+        {
+          name: 'category',
+          type: 'select',
+          label: 'Category',
+          options: [
+            { value: 'Rent/Mortgage', label: 'Rent/Mortgage' },
+            { value: 'Utilities', label: 'Utilities' },
+            { value: 'Groceries', label: 'Groceries' },
+            { value: 'Transportation', label: 'Transportation' },
+            { value: 'Entertainment', label: 'Entertainment' },
+            { value: 'Other', label: 'Other' }
+          ]
+        },
+        {
+          name: 'amount',
+          type: 'number',
+          label: 'Amount'
+        },
+        {
+          name: 'frequency',
+          type: 'select',
+          label: 'Frequency',
+          options: [
+            { value: 'Monthly', label: 'Monthly' },
+            { value: 'Annually', label: 'Annually' }
+          ]
+        }
+      ]}
+      defaultEntry={{
+        category: '',
+        amount: 0,
+        frequency: 'Monthly'
+      }}
+    />
+  );
+};
+
+export default ExpenditureForm;
+
+
+/*
 // src/components/Client/ExpenditureForm.tsx
 import React, { useState } from 'react';
 import { supabase } from '../../services/supabaseClient';
@@ -85,3 +137,4 @@ const ExpenditureForm: React.FC = () => {
 };
 
 export default ExpenditureForm;
+*/
