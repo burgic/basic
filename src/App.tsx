@@ -53,7 +53,7 @@ import './styles/globals.css';
               path="/client/profile"
               element={
                 <ProtectedRoute requiredRole="client">
-                  <AssetsForm />
+                  <ProfileForm />
                 </ProtectedRoute>
               }
             />
