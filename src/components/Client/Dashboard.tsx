@@ -113,52 +113,6 @@ const ClientDashboard: React.FC = () => {
     fetchFinancialData();
   }, [user]);
 
-      /*
-      try {
-        const [incomesRes, expendituresRes, assetsRes, liabilitiesRes] = await Promise.all([
-          supabase.from('incomes').select('amount').eq('client_id', clientId),
-          supabase.from('expenditures').select('category, amount').eq('client_id', clientId),
-          supabase.from('assets').select('value').eq('client_id', clientId),
-          supabase.from('liabilities').select('amount').eq('client_id', clientId),
-        ]);
-
-        console.log('Supabase responses:', incomesRes, expendituresRes, assetsRes, liabilitiesRes);
-
-        if (incomesRes.error || expendituresRes.error || assetsRes.error || liabilitiesRes.error) {
-          console.error('Error fetching financial data:', incomesRes.error, expendituresRes.error, assetsRes.error, liabilitiesRes.error);
-          throw new Error('Error fetching financial data.');
-        }
-
-        const totalIncome = incomesRes.data?.reduce((sum: number, item: any) => sum + item.amount, 0) || 0;
-        const totalAssets = assetsRes.data?.reduce((sum: number, item: any) => sum + item.value, 0) || 0;
-        const totalLiabilities = liabilitiesRes.data?.reduce((sum: number, item: any) => sum + item.amount, 0) || 0;
-
-        setFinancialData({
-          income: totalIncome,
-          expenditure: expendituresRes.data || [],
-          assets: totalAssets,
-          liabilities: totalLiabilities,
-        });
-
-        console.log('Financial Data Set:', {
-          income: totalIncome,
-          expenditure: expendituresRes.data,
-          assets: totalAssets,
-          liabilities: totalLiabilities,
-        });
-
-        setLoading(false);
-      } catch (err: any) {
-        console.error('Fetch error:', err);
-        setError(err.message || 'Failed to fetch financial data.');
-        setLoading(false);
-      }
-    };
-
-    fetchFinancialData();
-  }, [user]);
-*/
-
 if (loading) {
   return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
 }

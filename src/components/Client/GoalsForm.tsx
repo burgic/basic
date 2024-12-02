@@ -5,7 +5,7 @@ const GoalsForm: React.FC = () => {
   return (
     <FinancialForm
       formType="goals"
-      nextRoute="/client/dashboard"
+      nextRoute="/client/client-dashboard"
       stepNumber={4}
       fields={[
         {
