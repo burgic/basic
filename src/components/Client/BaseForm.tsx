@@ -3,22 +3,25 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../services/supabaseClient';
 import { AuthContext } from '../../context/AuthContext';
 
+
+interface FormField {
+  name: string;
+  type: 'text' | 'number' | 'select';
+  label: string;
+  options?: { value: string; label: string }[];
+}
+
 interface FormEntry {
   id: string;
   client_id: string;
-  [key: string]: any;
+  [key: string]: string | number | undefined;
 }
 
 interface FinancialFormProps {
   formType: 'expenditures' | 'assets' | 'goals' | 'liabilities';
   nextRoute: string;
   stepNumber: number;
-  fields: {
-    name: string;
-    type: 'text' | 'number' | 'select';
-    label: string;
-    options?: { value: string; label: string; }[];
-  }[];
+  fields: FormField[];
   defaultEntry: Record<string, any>;
 }
 
@@ -49,22 +52,23 @@ const FinancialForm: React.FC<FinancialFormProps> = ({
           .select('*')
           .eq('client_id', user.id);
 
-        if (error) {
-          throw new Error(`Failed to fetch ${formType}: ${error.message}`);
-        }
+          if (error) {
+            throw new Error(`Failed to fetch ${formType}: ${error.message}`);
+          }
 
-        if (data && data.length > 0) {
-          setEntries(data);
-        } else {
-          setEntries([{ id: '', client_id: user.id, ...defaultEntry }]);
+          if (data && data.length > 0) {
+            setEntries(data);  // Cast to specific type T instead of FormEntry
+          } else {
+            setEntries([{ id: '', client_id: user.id, ...defaultEntry }]);
+          }
+        } catch (error) {
+          console.error(`Error fetching ${formType}:`, error);
+          alert(`Failed to load existing ${formType} data`);
+        } finally {
+          setIsLoading(false);
         }
-      } catch (error) {
-        console.error(`Error fetching ${formType}:`, error);
-        alert(`Failed to load existing ${formType} data`);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+      };
+
 
     fetchData();
   }, [user, formType, defaultEntry]);
@@ -74,23 +78,34 @@ const FinancialForm: React.FC<FinancialFormProps> = ({
     newEntries[index] = {
       ...newEntries[index],
       [field]: value
-    };
+    } 
     setEntries(newEntries);
   };
+
+  
 
   const handleAddEntry = () => {
     if (!user) {
       console.warn('No user found');
       return;
     }
-    
+        
     setEntries([...entries, { id: '', client_id: user.id, ...defaultEntry }]);
+
   };
 
   const calculateProgress = () => {
-    const requiredFields = fields.length;
     const filledEntries = entries.filter(entry => 
-      fields.every(field => entry[field.name] !== '' && entry[field.name] !== 0)
+      fields.every(field => {
+        const value = entry[field.name as keyof FormEntry];
+        if (field.type === 'number') {
+          // Convert to number for comparison if it's a number field
+          const numValue = Number(value);
+          return !isNaN(numValue) && numValue !== 0;
+        }
+        // For text/select fields, check if string is not empty
+        return typeof value === 'string' && value.trim() !== '';
+      })
     );
     return (filledEntries.length / entries.length) * 100;
   };
@@ -104,7 +119,8 @@ const FinancialForm: React.FC<FinancialFormProps> = ({
     setIsSaving(true);
     try {
       const validEntries = entries.filter(entry => 
-        fields.every(field => entry[field.name] !== '')
+        fields.every(field => entry[field.name as keyof FormEntry] !== undefined && 
+                            entry[field.name as keyof FormEntry] !== '')
       );
       
       // Handle existing entries
@@ -170,7 +186,6 @@ const FinancialForm: React.FC<FinancialFormProps> = ({
         </div>
       </div>
 
-      {/* Form */}
       <div className="space-y-4">
         {entries.map((entry, index) => (
           <div key={entry.id || index} className="space-y-2 p-4 bg-gray-700 rounded-lg">
@@ -181,7 +196,7 @@ const FinancialForm: React.FC<FinancialFormProps> = ({
                 </label>
                 {field.type === 'select' ? (
                   <select
-                    value={entry[field.name]}
+                    value={String(entry[field.name] || '')}
                     onChange={(e) => handleChange(index, field.name, e.target.value)}
                     className="w-full px-4 py-2 bg-gray-600 text-gray-100 border border-gray-500 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   >
@@ -195,8 +210,14 @@ const FinancialForm: React.FC<FinancialFormProps> = ({
                 ) : (
                   <input
                     type={field.type}
-                    value={entry[field.name]}
-                    onChange={(e) => handleChange(index, field.name, field.type === 'number' ? Number(e.target.value) : e.target.value)}
+                    value={field.type === 'number' ? 
+                      Number(entry[field.name] || 0) : 
+                      String(entry[field.name] || '')}
+                    onChange={(e) => handleChange(
+                      index,
+                      field.name,
+                      field.type === 'number' ? Number(e.target.value) : e.target.value
+                    )}
                     className="w-full px-4 py-2 bg-gray-600 text-gray-100 border border-gray-500 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
                     placeholder={`Enter ${field.label.toLowerCase()}`}
                   />

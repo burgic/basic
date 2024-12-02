@@ -139,7 +139,7 @@ const AssetsForm: React.FC = () => {
       defaultEntry={{
         type: '',
         description: '',
-        value: ''
+        value: 0
       }}
     />
   );
