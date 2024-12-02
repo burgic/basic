@@ -15,6 +15,7 @@ import AssetsForm from './components/Client/AssetsForm';
 import LiabilitiesForm from './components/Client/LiabilitiesForm';
 import GoalsForm from './components/Client/GoalsForm';
 import ClientDetails from './components/Adviser/ClientDetails';
+import ProfileForm from './components/Client/ProfileForm';
 import './styles.css';
 import './styles/globals.css';
 
@@ -45,6 +46,14 @@ import './styles/globals.css';
               element={
                 <ProtectedRoute requiredRole="client">
                   <ExpenditureForm />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/client/profile"
+              element={
+                <ProtectedRoute requiredRole="client">
+                  <AssetsForm />
                 </ProtectedRoute>
               }
             />
