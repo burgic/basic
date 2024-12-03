@@ -10,7 +10,7 @@ const Chatbot = () => {
     if (!input || !user) return; // Ensure input and user exist
 
     try {
-      const response = await fetch('/api/chatbot', {
+      const response = await fetch('/.netlify/functions/chatbot', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user.id, query: input }), // Use user.id from AuthContext
