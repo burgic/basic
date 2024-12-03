@@ -22,7 +22,7 @@ export const handler: Handler = async (event) => {
   });
 
   try {
-    const { message } = JSON.parse(event.body || '{}');
+    const { message, userId } = JSON.parse(event.body || '{}');
 
     if (!message) {
         console.error('No message provided in the request body.');
@@ -63,7 +63,7 @@ export const handler: Handler = async (event) => {
         'Access-Control-Allow-Origin': '*', // Consider setting this to your domain for security
       },
       body: JSON.stringify({
-        response: completion.choices[0].message.content,
+        response: completion.choices[0].message?.content,
       }),
     };
   } catch (error: any) {
