@@ -9,8 +9,8 @@ const openai = new OpenAI({
 });
 
 const supabase = createClient(
-  process.env.REACT_APP_SUPABASE_DATABASE_URL!,
-  process.env.REACT_APP_SUPABASE_ANON_KEY!
+  process.env.SUPABASE_DATABASE_URL!,
+  process.env.SUPABASE_ANON_KEY!
 );
 
 // Ensure the handler function is correctly exported and contains all your logic
@@ -36,6 +36,13 @@ export const handler: Handler = async (event) => {
         body: JSON.stringify({ error: 'Message is required' }),
       };
     }
+    if (!userId) {
+        console.error('No userId provided in the request body.');
+        return {
+          statusCode: 400,
+          body: JSON.stringify({ error: 'User ID is required' }),
+        };
+      }
 
     const { data: userData, error: userError } = await supabase
        .from('users')
