@@ -16,13 +16,13 @@
 
 [[redirects]]
   from = "/*"
-  to = "/index.html"
+  to = "/.netlify/functions/:splat"
   status = 200
   force = true
 
 [functions]
   node_bundler = "esbuild"
-  included_files = ["src/components/Chat/Bot.js"]
+  external_node_modules = ["@supabase/supabase-js", "openai"]
 
 [dev]
   framework = "vite"

@@ -9,44 +9,30 @@ const Chat: React.FC = () => {
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
-  const sendMessage = async () => {
-    if (!input || !user) return
-
-    setIsLoading(true)
-    const newMessages = [...messages, { user: input, bot: '...' }]
-    setMessages(newMessages)
-    
+  const sendMessage = async (message: string) => {
     try {
-      const response = await fetch('/.netlify/functions/chatbot', {
+      const response = await fetch('/.netlify/functions/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          userId: user.id,
-          query: input
+          userId: user?.id,
+          message
         })
-      })
-
+      });
+  
       if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`)
+        throw new Error(`HTTP error! Status: ${response.status}`);
       }
-
-      const data = await response.json()
-      
-      // Update the last message with the bot's response
-      newMessages[newMessages.length - 1].bot = data.response
-      setMessages([...newMessages])
+  
+      const data = await response.json();
+      return data.response;
     } catch (error) {
-      console.error('Failed to send message:', error)
-      // Update the last message to show the error
-      newMessages[newMessages.length - 1].bot = 'Sorry, I encountered an error. Please try again.'
-      setMessages([...newMessages])
-    } finally {
-      setIsLoading(false)
-      setInput('')
+      console.error('Failed to send message:', error);
+      throw error;
     }
-  }
+  };
 
   return (
     <div className="w-full max-w-2xl mx-auto p-4 bg-gray-800 rounded-lg shadow-lg">
