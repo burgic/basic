@@ -18,6 +18,7 @@ import ClientDetails from './components/Adviser/ClientDetails';
 import ProfileForm from './components/Client/ProfileForm';
 import './styles.css';
 import './styles/globals.css';
+import Chatbot from './components/Chat/Chat';
 
 
 
@@ -78,6 +79,14 @@ import './styles/globals.css';
               element={
                 <ProtectedRoute requiredRole="client">
                   <GoalsForm />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/chat/chat"
+              element={
+                <ProtectedRoute requiredRole="client">
+                  <Chatbot /> 
                 </ProtectedRoute>
               }
             />
