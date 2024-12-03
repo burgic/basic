@@ -30,8 +30,8 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "OPENSSL_CONF=/dev/null react-scripts start",
-    "build": "OPENSSL_CONF=/dev/null react-scripts build && npm run build:functions",
+    "start": "react-scripts start", 
+    "build": "react-scripts build && npm run build:functions",
     "build:functions": "tsc -p tsconfig.functions.json",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
