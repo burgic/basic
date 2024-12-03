@@ -2,14 +2,14 @@ const fetch = require('node-fetch'); // Use fetch for API calls if needed
 const generateBotResponse = require('../../src/components/Chat/Bot'); // Update path as needed
 
 exports.handler = async (event) => {
-  if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      body: JSON.stringify({ error: 'Method not allowed. Use POST.' }),
-    };
-  }
-
   try {
+    if (event.httpMethod !== 'POST') {
+      return {
+        statusCode: 405,
+        body: JSON.stringify({ error: 'Method not allowed. Use POST.' }),
+      };
+    }
+
     const { userId, query } = JSON.parse(event.body);
 
     if (!userId || !query) {
@@ -19,10 +19,12 @@ exports.handler = async (event) => {
       };
     }
 
-    const response = await generateBotResponse(userId, query, 'financial advisor');
+    // Simulate a bot response (replace this with your actual logic)
+    const botResponse = `Hello, User ${userId}. You asked: "${query}"`;
+
     return {
       statusCode: 200,
-      body: JSON.stringify({ response }),
+      body: JSON.stringify({ response: botResponse }),
     };
   } catch (error) {
     console.error('Error in chatbot function:', error);
