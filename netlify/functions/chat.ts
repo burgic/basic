@@ -2,7 +2,7 @@
 
 import { Handler } from '@netlify/functions';
 import OpenAI from 'openai';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, supabase } from '@supabase/supabase-js';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -25,9 +25,24 @@ export const handler: Handler = async (event) => {
     const { message } = JSON.parse(event.body || '{}');
 
     if (!message) {
+        console.error('No message provided in the request body.');
       return {
         statusCode: 400,
         body: JSON.stringify({ error: 'Message is required' }),
+      };
+    }
+
+    const { data: userData, error: userError } = await supabase
+       .from('users')
+       .select('*')
+       .eq('id', userId)
+       .single();
+
+     if (userError) {
+       console.error('Error fetching user data from Supabase:', userError);
+       return {
+         statusCode: 500,
+         body: JSON.stringify({ error: 'Error fetching user data' }),
       };
     }
 
@@ -38,6 +53,8 @@ export const handler: Handler = async (event) => {
         { role: 'user', content: message },
       ],
     });
+
+    console.log('OpenAI API response:', completion);
 
     return {
       statusCode: 200,
