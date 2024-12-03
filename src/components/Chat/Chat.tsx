@@ -6,20 +6,29 @@ export default function Chat() {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<Array<{role: string, content: string}>>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { user } = useContext(AuthContext);
 
   const sendMessage = async (text: string) => {
-    if (!text.trim() || !user) return;
+    if (!text.trim() || !user) {
+      setError('Please enter a message and ensure you are logged in');
+      return;
+    }
     
     setIsLoading(true);
+    setError(null);
+    
     try {
-      const response = await fetch('/.netlify/functions/chatbot', {
+      const response = await fetch('/api/chatbot', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user.id, message: text })
       });
-
-      if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+      
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || `HTTP error! Status: ${response.status}`);
+      }
       
       const data = await response.json();
       setMessages(prev => [...prev, 
@@ -27,7 +36,8 @@ export default function Chat() {
         { role: 'assistant', content: data.response }
       ]);
     } catch (error) {
-      console.error('Failed to send message:', error);
+      console.error('Chat error:', error);
+      setError(error instanceof Error ? error.message : 'Failed to send message');
     } finally {
       setIsLoading(false);
       setMessage('');
@@ -36,6 +46,12 @@ export default function Chat() {
 
   return (
     <div className="max-w-2xl mx-auto p-4">
+      {error && (
+        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+          {error}
+        </div>
+      )}
+      
       <div className="space-y-4 mb-4 h-[60vh] overflow-y-auto">
         {messages.map((msg, i) => (
           <div key={i} className={`p-3 rounded-lg max-w-[80%] ${
