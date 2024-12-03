@@ -16,6 +16,10 @@ const Chatbot = () => {
         body: JSON.stringify({ userId: user.id, query: input }), // Use user.id from AuthContext
       });
 
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
       const data = await response.json();
 
       if (data.response) {
@@ -26,8 +30,11 @@ const Chatbot = () => {
       }
     } catch (error) {
       console.error('Failed to send message:', error);
-    }
-  };
+      setMessages([...messages, { user: input, bot: 'An error occurred. Please try again.' }]);
+  } finally {
+    setInput('');
+  }
+};
 
   if (!user) {
     return <div>Loading user information...</div>; // Show a loading state if user isn't available yet
