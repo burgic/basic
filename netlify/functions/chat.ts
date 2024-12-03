@@ -21,8 +21,13 @@ export const handler: Handler = async (event) => {
     headers: event.headers,
   });
 
+  let message: string | undefined;
+  let userId: string | undefined;
+
   try {
     const { message, userId } = JSON.parse(event.body || '{}');
+    message = body.message;
+    userId = body.userId;
 
     if (!message) {
         console.error('No message provided in the request body.');
@@ -47,7 +52,7 @@ export const handler: Handler = async (event) => {
     }
 
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4',
+      model: 'gpt-3.5',
       messages: [
         { role: 'system', content: 'You are a helpful financial advisor assistant.' },
         { role: 'user', content: message },
@@ -77,4 +82,9 @@ export const handler: Handler = async (event) => {
       body: JSON.stringify({ error: 'Internal server error', details: error.message }),
     };
   }
+
+    // Now you can use userId here
+    console.log('Received message:', message);
+    console.log('User ID:', userId);
+    
 };
