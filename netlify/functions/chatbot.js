@@ -1,5 +1,5 @@
 const fetch = require('node-fetch'); // Use fetch for API calls if needed
-const generateBotResponse = require('../../components/Chat/Bot'); // Update path as needed
+const generateBotResponse = require('../../src/components/Chat/Bot'); // Update path as needed
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
