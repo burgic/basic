@@ -15,6 +15,14 @@ const initialState: AuthContextProps = {
 
 export const AuthContext = createContext<AuthContextProps>(initialState);
 
+export const useAuth = () => {
+    const context = React.useContext(AuthContext);
+    if (!context) {
+        throw new Error('useAuth must be used within an AuthProvider');
+    }
+    return context;
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
     const [session, setSession] = useState<AuthSession | null>(null);
