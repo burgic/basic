@@ -10,13 +10,13 @@
   SECRETS_SCAN_ENABLED = "false"
 
 [[redirects]]
-  from = "/assets/*"
-  to = "/assets/:splat"
+  from = "/*"
+  to = "index.html"
   status = 200
 
 [[redirects]]
-  from = "*"
-  to = "/index.html"
+  from = "/.netlify/functions/*"
+  to = "/.netlify/functions/:splat"
   status = 200
   force = true
 
