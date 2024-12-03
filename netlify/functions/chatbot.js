@@ -1,5 +1,5 @@
 // netlify/functions/chatbot.ts
-
+/*
 import { Handler } from '@netlify/functions'
 import { createClient } from '@supabase/supabase-js'
 
@@ -63,3 +63,5 @@ const handler: Handler = async (event, context) => {
 }
 
 export { handler }
+
+*/
