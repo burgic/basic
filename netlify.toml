@@ -1,6 +1,7 @@
 [build]
   command = "npm install && npm run build"
   publish = "build" # For CRA
+  functions = "netlify/functions"
 
 [build.environment]
   NODE_VERSION = "18"
@@ -31,7 +32,7 @@
 [[headers]]
   for = "/assets/*.js"
 [headers.values]
-  Content-Type = "application/javascript"
+  Content-Type = "text/plain"
 
 [[headers]]
   for = "/assets/*.css"
