@@ -2,7 +2,7 @@
 
 import { Handler } from '@netlify/functions';
 import OpenAI from 'openai';
-import { createClient, supabase } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -44,19 +44,33 @@ export const handler: Handler = async (event) => {
         };
       }
 
-    const { data: userData, error: userError } = await supabase
-       .from('users')
+    const { data: profileData, error: profileError } = await supabase
+       .from('profiles')
        .select('*')
        .eq('id', userId)
        .single();
 
-     if (userError) {
-       console.error('Error fetching user data from Supabase:', userError);
-       return {
-         statusCode: 500,
-         body: JSON.stringify({ error: 'Error fetching user data' }),
-      };
-    }
+
+       if (profileError || !profileData) {
+        console.error('Error fetching user data from Supabase:', profileError);
+        return {
+          statusCode: 404,
+          body: JSON.stringify({ error: 'User not found in profiles table' }),
+        };
+      }
+  
+      // Fetch additional data if needed, e.g., goals, incomes
+      // Example:
+      const { data: goals, error: goalsError } = await supabase
+        .from('goals')
+        .select('*')
+        .eq('client_id', userId);
+  
+      if (goalsError) {
+        console.error('Error fetching goals data from Supabase:', goalsError);
+        // Optional: Return partial data or handle gracefully
+      }
+  
 
     const completion = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
@@ -76,6 +90,8 @@ export const handler: Handler = async (event) => {
       },
       body: JSON.stringify({
         response: completion.choices[0].message?.content,
+        userProfile: profileData, // Include fetched profile data if needed
+        userGoals: goals || [], 
       }),
     };
   } catch (error: any) {
@@ -89,9 +105,5 @@ export const handler: Handler = async (event) => {
       body: JSON.stringify({ error: 'Internal server error', details: error.message }),
     };
   }
-
-    // Now you can use userId here
-    console.log('Received message:', message);
-    console.log('User ID:', userId);
 
 };
