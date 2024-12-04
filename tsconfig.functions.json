@@ -11,7 +11,7 @@
       "resolveJsonModule": true,
       "isolatedModules": true,
       "noEmit": false,
-      "outDir": "functions-build",
+      "outDir": ".netlify/functions-build",
       "rootDir": "netlify/functions",
       "types": ["node"]
     },

@@ -1,7 +1,7 @@
 [build]
   command = "npm install && npm run build"
   publish = "build" # For CRA
-  functions = "netlify/functions"
+  functions = ".netlify/functions-build"
 
 [build.environment]
   NODE_VERSION = "18"
@@ -19,6 +19,7 @@
   from = "/*"
   to = "index.html"
   status = 200
+  force = true
 
 [functions]
   node_bundler = "esbuild"

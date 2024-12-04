@@ -21,16 +21,28 @@ export default function Chat() {
     try {
       const response = await fetch('/api/chatbot', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
         body: JSON.stringify({ userId: user.id, message: text })
       });
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Server returned non-JSON response');
+      }
       
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || `HTTP error! Status: ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Server error: ${response.status}`);
       }
       
       const data = await response.json();
+      if (!data.response) {
+        throw new Error('Invalid response format from server');
+      }
+
       setMessages(prev => [...prev, 
         { role: 'user', content: text },
         { role: 'assistant', content: data.response }
@@ -38,6 +50,10 @@ export default function Chat() {
     } catch (error) {
       console.error('Chat error:', error);
       setError(error instanceof Error ? error.message : 'Failed to send message');
+      setMessages(prev => [...prev, 
+        { role: 'user', content: text },
+        { role: 'assistant', content: 'Sorry, I encountered an error. Please try again.' }
+      ]);
     } finally {
       setIsLoading(false);
       setMessage('');
@@ -46,6 +62,10 @@ export default function Chat() {
 
   return (
     <div className="max-w-2xl mx-auto p-4">
+      <div className="mb-4 text-sm text-gray-600">
+        {user ? `Logged in as: ${user.email}` : 'Please log in to use the chat'}
+      </div>
+
       {error && (
         <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
           {error}
@@ -71,10 +91,11 @@ export default function Chat() {
           placeholder="Ask a question..."
           className="flex-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage(message)}
+          disabled={!user || isLoading}
         />
         <button
           onClick={() => sendMessage(message)}
-          disabled={isLoading}
+          disabled={!user || isLoading}
           className="px-4 py-2 bg-blue-500 text-white rounded-lg disabled:opacity-50 hover:bg-blue-600 transition-colors"
         >
           {isLoading ? 'Sending...' : 'Send'}

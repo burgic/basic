@@ -31,10 +31,12 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build && npm run build:functions",
+    "build": "npm run build:app && npm run build:functions",
+    "build:app": "react-scripts build",
     "build:functions": "tsc -p tsconfig.functions.json",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "netlify:build": "netlify build"
   },
   "eslintConfig": {
     "extends": [
