@@ -6,55 +6,151 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.handler = void 0;
 const openai_1 = __importDefault(require("openai"));
-const supabase_js_1 = require("@supabase/supabase-js");
-const openai = new openai_1.default({
-    apiKey: process.env.OPENAI_API_KEY
-});
-const supabase = (0, supabase_js_1.createClient)(process.env.REACT_APP_SUPABASE_DATABASE_URL, process.env.REACT_APP_SUPABASE_ANON_KEY);
 const handler = async (event) => {
-    if (event.httpMethod !== 'POST') {
-        return {
-            statusCode: 405,
-            body: JSON.stringify({ error: 'Method not allowed' })
-        };
-    }
     try {
-        const { userId, message } = JSON.parse(event.body || '{}');
-        if (!userId || !message) {
+        // Log environment variable presence (not the actual value)
+        console.log('OpenAI API Key exists:', !!process.env.OPENAI_API_KEY);
+        const openai = new openai_1.default({
+            apiKey: process.env.OPENAI_API_KEY
+        });
+        // Simple test request
+        try {
+            const test = await openai.chat.completions.create({
+                model: "gpt-3.5-turbo",
+                messages: [{ role: "user", content: "test" }],
+            });
             return {
-                statusCode: 400,
-                body: JSON.stringify({ error: 'Missing userId or message' })
+                statusCode: 200,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    success: true,
+                    message: 'OpenAI API connection successful',
+                    response: test.choices[0].message.content
+                })
             };
         }
-        // Fetch user's profile and financial data
-        const [profileResult, goalsResult, incomesResult, expendituresResult, assetsResult, liabilitiesResult] = await Promise.all([
-            supabase.from('profiles').select('*').eq('id', userId).single(),
-            supabase.from('goals').select('*').eq('client_id', userId),
-            supabase.from('incomes').select('*').eq('client_id', userId),
-            supabase.from('expenditures').select('*').eq('client_id', userId),
-            supabase.from('assets').select('*').eq('client_id', userId),
-            supabase.from('liabilities').select('*').eq('client_id', userId)
-        ]);
-        if (profileResult.error) {
-            throw new Error(`Error fetching profile: ${profileResult.error.message}`);
+        catch (apiError) {
+            console.error('OpenAI API Error:', apiError);
+            return {
+                statusCode: 500,
+                body: JSON.stringify({
+                    error: 'OpenAI API Error',
+                    details: apiError instanceof Error ? apiError.message : 'Unknown API error'
+                })
+            };
         }
-        const userProfile = profileResult.data;
-        // Convert null to empty arrays
-        const financialData = {
-            goals: goalsResult.data || [],
-            incomes: incomesResult.data || [],
-            expenditures: expendituresResult.data || [],
-            assets: assetsResult.data || [],
-            liabilities: liabilitiesResult.data || []
+    }
+    catch (error) {
+        console.error('Function Error:', error);
+        return {
+            statusCode: 500,
+            body: JSON.stringify({
+                error: 'Function Error',
+                details: error instanceof Error ? error.message : 'Unknown error'
+            })
         };
-        // Calculate financial metrics
-        const totalIncome = financialData.incomes.reduce((sum, income) => sum + Number(income.amount), 0);
-        const totalExpenses = financialData.expenditures.reduce((sum, exp) => sum + Number(exp.amount), 0);
-        const totalAssets = financialData.assets.reduce((sum, asset) => sum + Number(asset.value), 0);
-        const totalLiabilities = financialData.liabilities.reduce((sum, liability) => sum + Number(liability.amount), 0);
-        const netWorth = totalAssets - totalLiabilities;
-        // Create context for the AI based on user's financial data
-        const userContext = `
+    }
+};
+exports.handler = handler;
+/*
+
+// netlify/functions/chatbot.ts
+
+import { Handler } from '@netlify/functions';
+import OpenAI from 'openai';
+import { createClient } from '@supabase/supabase-js';
+
+interface ChatRequestBody {
+  userId: string;
+  message: string;
+}
+
+interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  adviser_id?: string;
+}
+
+interface FinancialData {
+  goals: any[];
+  incomes: any[];
+  expenditures: any[];
+  assets: any[];
+  liabilities: any[];
+}
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
+
+const supabase = createClient(
+  process.env.REACT_APP_SUPABASE_DATABASE_URL!,
+  process.env.REACT_APP_SUPABASE_ANON_KEY!
+);
+
+const handler: Handler = async (event) => {
+  if (event.httpMethod !== 'POST') {
+    return {
+      statusCode: 405,
+      body: JSON.stringify({ error: 'Method not allowed' })
+    };
+  }
+
+  try {
+    const { userId, message } = JSON.parse(event.body || '{}') as ChatRequestBody;
+
+    if (!userId || !message) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Missing userId or message' })
+      };
+    }
+
+    // Fetch user's profile and financial data
+    const [
+      profileResult,
+      goalsResult,
+      incomesResult,
+      expendituresResult,
+      assetsResult,
+      liabilitiesResult
+    ] = await Promise.all([
+      supabase.from('profiles').select('*').eq('id', userId).single(),
+      supabase.from('goals').select('*').eq('client_id', userId),
+      supabase.from('incomes').select('*').eq('client_id', userId),
+      supabase.from('expenditures').select('*').eq('client_id', userId),
+      supabase.from('assets').select('*').eq('client_id', userId),
+      supabase.from('liabilities').select('*').eq('client_id', userId)
+    ]);
+
+    if (profileResult.error) {
+      throw new Error(`Error fetching profile: ${profileResult.error.message}`);
+    }
+
+    const userProfile = profileResult.data as UserProfile;
+    
+    // Convert null to empty arrays
+    const financialData: FinancialData = {
+      goals: goalsResult.data || [],
+      incomes: incomesResult.data || [],
+      expenditures: expendituresResult.data || [],
+      assets: assetsResult.data || [],
+      liabilities: liabilitiesResult.data || []
+    };
+
+    // Calculate financial metrics
+    const totalIncome = financialData.incomes.reduce((sum, income) => sum + Number(income.amount), 0);
+    const totalExpenses = financialData.expenditures.reduce((sum, exp) => sum + Number(exp.amount), 0);
+    const totalAssets = financialData.assets.reduce((sum, asset) => sum + Number(asset.value), 0);
+    const totalLiabilities = financialData.liabilities.reduce((sum, liability) => sum + Number(liability.amount), 0);
+    const netWorth = totalAssets - totalLiabilities;
+
+    // Create context for the AI based on user's financial data
+    const userContext = `
       User Profile: ${JSON.stringify(userProfile)}
       Financial Overview:
       - Goals: ${financialData.goals.length} financial goals set
@@ -67,51 +163,54 @@ const handler = async (event) => {
       Detailed Goals:
       ${financialData.goals.map(goal => `- ${goal.goal}: £${goal.target_amount} in ${goal.time_horizon} years`).join('\n')}
     `;
-        // Generate chat response
-        const completion = await openai.chat.completions.create({
-            model: 'gpt-3.5-turbo',
-            messages: [
-                {
-                    role: 'system',
-                    content: `You are a financial advisor assistant. Your role is to provide helpful financial guidance based on the user's current financial situation. Here's the context about the user:\n${userContext}`
-                },
-                { role: 'user', content: message }
-            ]
-        });
-        return {
-            statusCode: 200,
-            headers: {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type',
-                'Access-Control-Allow-Methods': 'POST'
-            },
-            body: JSON.stringify({
-                response: completion.choices[0].message.content,
-                userProfile,
-                financialData,
-                metrics: {
-                    totalIncome,
-                    totalExpenses,
-                    totalAssets,
-                    totalLiabilities,
-                    netWorth
-                }
-            })
-        };
-    }
-    catch (error) {
-        console.error('Error:', error);
-        return {
-            statusCode: 500,
-            body: JSON.stringify({
-                error: 'Internal server error',
-                details: error instanceof Error ? error.message : 'Unknown error'
-            })
-        };
-    }
+
+    // Generate chat response
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-3.5-turbo',
+      messages: [
+        {
+          role: 'system',
+          content: `You are a financial advisor assistant. Your role is to provide helpful financial guidance based on the user's current financial situation. Here's the context about the user:\n${userContext}`
+        },
+        { role: 'user', content: message }
+      ]
+    });
+
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'POST'
+      },
+      body: JSON.stringify({
+        response: completion.choices[0].message.content,
+        userProfile,
+        financialData,
+        metrics: {
+          totalIncome,
+          totalExpenses,
+          totalAssets,
+          totalLiabilities,
+          netWorth
+        }
+      })
+    };
+  } catch (error) {
+    console.error('Error:', error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      })
+    };
+  }
 };
-exports.handler = handler;
+
+export { handler };
+
 /*
 // netlify/functions/chat.ts
 

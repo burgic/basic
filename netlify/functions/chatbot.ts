@@ -1,3 +1,62 @@
+/*
+// netlify/functions/chatbot.ts
+
+import { Handler } from '@netlify/functions';
+import OpenAI from 'openai';
+
+const handler: Handler = async (event) => {
+  try {
+    // Log environment variable presence (not the actual value)
+    console.log('OpenAI API Key exists:', !!process.env.OPENAI_API_KEY);
+    
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY
+    });
+
+    // Simple test request
+    try {
+      const test = await openai.chat.completions.create({
+        model: "gpt-3.5-turbo",
+        messages: [{ role: "user", content: "test" }],
+      });
+      
+      return {
+        statusCode: 200,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          success: true,
+          message: 'OpenAI API connection successful',
+          response: test.choices[0].message.content
+        })
+      };
+    } catch (apiError) {
+      console.error('OpenAI API Error:', apiError);
+      return {
+        statusCode: 500,
+        body: JSON.stringify({
+          error: 'OpenAI API Error',
+          details: apiError instanceof Error ? apiError.message : 'Unknown API error'
+        })
+      };
+    }
+  } catch (error) {
+    console.error('Function Error:', error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({
+        error: 'Function Error',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      })
+    };
+  }
+};
+
+export { handler };
+
+*/
+
 // netlify/functions/chatbot.ts
 
 import { Handler } from '@netlify/functions';
