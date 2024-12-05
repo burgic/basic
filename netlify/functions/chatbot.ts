@@ -7,6 +7,16 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
+const systemPrompt = `You are a helpful financial advisor assistant. Your role is to:
+- Provide clear, practical financial guidance
+- Explain financial concepts in simple terms
+- Help users make informed decisions about their finances
+- Give complete, well-structured responses
+- Use bullet points and numbering for clarity
+- Always finish your thoughts and never leave sentences incomplete
+
+Remember to be professional, clear, and thorough in your responses.`;
+
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return {
@@ -16,7 +26,7 @@ export const handler: Handler = async (event) => {
   }
 
   try {
-    const { message } = JSON.parse(event.body || '{}');
+    const { message, messageHistory = [] } = JSON.parse(event.body || '{}');
     
     if (!message) {
       return {
@@ -25,21 +35,23 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // Create chat context
-    const systemMessage = `You are a helpful financial advisor assistant. 
-    Your role is to provide guidance on financial matters, explain financial concepts, 
-    and help users make informed decisions about their finances. Please be clear, 
-    professional, and focus on providing practical, actionable advice.`;
+    // Construct messages array with history
+    const messages = [
+      { role: "system", content: systemPrompt },
+      ...messageHistory,
+      { role: "user", content: message }
+    ];
 
     const completion = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
-      messages: [
-        { role: "system", content: systemMessage },
-        { role: "user", content: message }
-      ],
+      messages: messages,
       temperature: 0.7,
-      max_tokens: 200
+      max_tokens: 1000, // Increased token limit
+      presence_penalty: 0.6, // Encourages covering new ground
+      frequency_penalty: 0.4 // Reduces repetition
     });
+
+    const response = completion.choices[0].message.content;
 
     return {
       statusCode: 200,
@@ -51,7 +63,7 @@ export const handler: Handler = async (event) => {
       },
       body: JSON.stringify({
         success: true,
-        response: completion.choices[0].message.content
+        response
       })
     };
   } catch (error) {
@@ -65,7 +77,6 @@ export const handler: Handler = async (event) => {
     };
   }
 };
-
 
 /*
 // netlify/functions/chatbot.ts
