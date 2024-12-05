@@ -1,4 +1,3 @@
-
 // netlify/functions/chatbot.ts
 
 import { Handler } from '@netlify/functions';
@@ -9,7 +8,6 @@ const openai = new OpenAI({
 });
 
 export const handler: Handler = async (event) => {
-  // Only allow POST
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
@@ -18,13 +16,29 @@ export const handler: Handler = async (event) => {
   }
 
   try {
-    // Log the presence of API key (not the actual key)
-    console.log('API Key present:', !!process.env.OPENAI_API_KEY);
+    const { message } = JSON.parse(event.body || '{}');
+    
+    if (!message) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Message is required' })
+      };
+    }
 
-    // Simple OpenAI test
+    // Create chat context
+    const systemMessage = `You are a helpful financial advisor assistant. 
+    Your role is to provide guidance on financial matters, explain financial concepts, 
+    and help users make informed decisions about their finances. Please be clear, 
+    professional, and focus on providing practical, actionable advice.`;
+
     const completion = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
-      messages: [{ role: "user", content: "Hello" }],
+      messages: [
+        { role: "system", content: systemMessage },
+        { role: "user", content: message }
+      ],
+      temperature: 0.7,
+      max_tokens: 200
     });
 
     return {
@@ -37,7 +51,6 @@ export const handler: Handler = async (event) => {
       },
       body: JSON.stringify({
         success: true,
-        apiKeyPresent: !!process.env.OPENAI_API_KEY,
         response: completion.choices[0].message.content
       })
     };
@@ -47,14 +60,11 @@ export const handler: Handler = async (event) => {
       statusCode: 500,
       body: JSON.stringify({ 
         error: 'Server error',
-        details: error instanceof Error ? error.message : 'Unknown error',
-        apiKeyPresent: !!process.env.OPENAI_API_KEY
+        details: error instanceof Error ? error.message : 'Unknown error'
       })
     };
   }
 };
-
-
 
 
 /*
