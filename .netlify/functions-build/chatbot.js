@@ -6,55 +6,111 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.handler = void 0;
 const openai_1 = __importDefault(require("openai"));
+const openai = new openai_1.default({
+    apiKey: process.env.OPENAI_API_KEY
+});
 const handler = async (event) => {
+    // Only allow POST
+    if (event.httpMethod !== 'POST') {
+        return {
+            statusCode: 405,
+            body: JSON.stringify({ error: 'Method not allowed' })
+        };
+    }
     try {
-        // Log environment variable presence (not the actual value)
-        console.log('OpenAI API Key exists:', !!process.env.OPENAI_API_KEY);
-        const openai = new openai_1.default({
-            apiKey: process.env.OPENAI_API_KEY
+        // Log the presence of API key (not the actual key)
+        console.log('API Key present:', !!process.env.OPENAI_API_KEY);
+        // Simple OpenAI test
+        const completion = await openai.chat.completions.create({
+            model: "gpt-3.5-turbo",
+            messages: [{ role: "user", content: "Hello" }],
         });
-        // Simple test request
-        try {
-            const test = await openai.chat.completions.create({
-                model: "gpt-3.5-turbo",
-                messages: [{ role: "user", content: "test" }],
-            });
-            return {
-                statusCode: 200,
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    success: true,
-                    message: 'OpenAI API connection successful',
-                    response: test.choices[0].message.content
-                })
-            };
-        }
-        catch (apiError) {
-            console.error('OpenAI API Error:', apiError);
-            return {
-                statusCode: 500,
-                body: JSON.stringify({
-                    error: 'OpenAI API Error',
-                    details: apiError instanceof Error ? apiError.message : 'Unknown API error'
-                })
-            };
-        }
+        return {
+            statusCode: 200,
+            headers: {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': 'Content-Type',
+                'Access-Control-Allow-Methods': 'POST'
+            },
+            body: JSON.stringify({
+                success: true,
+                apiKeyPresent: !!process.env.OPENAI_API_KEY,
+                response: completion.choices[0].message.content
+            })
+        };
     }
     catch (error) {
-        console.error('Function Error:', error);
+        console.error('Error:', error);
         return {
             statusCode: 500,
             body: JSON.stringify({
-                error: 'Function Error',
-                details: error instanceof Error ? error.message : 'Unknown error'
+                error: 'Server error',
+                details: error instanceof Error ? error.message : 'Unknown error',
+                apiKeyPresent: !!process.env.OPENAI_API_KEY
             })
         };
     }
 };
 exports.handler = handler;
 /*
+// netlify/functions/chatbot.ts
+
+import { Handler } from '@netlify/functions';
+import OpenAI from 'openai';
+
+const handler: Handler = async (event) => {
+  try {
+    // Log environment variable presence (not the actual value)
+    console.log('OpenAI API Key exists:', !!process.env.OPENAI_API_KEY);
+    
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY
+    });
+
+    // Simple test request
+    try {
+      const test = await openai.chat.completions.create({
+        model: "gpt-3.5-turbo",
+        messages: [{ role: "user", content: "test" }],
+      });
+      
+      return {
+        statusCode: 200,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          success: true,
+          message: 'OpenAI API connection successful',
+          response: test.choices[0].message.content
+        })
+      };
+    } catch (apiError) {
+      console.error('OpenAI API Error:', apiError);
+      return {
+        statusCode: 500,
+        body: JSON.stringify({
+          error: 'OpenAI API Error',
+          details: apiError instanceof Error ? apiError.message : 'Unknown API error'
+        })
+      };
+    }
+  } catch (error) {
+    console.error('Function Error:', error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({
+        error: 'Function Error',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      })
+    };
+  }
+};
+
+export { handler };
+
+
 
 // netlify/functions/chatbot.ts
 
@@ -211,7 +267,7 @@ const handler: Handler = async (event) => {
 
 export { handler };
 
-/*
+
 // netlify/functions/chat.ts
 
 import { Handler } from '@netlify/functions';

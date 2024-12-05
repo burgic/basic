@@ -1,3 +1,62 @@
+
+// netlify/functions/chatbot.ts
+
+import { Handler } from '@netlify/functions';
+import OpenAI from 'openai';
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
+
+export const handler: Handler = async (event) => {
+  // Only allow POST
+  if (event.httpMethod !== 'POST') {
+    return {
+      statusCode: 405,
+      body: JSON.stringify({ error: 'Method not allowed' })
+    };
+  }
+
+  try {
+    // Log the presence of API key (not the actual key)
+    console.log('API Key present:', !!process.env.OPENAI_API_KEY);
+
+    // Simple OpenAI test
+    const completion = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [{ role: "user", content: "Hello" }],
+    });
+
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'POST'
+      },
+      body: JSON.stringify({
+        success: true,
+        apiKeyPresent: !!process.env.OPENAI_API_KEY,
+        response: completion.choices[0].message.content
+      })
+    };
+  } catch (error) {
+    console.error('Error:', error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ 
+        error: 'Server error',
+        details: error instanceof Error ? error.message : 'Unknown error',
+        apiKeyPresent: !!process.env.OPENAI_API_KEY
+      })
+    };
+  }
+};
+
+
+
+
 /*
 // netlify/functions/chatbot.ts
 
@@ -55,7 +114,7 @@ const handler: Handler = async (event) => {
 
 export { handler };
 
-*/
+
 
 // netlify/functions/chatbot.ts
 
@@ -212,7 +271,7 @@ const handler: Handler = async (event) => {
 
 export { handler };
 
-/*
+
 // netlify/functions/chat.ts
 
 import { Handler } from '@netlify/functions';
