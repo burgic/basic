@@ -2,9 +2,14 @@ import React, { useState } from 'react';
 import { useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 
+interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 export default function Chat() {
   const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState<Array<{role: string, content: string}>>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { user } = useContext(AuthContext);
@@ -17,6 +22,12 @@ export default function Chat() {
     
     setIsLoading(true);
     setError(null);
+
+    // Create message history in the format OpenAI expects
+    const messageHistory = messages.map(msg => ({
+      role: msg.role,
+      content: msg.content
+    }));
     
     try {
       const response = await fetch('/.netlify/functions/chatbot', {
@@ -25,7 +36,8 @@ export default function Chat() {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ 
-          message: text
+          message: text,
+          messageHistory
         })
       });
 
@@ -40,10 +52,13 @@ export default function Chat() {
         throw new Error(data.error);
       }
       
-      setMessages(prev => [...prev, 
-        { role: 'user', content: text },
-        { role: 'assistant', content: data.response }
-      ]);
+      const newUserMessage: ChatMessage = { role: 'user', content: text };
+      const newAssistantMessage: ChatMessage = { 
+        role: 'assistant', 
+        content: data.response 
+      };
+      
+      setMessages(prev => [...prev, newUserMessage, newAssistantMessage]);
     } catch (error) {
       console.error('Chat error:', error);
       setError(error instanceof Error ? error.message : 'Failed to send message');
@@ -61,30 +76,48 @@ export default function Chat() {
         </div>
       )}
       
-      <div className="space-y-4 mb-4 h-[60vh] overflow-y-auto">
+      <div className="space-y-4 mb-4 h-[60vh] overflow-y-auto border border-gray-200 rounded-lg p-4 bg-gray-50">
+        {messages.length === 0 && (
+          <div className="text-center text-gray-500 py-8">
+            Ask me anything about financial planning, investments, or budgeting!
+          </div>
+        )}
         {messages.map((msg, i) => (
-          <div key={i} className={`p-3 rounded-lg max-w-[80%] ${
-            msg.role === 'user' 
-              ? 'bg-blue-500 text-white ml-auto' 
-              : 'bg-gray-200 text-gray-900'
-          }`}>
-            {msg.content}
+          <div 
+            key={i} 
+            className={`p-4 rounded-lg max-w-[85%] ${
+              msg.role === 'user' 
+                ? 'bg-blue-500 text-white ml-auto' 
+                : 'bg-white text-gray-800 border border-gray-200'
+            }`}
+          >
+            <div className="text-sm opacity-75 mb-1">
+              {msg.role === 'user' ? 'You' : 'Financial Advisor'}
+            </div>
+            <div className="whitespace-pre-wrap">
+              {msg.content}
+            </div>
           </div>
         ))}
+        {isLoading && (
+          <div className="bg-gray-100 text-gray-600 p-4 rounded-lg max-w-[85%]">
+            Thinking...
+          </div>
+        )}
       </div>
       
       <div className="flex gap-2">
         <input
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          placeholder="Ask a question..."
-          className="flex-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Ask about financial planning, investments, or budgeting..."
+          className="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage(message)}
         />
         <button
           onClick={() => sendMessage(message)}
           disabled={isLoading}
-          className="px-4 py-2 bg-blue-500 text-white rounded-lg disabled:opacity-50 hover:bg-blue-600 transition-colors"
+          className="px-6 py-3 bg-blue-500 text-white rounded-lg disabled:opacity-50 hover:bg-blue-600 transition-colors"
         >
           {isLoading ? 'Sending...' : 'Send'}
         </button>
@@ -92,7 +125,6 @@ export default function Chat() {
     </div>
   );
 }
-
 /*
 import React, { useState } from 'react';
 import { useContext } from 'react';
