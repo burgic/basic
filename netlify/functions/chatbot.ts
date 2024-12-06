@@ -1,7 +1,168 @@
+
 // netlify/functions/chatbot.ts
 
 import { Handler } from '@netlify/functions';
 import OpenAI from 'openai';
+import { createClient } from '@supabase/supabase-js';
+
+interface FinancialData {
+  incomes: any[];
+  expenditures: any[];
+  assets: any[];
+  liabilities: any[];
+  goals: any[];
+}
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
+
+const supabase = createClient(
+  process.env.REACT_APP_SUPABASE_DATABASE_URL!,
+  process.env.REACT_APP_SUPABASE_ANON_KEY!
+);
+
+const createFinancialSummary = (data: FinancialData) => {
+  const totalIncome = data.incomes.reduce((sum, inc) => sum + Number(inc.amount), 0);
+  const totalExpenditure = data.expenditures.reduce((sum, exp) => sum + Number(exp.amount), 0);
+  const totalAssets = data.assets.reduce((sum, asset) => sum + Number(asset.value), 0);
+  const totalLiabilities = data.liabilities.reduce((sum, liability) => sum + Number(liability.amount), 0);
+  const netWorth = totalAssets - totalLiabilities;
+  const monthlySavings = totalIncome - totalExpenditure;
+  
+  return `
+Financial Summary:
+- Monthly Income: £${totalIncome.toFixed(2)}
+- Monthly Expenses: £${totalExpenditure.toFixed(2)}
+- Monthly Savings Potential: £${monthlySavings.toFixed(2)}
+- Total Assets: £${totalAssets.toFixed(2)}
+- Total Liabilities: £${totalLiabilities.toFixed(2)}
+- Net Worth: £${netWorth.toFixed(2)}
+
+Goals:
+${data.goals.map(goal => `- ${goal.goal}: £${goal.target_amount} in ${goal.time_horizon} years`).join('\n')}
+
+Income Sources:
+${data.incomes.map(income => `- ${income.type}: £${income.amount} ${income.frequency}`).join('\n')}
+
+Major Expenses:
+${data.expenditures.map(exp => `- ${exp.category}: £${exp.amount} ${exp.frequency}`).join('\n')}
+
+Assets:
+${data.assets.map(asset => `- ${asset.type}: £${asset.value} (${asset.description})`).join('\n')}
+
+Liabilities:
+${data.liabilities.map(liability => `- ${liability.type}: £${liability.amount} at ${liability.interest_rate}% interest`).join('\n')}
+`;
+};
+
+const systemPrompt = `You are a helpful financial advisor assistant. You have access to the user's financial data and should use this information to provide personalized advice. When providing advice:
+- Reference specific numbers from their financial data
+- Make personalized recommendations based on their current situation
+- Consider their goals when providing advice
+- Be specific and actionable
+- Use their actual income, expenses, and goals in examples
+- Explain how their current financial position relates to their goals
+- Provide practical steps they can take based on their specific situation`;
+
+export const handler: Handler = async (event) => {
+  if (event.httpMethod !== 'POST') {
+    return {
+      statusCode: 405,
+      body: JSON.stringify({ error: 'Method not allowed' })
+    };
+  }
+
+  try {
+    const { message, userId, messageHistory = [] } = JSON.parse(event.body || '{}');
+    
+    if (!message || !userId) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Message and userId are required' })
+      };
+    }
+
+    // Fetch user's financial data
+    const [
+      { data: incomes, error: incomesError },
+      { data: expenditures, error: expendituresError },
+      { data: assets, error: assetsError },
+      { data: liabilities, error: liabilitiesError },
+      { data: goals, error: goalsError }
+    ] = await Promise.all([
+      supabase.from('incomes').select('*').eq('client_id', userId),
+      supabase.from('expenditures').select('*').eq('client_id', userId),
+      supabase.from('assets').select('*').eq('client_id', userId),
+      supabase.from('liabilities').select('*').eq('client_id', userId),
+      supabase.from('goals').select('*').eq('client_id', userId)
+    ]);
+
+    if (incomesError || expendituresError || assetsError || liabilitiesError || goalsError) {
+      throw new Error('Error fetching financial data');
+    }
+
+    const financialData: FinancialData = {
+      incomes: incomes || [],
+      expenditures: expenditures || [],
+      assets: assets || [],
+      liabilities: liabilities || [],
+      goals: goals || []
+    };
+
+    const financialSummary = createFinancialSummary(financialData);
+
+    // Construct messages array with history and financial context
+    const messages = [
+      { 
+        role: "system", 
+        content: `${systemPrompt}\n\nCurrent Financial Information:\n${financialSummary}` 
+      },
+      ...messageHistory,
+      { role: "user", content: message }
+    ];
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo-16k",
+      messages: messages,
+      temperature: 0.7,
+      max_tokens: 1500,
+      presence_penalty: 0.6,
+      frequency_penalty: 0.4
+    });
+
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'POST'
+      },
+      body: JSON.stringify({
+        success: true,
+        response: completion.choices[0].message.content
+      })
+    };
+  } catch (error) {
+    console.error('Error:', error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ 
+        error: 'Server error',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      })
+    };
+  }
+};
+
+/*
+// netlify/functions/chatbot.ts
+
+import { Handler } from '@netlify/functions';
+import OpenAI from 'openai';
+
+
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
@@ -78,7 +239,7 @@ export const handler: Handler = async (event) => {
   }
 };
 
-/*
+
 // netlify/functions/chatbot.ts
 
 import { Handler } from '@netlify/functions';

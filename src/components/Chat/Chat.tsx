@@ -37,7 +37,8 @@ export default function Chat() {
         },
         body: JSON.stringify({ 
           message: text,
-          messageHistory
+          messageHistory,
+          userId: user.id  // Add this line
         })
       });
 
