@@ -1,17 +1,8 @@
-
 // netlify/functions/chatbot.ts
 
 import { Handler } from '@netlify/functions';
 import OpenAI from 'openai';
 import { createClient } from '@supabase/supabase-js';
-
-interface FinancialData {
-  incomes: any[];
-  expenditures: any[];
-  assets: any[];
-  liabilities: any[];
-  goals: any[];
-}
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
@@ -22,59 +13,71 @@ const supabase = createClient(
   process.env.REACT_APP_SUPABASE_ANON_KEY!
 );
 
-const createFinancialSummary = (data: FinancialData) => {
-  const totalIncome = data.incomes.reduce((sum, inc) => sum + Number(inc.amount), 0);
-  const totalExpenditure = data.expenditures.reduce((sum, exp) => sum + Number(exp.amount), 0);
-  const totalAssets = data.assets.reduce((sum, asset) => sum + Number(asset.value), 0);
-  const totalLiabilities = data.liabilities.reduce((sum, liability) => sum + Number(liability.amount), 0);
-  const netWorth = totalAssets - totalLiabilities;
-  const monthlySavings = totalIncome - totalExpenditure;
+const createFinancialSummary = (data: any) => {
+  console.log('Creating financial summary with data:', JSON.stringify(data, null, 2));
   
+  // Calculate totals
+  const totalIncome = data.incomes?.reduce((sum: number, inc: any) => 
+    sum + (Number(inc.amount) * (inc.frequency === 'Monthly' ? 1 : 1/12)), 0) || 0;
+  
+  const totalExpenditure = data.expenditures?.reduce((sum: number, exp: any) => 
+    sum + (Number(exp.amount) * (exp.frequency === 'Monthly' ? 1 : 1/12)), 0) || 0;
+  
+  const totalAssets = data.assets?.reduce((sum: number, asset: any) => 
+    sum + Number(asset.value), 0) || 0;
+  
+  const totalLiabilities = data.liabilities?.reduce((sum: number, liability: any) => 
+    sum + Number(liability.amount), 0) || 0;
+
   return `
-Financial Summary:
-- Monthly Income: £${totalIncome.toFixed(2)}
-- Monthly Expenses: £${totalExpenditure.toFixed(2)}
-- Monthly Savings Potential: £${monthlySavings.toFixed(2)}
-- Total Assets: £${totalAssets.toFixed(2)}
-- Total Liabilities: £${totalLiabilities.toFixed(2)}
-- Net Worth: £${netWorth.toFixed(2)}
+FINANCIAL OVERVIEW
+=================
+Monthly Income: £${totalIncome.toFixed(2)}
+Monthly Expenses: £${totalExpenditure.toFixed(2)}
+Monthly Cash Flow: £${(totalIncome - totalExpenditure).toFixed(2)}
+Total Assets: £${totalAssets.toFixed(2)}
+Total Liabilities: £${totalLiabilities.toFixed(2)}
+Net Worth: £${(totalAssets - totalLiabilities).toFixed(2)}
 
-Goals:
-${data.goals.map(goal => `- ${goal.goal}: £${goal.target_amount} in ${goal.time_horizon} years`).join('\n')}
-
+DETAILED BREAKDOWN
+=================
 Income Sources:
-${data.incomes.map(income => `- ${income.type}: £${income.amount} ${income.frequency}`).join('\n')}
+${data.incomes?.map((inc: any) => 
+  `- ${inc.type}: £${inc.amount} (${inc.frequency})`
+).join('\n') || 'No income data available'}
 
-Major Expenses:
-${data.expenditures.map(exp => `- ${exp.category}: £${exp.amount} ${exp.frequency}`).join('\n')}
+Monthly Expenses:
+${data.expenditures?.map((exp: any) => 
+  `- ${exp.category}: £${exp.amount} (${exp.frequency})`
+).join('\n') || 'No expense data available'}
 
 Assets:
-${data.assets.map(asset => `- ${asset.type}: £${asset.value} (${asset.description})`).join('\n')}
+${data.assets?.map((asset: any) => 
+  `- ${asset.type}: £${asset.value} - ${asset.description}`
+).join('\n') || 'No asset data available'}
 
 Liabilities:
-${data.liabilities.map(liability => `- ${liability.type}: £${liability.amount} at ${liability.interest_rate}% interest`).join('\n')}
+${data.liabilities?.map((liability: any) => 
+  `- ${liability.type}: £${liability.amount} at ${liability.interest_rate}% interest`
+).join('\n') || 'No liability data available'}
+
+Financial Goals:
+${data.goals?.map((goal: any) => 
+  `- ${goal.goal}: Target £${goal.target_amount} in ${goal.time_horizon} years`
+).join('\n') || 'No goals set'}
 `;
 };
 
-const systemPrompt = `You are a helpful financial advisor assistant. You have access to the user's financial data and should use this information to provide personalized advice. When providing advice:
-- Reference specific numbers from their financial data
-- Make personalized recommendations based on their current situation
-- Consider their goals when providing advice
-- Be specific and actionable
-- Use their actual income, expenses, and goals in examples
-- Explain how their current financial position relates to their goals
-- Provide practical steps they can take based on their specific situation`;
-
 export const handler: Handler = async (event) => {
+  console.log('Function invoked');
+  
   if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      body: JSON.stringify({ error: 'Method not allowed' })
-    };
+    return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
 
   try {
     const { message, userId, messageHistory = [] } = JSON.parse(event.body || '{}');
+    console.log('Received request for userId:', userId);
     
     if (!message || !userId) {
       return {
@@ -83,7 +86,8 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // Fetch user's financial data
+    // Fetch financial data
+    console.log('Fetching financial data...');
     const [
       { data: incomes, error: incomesError },
       { data: expenditures, error: expendituresError },
@@ -98,37 +102,60 @@ export const handler: Handler = async (event) => {
       supabase.from('goals').select('*').eq('client_id', userId)
     ]);
 
+    // Log data retrieval results
+    console.log('Retrieved data:', {
+      incomesCount: incomes?.length || 0,
+      expendituresCount: expenditures?.length || 0,
+      assetsCount: assets?.length || 0,
+      liabilitiesCount: liabilities?.length || 0,
+      goalsCount: goals?.length || 0
+    });
+
+    // Check for errors
     if (incomesError || expendituresError || assetsError || liabilitiesError || goalsError) {
+      console.error('Database errors:', {
+        incomesError,
+        expendituresError,
+        assetsError,
+        liabilitiesError,
+        goalsError
+      });
       throw new Error('Error fetching financial data');
     }
 
-    const financialData: FinancialData = {
-      incomes: incomes || [],
-      expenditures: expenditures || [],
-      assets: assets || [],
-      liabilities: liabilities || [],
-      goals: goals || []
+    const financialData = {
+      incomes,
+      expenditures,
+      assets,
+      liabilities,
+      goals
     };
 
     const financialSummary = createFinancialSummary(financialData);
+    console.log('Generated financial summary:', financialSummary);
 
-    // Construct messages array with history and financial context
-    const messages = [
-      { 
-        role: "system", 
-        content: `${systemPrompt}\n\nCurrent Financial Information:\n${financialSummary}` 
-      },
-      ...messageHistory,
-      { role: "user", content: message }
-    ];
+    const systemMessage = `You are a financial advisor assistant with access to the user's current financial data. 
+Base your advice on their actual financial situation as shown below:
 
+${financialSummary}
+
+When responding:
+1. Always reference specific numbers from their data
+2. Make recommendations based on their actual income, expenses, and goals
+3. Provide specific, actionable advice
+4. Explain how their current finances align with their goals
+5. Consider their income, expenses, assets, and liabilities in your analysis`;
+
+    // Create completion
     const completion = await openai.chat.completions.create({
       model: "gpt-3.5-turbo-16k",
-      messages: messages,
+      messages: [
+        { role: "system", content: systemMessage },
+        ...messageHistory,
+        { role: "user", content: message }
+      ],
       temperature: 0.7,
-      max_tokens: 1500,
-      presence_penalty: 0.6,
-      frequency_penalty: 0.4
+      max_tokens: 1500
     });
 
     return {
@@ -141,7 +168,16 @@ export const handler: Handler = async (event) => {
       },
       body: JSON.stringify({
         success: true,
-        response: completion.choices[0].message.content
+        response: completion.choices[0].message.content,
+        debug: {
+          hasData: {
+            incomes: !!incomes?.length,
+            expenditures: !!expenditures?.length,
+            assets: !!assets?.length,
+            liabilities: !!liabilities?.length,
+            goals: !!goals?.length
+          }
+        }
       })
     };
   } catch (error) {
