@@ -86,6 +86,35 @@ export const handler: Handler = async (event) => {
       };
     }
 
+        // Test Supabase connection
+        console.log('Testing Supabase connection...');
+        try {
+          const { data: testData, error: testError } = await supabase
+            .from('profiles')
+            .select('count')
+            .single();
+          console.log('Supabase connection test:', { success: !testError, error: testError });
+        } catch (dbError) {
+          console.error('Supabase connection test failed:', dbError);
+        }
+    
+        // Fetch user's financial data
+        console.log('Fetching user data from Supabase for userId:', userId);
+        
+        // Fetch and log profile first
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single();
+        
+        console.log('Profile fetch result:', {
+          success: !profileError,
+          hasProfile: !!profile,
+          profileError
+        });
+    
+
     // Fetch financial data
     console.log('Fetching financial data...');
     const [
