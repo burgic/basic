@@ -53,6 +53,22 @@ const ClientDashboard: React.FC = () => {
       }
 
       console.log('Starting financial data fetch for user:', user.id);
+      
+      try {
+        const { data: testData, error: testError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('id', user.id)
+          .single();
+          
+        console.log('Profile test query:', {
+          success: !testError,
+          hasProfile: !!testData,
+          error: testError?.message
+        });
+      } catch (e) {
+        console.error('Profile test failed:', e);
+      }
 
       // Insert the new code here
       try {
