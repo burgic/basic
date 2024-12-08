@@ -40,10 +40,10 @@ const createFinancialSummary = (data) => {
     return `
 FINANCIAL OVERVIEW
 =================
-Monthly Income: £${totalIncome.toFixed(2)}
+Monthly Income: £${financialContext.income ? `Income: £${financialContext.income}` : 'Income: Not provided'}
 Monthly Expenses: £${totalExpenditure.toFixed(2)}
 Monthly Cash Flow: £${((totalIncome || 0) - (totalExpenditure || 0)).toFixed(2)}
-Total Assets: £${(totalAssets || 0).toFixed(2)}
+Total Assets: £${financialContext.assets ? `Assets: £${financialContext.assets}` : 'Assets: Not provided'}
 Total Liabilities: £${(totalLiabilities || 0).toFixed(2)}
 Net Worth: £${netWorth.toFixed(2)}
 

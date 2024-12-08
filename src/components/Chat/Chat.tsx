@@ -26,6 +26,7 @@ export default function Chat() {
       financialContext: financialData 
     });
     
+
     if (!text.trim() || !user?.id || !financialData) return;
     
     setIsLoading(true);
@@ -50,6 +51,8 @@ export default function Chat() {
           financialContext: financialData
         })
       });
+
+      
 
       console.log('Response status:', response.status);
       const contentType = response.headers.get('content-type');
