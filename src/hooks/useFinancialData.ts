@@ -71,6 +71,7 @@ export const useFinancialData = () => {
       setLoading(false);
     }
   };
+  
 
   useEffect(() => {
     fetchData();

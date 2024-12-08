@@ -186,6 +186,8 @@ When responding:
       temperature: 0.7,
       max_tokens: 1500
     });
+    
+    console.log('OpenAI Completion Response:', completion);
 
     return {
       statusCode: 200,

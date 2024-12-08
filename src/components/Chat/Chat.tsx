@@ -1,3 +1,5 @@
+// src/components/Chat/Chat.tsx
+
 import React, { useState } from 'react';
 import { useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
@@ -18,6 +20,12 @@ export default function Chat() {
   const { data: financialData, loading: dataLoading } = useFinancialData();
 
   const sendMessage = async (text: string) => {
+    console.log('Payload:', { 
+      message: text,
+      userId: user?.id,
+      financialContext: financialData 
+    });
+    
     if (!text.trim() || !user?.id || !financialData) return;
     
     setIsLoading(true);
@@ -127,6 +135,8 @@ export default function Chat() {
     </div>
   );
 }
+
+
 /*
 import React, { useState } from 'react';
 import { useContext } from 'react';
