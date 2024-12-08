@@ -29,7 +29,7 @@ const SignIn: React.FC = () => {
       if (data.user?.user_metadata.role === 'adviser') {
         navigate('/adviser/adviser-dashboard');
       } else {
-        navigate('/client-dashboard');
+        navigate('/client/client-dashboard');
       }
     } catch (error: any) {
       setError(error.message);

@@ -11,6 +11,14 @@ interface ProtectedRouteProps {
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRole }) => {
   const { user } = useContext(AuthContext);
 
+  console.log('Protected Route:', {
+    user: user?.id,
+    userRole: user?.user_metadata?.role,
+    requiredRole,
+    hasUser: !!user,
+    roleMatch: user?.user_metadata?.role === requiredRole
+  });
+
   if (!user) {
     return <Navigate to="/" replace />;
   }
