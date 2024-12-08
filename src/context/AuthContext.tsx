@@ -28,23 +28,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [session, setSession] = useState<AuthSession | null>(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        // Get initial session
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setSession(session);
-            setUser(session?.user ?? null);
-            setLoading(false);
-        });
+    // src/components/Auth/AuthProvider.tsx or similar
 
-        // Listen for changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-            setSession(session);
-            setUser(session?.user ?? null);
-            setLoading(false);
-        });
-
-        return () => subscription.unsubscribe();
-    }, []);
+useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        // Check if profile exists
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+  
+        // If no profile exists, create one
+        if (!profile) {
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert({
+              id: session.user.id,
+              email: session.user.email,
+              role: 'client',
+              created_at: new Date().toISOString()
+            });
+  
+          if (profileError) {
+            console.error('Error creating profile:', profileError);
+          }
+        }
+      }
+    });
+  
+    return () => subscription.unsubscribe();
+  }, []);
 
     if (loading) {
         return <div>Loading...</div>; // Or your loading component

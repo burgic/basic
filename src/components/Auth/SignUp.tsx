@@ -21,11 +21,14 @@ const SignUp: React.FC = () => {
         email,
         password,
         options: {
-          data: { role },
+          data: { 
+            role },
         },
       });
 
       if (error) throw error;
+      if (!data?.user) throw new Error('No user data returned');
+      
 
       if (data.user) {
         const { error: profileError } = await supabase
@@ -37,7 +40,7 @@ const SignUp: React.FC = () => {
             created_at: new Date().toISOString(),
           });
 
-        if (profileError) throw profileError;
+          if (profileError) throw profileError;
 
         alert('Sign-up successful! Please check your email to confirm your account.');
         navigate('/');
