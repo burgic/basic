@@ -38,7 +38,11 @@ const ClientDashboard: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    console.log('Fetching financial data...');
+    console.log('Dashboard mounted, user:', { 
+      userId: user?.id,
+      isAuthenticated: !!user 
+    });
+
     const fetchFinancialData = async () => {
       if (!user) {
         setError('User not authenticated.');
@@ -47,6 +51,8 @@ const ClientDashboard: React.FC = () => {
         return;
       }
 
+      console.log('Starting financial data fetch for user:', user.id);
+
       // Insert the new code here
       try {
         // Fetch incomes with proper type casting and null checks
@@ -54,6 +60,11 @@ const ClientDashboard: React.FC = () => {
           .from('incomes')
           .select('*')
           .eq('client_id', user.id);
+
+        console.log('Incomes fetch result:', { 
+          success: !incomesError, 
+          count: incomesData?.length || 0 
+        });
 
         if (incomesError) {
           throw new Error(`Failed to fetch incomes: ${incomesError.message}`);
@@ -64,6 +75,11 @@ const ClientDashboard: React.FC = () => {
           .from('expenditures')
           .select('*')
           .eq('client_id', user.id);
+
+        console.log('Expenditures fetch result:', { 
+          success: !expendituresError, 
+          count: expendituresData?.length || 0 
+        });
 
         if (expendituresError) {
           throw new Error(`Failed to fetch expenditures: ${expendituresError.message}`);
@@ -109,6 +125,7 @@ const ClientDashboard: React.FC = () => {
 
 
         // Update financial data state
+        console.log('Setting financial data');
         setFinancialData({
           income: totalIncome,
           expenditure: expenditures,
