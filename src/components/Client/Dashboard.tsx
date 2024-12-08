@@ -32,7 +32,7 @@ interface FinancialData {
 
 const ClientDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useContext(AuthContext);
+  const { user, session } = useContext(AuthContext);
   const [financialData, setFinancialData] = useState<FinancialData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -44,13 +44,26 @@ const ClientDashboard: React.FC = () => {
     });
 
     const fetchFinancialData = async () => {
-      if (!user) {
+      if (!user || !session) {
         console.log('No user found in dashboard');
         setError('User not authenticated.');
         setLoading(false);
         console.warn('No user found in AuthContext.');
         return;
       }
+
+      /*
+      // Verify auth status before fetching
+      const { data: { session: currentSession }, error: sessionError } = 
+        await supabase.auth.getSession();
+
+      if (sessionError || !currentSession) {
+        console.error('Session verification failed:', sessionError);
+        setError('Session expired');
+        setLoading(false);
+        return;
+      }
+        */
 
       console.log('Starting financial data fetch for user:', user.id);
       
@@ -160,7 +173,7 @@ const ClientDashboard: React.FC = () => {
     };
 
     fetchFinancialData();
-  }, [user]);
+  }, [user, session]);
 
   if (loading) {
     return (

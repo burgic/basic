@@ -7,6 +7,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey,
 {
     auth: {
       persistSession: true, // Enable session persistence
+      autoRefreshToken: false, // Disable auto-refreshing the token
+      storageKey: 'app-auth',
       storage: localStorage // Use localStorage for session storage
     }
   }
