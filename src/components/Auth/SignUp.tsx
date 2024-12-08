@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../../services/supabaseClient';
+import { sign } from 'crypto';
 
 const SignUp: React.FC = () => {
   const navigate = useNavigate();
@@ -25,9 +26,6 @@ const SignUp: React.FC = () => {
             role },
         },
       });
-
-      if (error) throw error;
-      if (!data?.user) throw new Error('No user data returned');
       
 
       if (data.user) {
