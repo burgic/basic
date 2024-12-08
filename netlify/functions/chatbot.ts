@@ -15,12 +15,17 @@ const supabase = createClient(
 );
 
 const createFinancialSummary = (data: FinancialData): string => {
-  const totalIncome = data.incomes.reduce((sum, inc) => sum + inc.amount, 0);
+  const totalIncome = (data.incomes || []).reduce((sum, income) => sum + income.amount, 0);
   const totalExpenditure = data.expenditures.reduce((sum, exp) => sum + exp.amount, 0);
   const totalAssets = data.assets.reduce((sum, asset) => sum + asset.value, 0);
   const totalLiabilities = data.liabilities.reduce((sum, liability) => sum + liability.amount, 0);
   const netWorth = totalAssets - totalLiabilities;
 
+  if (!data.incomes || !data.incomes.length) {
+    console.log('No income data available');
+    return 'No income data available';
+  }
+  
 
   /*
   // Calculate totals
@@ -79,6 +84,7 @@ ${data.goals.map((goal) =>
   `- ${goal.goal}: Target £${goal.target_amount} in ${goal.time_horizon} years`
 ).join('\n') || 'No goals set'}
 `;
+
 
 
 };
