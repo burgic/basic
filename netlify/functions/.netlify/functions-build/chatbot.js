@@ -150,7 +150,15 @@ const handler = async (event) => {
         const systemMessage = `You are a financial advisor assistant with access to the user's current financial data. 
 Base your advice on their actual financial situation as shown below:
 
-${financialSummary}
+Income: £${financialContext.income || 'Not provided'}
+Assets: £${financialContext.assets || 'Not provided'}
+Liabilities: £${financialContext.liabilities || 'Not provided'}
+Expenditures: ${
+  financialContext.expenditure?.map(e => `- ${e.category}: £${e.amount}`).join('\n') || 'Not provided'
+}
+Goals: ${
+  financialContext.goals?.map(g => `- ${g.goal}: £${g.target_amount} target in ${g.time_horizon} years`).join('\n') || 'Not provided'
+}
 
 Please use this data to answer the user's question in detail, considering their:
 1. Income
