@@ -6,11 +6,13 @@ import { AuthSession, User } from '@supabase/supabase-js';
 interface AuthContextProps {
     user: User | null;
     session: AuthSession | null;
+    loading: boolean;
 }
 
 const initialState: AuthContextProps = {
     user: null,
-    session: null
+    session: null,
+    loading: true
 };
 
 export const AuthContext = createContext<AuthContextProps>(initialState);
@@ -23,12 +25,65 @@ export const useAuth = () => {
     return context;
 };
 
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
     const [session, setSession] = useState<AuthSession | null>(null);
     const [loading, setLoading] = useState(true);
 
-    // src/components/Auth/AuthProvider.tsx or similar
+    useEffect(() => {
+        // Get initial session
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            console.log('Initial session:', session);
+            setSession(session);
+            setUser(session?.user ?? null);
+            setLoading(false);
+        });
+
+        // Listen for auth changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+            console.log('Auth state changed:', event, session);
+            setSession(session);
+            setUser(session?.user ?? null);
+
+            if (event === 'SIGNED_IN' && session?.user) {
+                // Check if profile exists
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', session.user.id)
+                    .single();
+
+                // If no profile exists, create one
+                if (!profile) {
+                    const { error: profileError } = await supabase
+                        .from('profiles')
+                        .insert({
+                            id: session.user.id,
+                            email: session.user.email,
+                            role: 'client',
+                            created_at: new Date().toISOString()
+                        });
+
+                    if (profileError) {
+                        console.error('Error creating profile:', profileError);
+                    }
+                }
+            }
+        });
+
+        return () => subscription.unsubscribe();
+    }, []);
+
+    // Don't return loading component here
+    return (
+        <AuthContext.Provider value={{ user, session, loading }}>
+            {children}
+        </AuthContext.Provider>
+    );
+};
+
+/*
 
 useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -71,3 +126,5 @@ useEffect(() => {
         </AuthContext.Provider>
     );
 };
+
+*/
