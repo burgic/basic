@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
+import { useFinancialData } from '../../hooks/useFinancialData';
+import { supabase } from '../../services/supabaseClient';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -13,12 +15,10 @@ export default function Chat() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { user } = useContext(AuthContext);
+  const { data: financialData, loading: dataLoading } = useFinancialData();
 
   const sendMessage = async (text: string) => {
-    if (!text.trim() || !user) {
-      setError('Please enter a message and ensure you are logged in');
-      return;
-    }
+    if (!text.trim() || !user?.id || !financialData) return;
     
     setIsLoading(true);
     setError(null);
@@ -38,7 +38,8 @@ export default function Chat() {
         body: JSON.stringify({ 
           message: text,
           messageHistory,
-          userId: user.id  // Add this line
+          userId: user.id,  // Add this line
+          financialContext: financialData
         })
       });
 
