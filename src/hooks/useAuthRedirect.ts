@@ -9,12 +9,18 @@ export const useAuthRedirect = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+
+    console.log('Auth redirect check:', { 
+      hasUser: !!user, 
+      userRole: user?.user_metadata?.role 
+    });
+
     if (user) {
       const role = user.user_metadata.role;
       if (role === 'adviser') {
         navigate('/adviser/adviser-dashboard');
       } else if (role === 'client') {
-        navigate('/client-dashboard');
+        navigate('/client/client-dashboard');
       }
     }
   }, [user, navigate]);
