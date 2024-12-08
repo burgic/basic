@@ -1,3 +1,5 @@
+// tsconfig.json
+
 {
   "compilerOptions": {
     "target": "es2020",
@@ -15,6 +17,7 @@
     "noFallthroughCasesInSwitch": true,
     "module": "esnext",
     "moduleResolution": "node",
+    "rootDir": ".",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": false,
@@ -22,7 +25,7 @@
     "types": ["react", "react-dom", "node"],
     "typeRoots": ["./node_modules/@types", "./src/@types"],
     "outDir": "./dist",
-    "baseUrl": ".",
+    "baseUrl": "src",
     "paths": {
       "@/*": ["src/*"]
     }

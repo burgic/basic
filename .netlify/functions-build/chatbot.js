@@ -12,38 +12,57 @@ const openai = new openai_1.default({
 });
 const supabase = (0, supabase_js_1.createClient)(process.env.REACT_APP_SUPABASE_DATABASE_URL, process.env.REACT_APP_SUPABASE_ANON_KEY);
 const createFinancialSummary = (data) => {
-    console.log('Creating financial summary with data:', JSON.stringify(data, null, 2));
+    const totalIncome = data.incomes.reduce((sum, inc) => sum + inc.amount, 0);
+    const totalExpenditure = data.expenditures.reduce((sum, exp) => sum + exp.amount, 0);
+    const totalAssets = data.assets.reduce((sum, asset) => sum + asset.value, 0);
+    const totalLiabilities = data.liabilities.reduce((sum, liability) => sum + liability.amount, 0);
+    const netWorth = totalAssets - totalLiabilities;
+    /*
     // Calculate totals
-    const totalIncome = data.incomes?.reduce((sum, inc) => sum + (Number(inc.amount) * (inc.frequency === 'Monthly' ? 1 : 1 / 12)), 0) || 0;
-    const totalExpenditure = data.expenditures?.reduce((sum, exp) => sum + (Number(exp.amount) * (exp.frequency === 'Monthly' ? 1 : 1 / 12)), 0) || 0;
-    const totalAssets = data.assets?.reduce((sum, asset) => sum + Number(asset.value), 0) || 0;
-    const totalLiabilities = data.liabilities?.reduce((sum, liability) => sum + Number(liability.amount), 0) || 0;
+    const totalIncome = data.incomes?.reduce((sum: number, inc: any) =>
+      sum + (Number(inc.amount) * (inc.frequency === 'Monthly' ? 1 : 1/12)), 0) || 0;
+    
+    const totalExpenditure = data.expenditures?.reduce((sum: number, exp: any) =>
+      sum + (Number(exp.amount) * (exp.frequency === 'Monthly' ? 1 : 1/12)), 0) || 0;
+    
+    const totalAssets = data.assets?.reduce((sum: number, asset: any) =>
+      sum + Number(asset.value), 0) || 0;
+    
+    const totalLiabilities = data.liabilities?.reduce((sum: number, liability: any) =>
+      sum + Number(liability.amount), 0) || 0;
+    
+    console.log('Inputs for financial summary:', JSON.stringify(data, null, 2));
+    const summary = `
+      ... (existing summary logic)
+    `;
+    console.log('Generated Financial Summary:', summary);
+    */
     return `
 FINANCIAL OVERVIEW
 =================
 Monthly Income: £${totalIncome.toFixed(2)}
 Monthly Expenses: £${totalExpenditure.toFixed(2)}
-Monthly Cash Flow: £${(totalIncome - totalExpenditure).toFixed(2)}
-Total Assets: £${totalAssets.toFixed(2)}
-Total Liabilities: £${totalLiabilities.toFixed(2)}
-Net Worth: £${(totalAssets - totalLiabilities).toFixed(2)}
+Monthly Cash Flow: £${((totalIncome || 0) - (totalExpenditure || 0)).toFixed(2)}
+Total Assets: £${(totalAssets || 0).toFixed(2)}
+Total Liabilities: £${(totalLiabilities || 0).toFixed(2)}
+Net Worth: £${netWorth.toFixed(2)}
 
 DETAILED BREAKDOWN
 =================
 Income Sources:
-${data.incomes?.map((inc) => `- ${inc.type}: £${inc.amount} (${inc.frequency})`).join('\n') || 'No income data available'}
+${data.incomes.map((inc) => `- ${inc.type}: £${inc.amount} (${inc.frequency})`).join('\n') || 'No income data available'}
 
 Monthly Expenses:
-${data.expenditures?.map((exp) => `- ${exp.category}: £${exp.amount} (${exp.frequency})`).join('\n') || 'No expense data available'}
+${data.expenditures.map((exp) => `- ${exp.category}: £${exp.amount}`).join('\n') || 'No expense data available'}
 
 Assets:
-${data.assets?.map((asset) => `- ${asset.type}: £${asset.value} - ${asset.description}`).join('\n') || 'No asset data available'}
+${data.assets.map((asset) => `- ${asset.type}: £${asset.value} - ${asset.description}`).join('\n') || 'No asset data available'}
 
 Liabilities:
-${data.liabilities?.map((liability) => `- ${liability.type}: £${liability.amount} at ${liability.interest_rate}% interest`).join('\n') || 'No liability data available'}
+${data.liabilities.map((liability) => `- ${liability.type}: £${liability.amount} at ${liability.interest_rate}% interest`).join('\n') || 'No liability data available'}
 
 Financial Goals:
-${data.goals?.map((goal) => `- ${goal.goal}: Target £${goal.target_amount} in ${goal.time_horizon} years`).join('\n') || 'No goals set'}
+${data.goals.map((goal) => `- ${goal.goal}: Target £${goal.target_amount} in ${goal.time_horizon} years`).join('\n') || 'No goals set'}
 `;
 };
 const handler = async (event) => {
@@ -88,11 +107,11 @@ const handler = async (event) => {
         // Fetch financial data
         console.log('Fetching financial data...');
         const [{ data: incomes, error: incomesError }, { data: expenditures, error: expendituresError }, { data: assets, error: assetsError }, { data: liabilities, error: liabilitiesError }, { data: goals, error: goalsError }] = await Promise.all([
-            supabase.from('incomes').select('*').eq('client_id', userId),
-            supabase.from('expenditures').select('*').eq('client_id', userId),
-            supabase.from('assets').select('*').eq('client_id', userId),
-            supabase.from('liabilities').select('*').eq('client_id', userId),
-            supabase.from('goals').select('*').eq('client_id', userId)
+            supabase.from('incomes').select('type, amount, frequency').eq('client_id', userId),
+            supabase.from('expenditures').select('category, amount, frequency').eq('client_id', userId),
+            supabase.from('assets').select('type, description, value').eq('client_id', userId),
+            supabase.from('liabilities').select('type, amount, interest_rate').eq('client_id', userId),
+            supabase.from('goals').select('*').eq('client_id', userId),
         ]);
         // Log data retrieval results
         console.log('Retrieved data:', {
@@ -114,12 +133,18 @@ const handler = async (event) => {
             throw new Error('Error fetching financial data');
         }
         const financialData = {
-            incomes,
-            expenditures,
-            assets,
-            liabilities,
-            goals
+            incomes: incomes || [],
+            expenditures: expenditures || [],
+            assets: assets || [],
+            liabilities: liabilities || [],
+            goals: goals || [] // Use an empty array if goals is null
         };
+        /*totalIncome: incomes.reduce((sum, income) =>
+          sum + (income.amount * (income.frequency === 'Monthly' ? 1 : 1 / 12)), 0),
+        totalExpenditure: expenditures.reduce((sum, expenditure) => sum + expenditure.amount, 0),
+        totalAssets: assets.reduce((sum, asset) => sum + asset.value, 0),
+        totalLiabilities: liabilities.reduce((sum, liability) => sum + liability.amount, 0)
+        */
         const financialSummary = createFinancialSummary(financialData);
         console.log('Generated financial summary:', financialSummary);
         const systemMessage = `You are a financial advisor assistant with access to the user's current financial data. 
@@ -160,6 +185,11 @@ Provide actionable and personalized advice based on the provided data.
             ...messageHistory,
             { role: 'user', content: message }
         ]);
+        console.log('OpenAI Prompt:', {
+            systemMessage,
+            messageHistory,
+            userMessage: message
+        });
         return {
             statusCode: 200,
             headers: {
