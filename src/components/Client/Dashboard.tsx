@@ -45,6 +45,7 @@ const ClientDashboard: React.FC = () => {
 
     const fetchFinancialData = async () => {
       if (!user) {
+        console.log('No user found in dashboard');
         setError('User not authenticated.');
         setLoading(false);
         console.warn('No user found in AuthContext.');
@@ -145,17 +146,33 @@ const ClientDashboard: React.FC = () => {
     fetchFinancialData();
   }, [user]);
 
-if (loading) {
-  return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
-}
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
+          <p>Loading your financial data...</p>
+        </div>
+      </div>
+    );
+  }
 
-if (error) {
-  return (
-    <div className="flex justify-center items-center min-h-screen text-red-600">
-      Error: {error}
-    </div>
-  );
-}
+  if (error) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 max-w-md">
+          <h3 className="text-red-800 font-medium">Error Loading Data</h3>
+          <p className="text-red-600">{error}</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="mt-4 px-4 py-2 bg-red-100 text-red-800 rounded hover:bg-red-200"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
 if (!financialData) {
   return (
