@@ -148,17 +148,17 @@ const handler = async (event) => {
         const financialSummary = createFinancialSummary(financialData);
         console.log('Generated financial summary:', financialSummary);
         const systemMessage = `You are a financial advisor assistant with access to the user's current financial data. 
-Base your advice on their actual financial situation as shown below:
+        Base your advice on their actual financial situation as shown below:
 
-Income: £${financialContext.income || 'Not provided'}
-Assets: £${financialContext.assets || 'Not provided'}
-Liabilities: £${financialContext.liabilities || 'Not provided'}
-Expenditures: ${
-  financialContext.expenditure?.map(e => `- ${e.category}: £${e.amount}`).join('\n') || 'Not provided'
-}
-Goals: ${
-  financialContext.goals?.map(g => `- ${g.goal}: £${g.target_amount} target in ${g.time_horizon} years`).join('\n') || 'Not provided'
-}
+        Income: £${financialContext.income || 'Not provided'}
+        Assets: £${financialContext.assets || 'Not provided'}
+        Liabilities: £${financialContext.liabilities || 'Not provided'}
+        Expenditures: ${
+          financialContext.expenditure?.map(e => `- ${e.category}: £${e.amount}`).join('\n') || 'Not provided'
+        }
+        Goals: ${
+          financialContext.goals?.map(g => `- ${g.goal}: £${g.target_amount} target in ${g.time_horizon} years`).join('\n') || 'Not provided'
+        }
 
 Please use this data to answer the user's question in detail, considering their:
 1. Income
@@ -233,6 +233,7 @@ Provide actionable and personalized advice based on the provided data.
     }
 };
 exports.handler = handler;
+
 /*
 // netlify/functions/chatbot.ts
 

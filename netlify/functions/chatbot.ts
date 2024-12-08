@@ -14,8 +14,15 @@ const supabase = createClient(
   process.env.REACT_APP_SUPABASE_ANON_KEY!
 );
 
+interface RequestBody {
+  message: string;
+  userId: string;
+  financialData: FinancialData;
+  messageHistory?: { role: string; content: string; }[];
+}
+
 const createFinancialSummary = (data: FinancialData): string => {
-  const totalIncome = (data.incomes || []).reduce((sum, income) => sum + income.amount, 0);
+  const totalIncome = data.incomes.reduce((sum, inc) => sum + inc.amount, 0);
   const totalExpenditure = data.expenditures.reduce((sum, exp) => sum + exp.amount, 0);
   const totalAssets = data.assets.reduce((sum, asset) => sum + asset.value, 0);
   const totalLiabilities = data.liabilities.reduce((sum, liability) => sum + liability.amount, 0);
@@ -26,66 +33,33 @@ const createFinancialSummary = (data: FinancialData): string => {
     return 'No income data available';
   }
   
-
-  /*
-  // Calculate totals
-  const totalIncome = data.incomes?.reduce((sum: number, inc: any) => 
-    sum + (Number(inc.amount) * (inc.frequency === 'Monthly' ? 1 : 1/12)), 0) || 0;
-  
-  const totalExpenditure = data.expenditures?.reduce((sum: number, exp: any) => 
-    sum + (Number(exp.amount) * (exp.frequency === 'Monthly' ? 1 : 1/12)), 0) || 0;
-  
-  const totalAssets = data.assets?.reduce((sum: number, asset: any) => 
-    sum + Number(asset.value), 0) || 0;
-  
-  const totalLiabilities = data.liabilities?.reduce((sum: number, liability: any) => 
-    sum + Number(liability.amount), 0) || 0;
-  
-  console.log('Inputs for financial summary:', JSON.stringify(data, null, 2));
-  const summary = `
-    ... (existing summary logic)
-  `;
-  console.log('Generated Financial Summary:', summary);
-  */
   return `
 FINANCIAL OVERVIEW
 =================
 Monthly Income: £${totalIncome.toFixed(2)}
 Monthly Expenses: £${totalExpenditure.toFixed(2)}
-Monthly Cash Flow: £${((totalIncome || 0) - (totalExpenditure || 0)).toFixed(2)}
-Total Assets: £${(totalAssets || 0).toFixed(2)}
-Total Liabilities: £${(totalLiabilities || 0).toFixed(2)}
+Monthly Cash Flow: £${(totalIncome - totalExpenditure).toFixed(2)}
+Total Assets: £${totalAssets.toFixed(2)}
+Total Liabilities: £${totalLiabilities.toFixed(2)}
 Net Worth: £${netWorth.toFixed(2)}
 
 DETAILED BREAKDOWN
 =================
 Income Sources:
-${data.incomes.map((inc) => 
-  `- ${inc.type}: £${inc.amount} (${inc.frequency})`
-).join('\n') || 'No income data available'}
+${data.incomes.map((inc) => `- ${inc.type}: £${inc.amount} (${inc.frequency})`).join('\n') || 'No income data available'}
 
 Monthly Expenses:
-${data.expenditures.map((exp) => 
-  `- ${exp.category}: £${exp.amount}`
-).join('\n') || 'No expense data available'}
+${data.expenditures.map((exp) => `- ${exp.category}: £${exp.amount}`).join('\n') || 'No expense data available'}
 
 Assets:
-${data.assets.map((asset) => 
-  `- ${asset.type}: £${asset.value} - ${asset.description}`
-).join('\n') || 'No asset data available'}
+${data.assets.map((asset) => `- ${asset.type}: £${asset.value} - ${asset.description}`).join('\n') || 'No asset data available'}
 
 Liabilities:
-${data.liabilities.map((liability) => 
-  `- ${liability.type}: £${liability.amount} at ${liability.interest_rate}% interest`
-).join('\n') || 'No liability data available'}
+${data.liabilities.map((liability) => `- ${liability.type}: £${liability.amount} at ${liability.interest_rate}% interest`).join('\n') || 'No liability data available'}
 
 Financial Goals:
-${data.goals.map((goal) => 
-  `- ${goal.goal}: Target £${goal.target_amount} in ${goal.time_horizon} years`
-).join('\n') || 'No goals set'}
+${data.goals.map((goal) => `- ${goal.goal}: Target £${goal.target_amount} in ${goal.time_horizon} years`).join('\n') || 'No goals set'}
 `;
-
-
 
 };
 
@@ -229,6 +203,14 @@ export const handler: Handler = async (event) => {
         goals: mappedGoals // Use an empty array if goals is null
       };
 
+      const totalIncome = financialData.incomes.reduce((sum: number, income) => sum + income.amount, 0);
+      const totalExpenditure = financialData.expenditures.reduce((sum: number, exp: any) => sum + exp.amount, 0);
+      const totalLiabilities = financialData.liabilities.reduce((sum, liability) => sum + liability.amount, 0);
+      const totalAssets = financialData.assets.reduce((sum, asset) => sum + asset.value, 0);
+      const netWorth = totalAssets - totalLiabilities;
+
+
+
 
     const financialSummary = createFinancialSummary(financialData);
     console.log('Generated financial summary:', financialSummary);
@@ -236,7 +218,29 @@ export const handler: Handler = async (event) => {
     const systemMessage = `You are a financial advisor assistant with access to the user's current financial data. 
 Base your advice on their actual financial situation as shown below:
 
-${financialSummary}
+Monthly Income: £${totalIncome ? totalIncome.toFixed(2) : 'Not provided'}
+Monthly Expenses: £${totalExpenditure.toFixed(2)}
+Monthly Cash Flow: £${(totalIncome - totalExpenditure).toFixed(2)}
+Total Assets: £${totalAssets.toFixed(2)}
+Total Liabilities: £${totalLiabilities.toFixed(2)}
+Net Worth: £${netWorth.toFixed(2)}
+
+DETAILED BREAKDOWN
+=================
+Income Sources:
+${financialData.incomes.map((inc) => `- ${inc.type}: £${inc.amount} (${inc.frequency})`).join('\n') || 'No income data available'}
+
+Monthly Expenses:
+${financialData.expenditures.map((exp) => `- ${exp.category}: £${exp.amount}`).join('\n') || 'No expense data available'}
+
+Assets:
+${financialData.assets.map((asset) => `- ${asset.type}: £${asset.value} - ${asset.description}`).join('\n') || 'No asset data available'}
+
+Liabilities:
+${financialData.liabilities.map((liability) => `- ${liability.type}: £${liability.amount} at ${liability.interest_rate}% interest`).join('\n') || 'No liability data available'}
+
+Financial Goals:
+${financialData.goals.map((goal) => `- ${goal.goal}: Target £${goal.target_amount} in ${goal.time_horizon} years`).join('\n') || 'No goals set'}
 
 Please use this data to answer the user's question in detail, considering their:
 1. Income
@@ -327,7 +331,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
-const systemPrompt = `You are a helpful financial advisor assistant. Your role is to:
+const systemPrompt = You are a helpful financial advisor assistant. Your role is to:
 - Provide clear, practical financial guidance
 - Explain financial concepts in simple terms
 - Help users make informed decisions about their finances
@@ -335,7 +339,7 @@ const systemPrompt = `You are a helpful financial advisor assistant. Your role i
 - Use bullet points and numbering for clarity
 - Always finish your thoughts and never leave sentences incomplete
 
-Remember to be professional, clear, and thorough in your responses.`;
+Remember to be professional, clear, and thorough in your responses.;
 
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -529,7 +533,7 @@ const handler: Handler = async (event) => {
     ]);
 
     if (profileResult.error) {
-      throw new Error(`Error fetching profile: ${profileResult.error.message}`);
+      
     }
 
     const userProfile = profileResult.data as UserProfile;
@@ -551,19 +555,17 @@ const handler: Handler = async (event) => {
     const netWorth = totalAssets - totalLiabilities;
 
     // Create context for the AI based on user's financial data
-    const userContext = `
-      User Profile: ${JSON.stringify(userProfile)}
+    const userContext = 
+      User Profile: $ {JSON.stringify(userProfile)}
       Financial Overview:
-      - Goals: ${financialData.goals.length} financial goals set
-      - Total Monthly Income: £${totalIncome}
-      - Total Monthly Expenses: £${totalExpenses}
-      - Net Worth: £${netWorth}
-      - Total Assets: £${totalAssets}
-      - Total Liabilities: £${totalLiabilities}
+      Income: £$ {financialContext.income || 'Not provided'}
+      Assets: £$ {financialContext.assets || 'Not provided'}
+      Liabilities: £$ {financialContext.liabilities || 'Not provided'}
+      Expenditures:
+     
 
       Detailed Goals:
-      ${financialData.goals.map(goal => `- ${goal.goal}: £${goal.target_amount} in ${goal.time_horizon} years`).join('\n')}
-    `;
+     ;
 
     // Generate chat response
     const completion = await openai.chat.completions.create({
@@ -571,7 +573,7 @@ const handler: Handler = async (event) => {
       messages: [
         {
           role: 'system',
-          content: `You are a financial advisor assistant. Your role is to provide helpful financial guidance based on the user's current financial situation. Here's the context about the user:\n${userContext}`
+          content: You are a financial advisor assistant. Your role is to provide helpful financial guidance based on the user's current financial situation. Here's the context about the user:\n${userContext}`
         },
         { role: 'user', content: message }
       ]
