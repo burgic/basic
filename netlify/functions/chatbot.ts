@@ -66,6 +66,7 @@ ${data.goals?.map((goal: any) =>
   `- ${goal.goal}: Target £${goal.target_amount} in ${goal.time_horizon} years`
 ).join('\n') || 'No goals set'}
 `;
+
 };
 
 export const handler: Handler = async (event) => {
@@ -168,12 +169,23 @@ Base your advice on their actual financial situation as shown below:
 
 ${financialSummary}
 
+Please use this data to answer the user's question in detail, considering their:
+1. Income
+2. Expenses
+3. Assets
+4. Liabilities
+5. Financial Goals
+
 When responding:
 1. Always reference specific numbers from their data
 2. Make recommendations based on their actual income, expenses, and goals
 3. Provide specific, actionable advice
 4. Explain how their current finances align with their goals
-5. Consider their income, expenses, assets, and liabilities in your analysis`;
+5. Consider their income, expenses, assets, and liabilities in your analysis
+
+Provide actionable and personalized advice based on the provided data.
+
+`;
 
     // Create completion
     const completion = await openai.chat.completions.create({
@@ -187,7 +199,12 @@ When responding:
       max_tokens: 1500
     });
     
-    console.log('OpenAI Completion Response:', completion);
+    console.log('Prompt to OpenAI:', [
+      { role: 'system', content: systemMessage },
+      ...messageHistory,
+      { role: 'user', content: message }
+    ]);
+    
 
     return {
       statusCode: 200,
