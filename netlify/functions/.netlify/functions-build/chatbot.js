@@ -107,11 +107,11 @@ const handler = async (event) => {
         // Fetch financial data
         console.log('Fetching financial data...');
         const [{ data: incomes, error: incomesError }, { data: expenditures, error: expendituresError }, { data: assets, error: assetsError }, { data: liabilities, error: liabilitiesError }, { data: goals, error: goalsError }] = await Promise.all([
-            supabase.from('incomes').select('type, amount, frequency').eq('client_id', userId),
-            supabase.from('expenditures').select('category, amount, frequency').eq('client_id', userId),
-            supabase.from('assets').select('type, description, value').eq('client_id', userId),
-            supabase.from('liabilities').select('type, amount, interest_rate').eq('client_id', userId),
-            supabase.from('goals').select('*').eq('client_id', userId),
+            supabase.from('incomes').select('id, client_id, type, amount, frequency').eq('client_id', userId),
+            supabase.from('expenditures').select('id, client_id, category, amount, frequency').eq('client_id', userId),
+            supabase.from('assets').select('id, client_id, type, description, value').eq('client_id', userId),
+            supabase.from('liabilities').select('id, client_id, type, amount, interest_rate').eq('client_id', userId),
+            supabase.from('goals').select('id, client_id, goal, target_amount, time_horizon').eq('client_id', userId),
         ]);
         // Log data retrieval results
         console.log('Retrieved data:', {

@@ -1,48 +1,37 @@
 // netlify/functions/chatbot.ts
-
-import { Handler } from '@netlify/functions';
 import OpenAI from 'openai';
 import { createClient } from '@supabase/supabase-js';
-import { Income, Expenditure, Asset, Liability, Goal, FinancialData } from './types/financial';
-
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
+    apiKey: process.env.OPENAI_API_KEY
 });
-
-const supabase = createClient(
-  process.env.REACT_APP_SUPABASE_DATABASE_URL!,
-  process.env.REACT_APP_SUPABASE_ANON_KEY!
-);
-
-const createFinancialSummary = (data: FinancialData): string => {
-  const totalIncome = data.incomes.reduce((sum, inc) => sum + inc.amount, 0);
-  const totalExpenditure = data.expenditures.reduce((sum, exp) => sum + exp.amount, 0);
-  const totalAssets = data.assets.reduce((sum, asset) => sum + asset.value, 0);
-  const totalLiabilities = data.liabilities.reduce((sum, liability) => sum + liability.amount, 0);
-  const netWorth = totalAssets - totalLiabilities;
-
-
-  /*
-  // Calculate totals
-  const totalIncome = data.incomes?.reduce((sum: number, inc: any) => 
-    sum + (Number(inc.amount) * (inc.frequency === 'Monthly' ? 1 : 1/12)), 0) || 0;
-  
-  const totalExpenditure = data.expenditures?.reduce((sum: number, exp: any) => 
-    sum + (Number(exp.amount) * (exp.frequency === 'Monthly' ? 1 : 1/12)), 0) || 0;
-  
-  const totalAssets = data.assets?.reduce((sum: number, asset: any) => 
-    sum + Number(asset.value), 0) || 0;
-  
-  const totalLiabilities = data.liabilities?.reduce((sum: number, liability: any) => 
-    sum + Number(liability.amount), 0) || 0;
-  
-  console.log('Inputs for financial summary:', JSON.stringify(data, null, 2));
-  const summary = `
-    ... (existing summary logic)
-  `;
-  console.log('Generated Financial Summary:', summary);
-  */
-  return `
+const supabase = createClient(process.env.REACT_APP_SUPABASE_DATABASE_URL, process.env.REACT_APP_SUPABASE_ANON_KEY);
+const createFinancialSummary = (data) => {
+    const totalIncome = data.incomes.reduce((sum, inc) => sum + inc.amount, 0);
+    const totalExpenditure = data.expenditures.reduce((sum, exp) => sum + exp.amount, 0);
+    const totalAssets = data.assets.reduce((sum, asset) => sum + asset.value, 0);
+    const totalLiabilities = data.liabilities.reduce((sum, liability) => sum + liability.amount, 0);
+    const netWorth = totalAssets - totalLiabilities;
+    /*
+    // Calculate totals
+    const totalIncome = data.incomes?.reduce((sum: number, inc: any) =>
+      sum + (Number(inc.amount) * (inc.frequency === 'Monthly' ? 1 : 1/12)), 0) || 0;
+    
+    const totalExpenditure = data.expenditures?.reduce((sum: number, exp: any) =>
+      sum + (Number(exp.amount) * (exp.frequency === 'Monthly' ? 1 : 1/12)), 0) || 0;
+    
+    const totalAssets = data.assets?.reduce((sum: number, asset: any) =>
+      sum + Number(asset.value), 0) || 0;
+    
+    const totalLiabilities = data.liabilities?.reduce((sum: number, liability: any) =>
+      sum + Number(liability.amount), 0) || 0;
+    
+    console.log('Inputs for financial summary:', JSON.stringify(data, null, 2));
+    const summary = `
+      ... (existing summary logic)
+    `;
+    console.log('Generated Financial Summary:', summary);
+    */
+    return `
 FINANCIAL OVERVIEW
 =================
 Monthly Income: £${totalIncome.toFixed(2)}
@@ -55,179 +44,140 @@ Net Worth: £${netWorth.toFixed(2)}
 DETAILED BREAKDOWN
 =================
 Income Sources:
-${data.incomes.map((inc) => 
-  `- ${inc.type}: £${inc.amount} (${inc.frequency})`
-).join('\n') || 'No income data available'}
+${data.incomes.map((inc) => `- ${inc.type}: £${inc.amount} (${inc.frequency})`).join('\n') || 'No income data available'}
 
 Monthly Expenses:
-${data.expenditures.map((exp) => 
-  `- ${exp.category}: £${exp.amount}`
-).join('\n') || 'No expense data available'}
+${data.expenditures.map((exp) => `- ${exp.category}: £${exp.amount}`).join('\n') || 'No expense data available'}
 
 Assets:
-${data.assets.map((asset) => 
-  `- ${asset.type}: £${asset.value} - ${asset.description}`
-).join('\n') || 'No asset data available'}
+${data.assets.map((asset) => `- ${asset.type}: £${asset.value} - ${asset.description}`).join('\n') || 'No asset data available'}
 
 Liabilities:
-${data.liabilities.map((liability) => 
-  `- ${liability.type}: £${liability.amount} at ${liability.interest_rate}% interest`
-).join('\n') || 'No liability data available'}
+${data.liabilities.map((liability) => `- ${liability.type}: £${liability.amount} at ${liability.interest_rate}% interest`).join('\n') || 'No liability data available'}
 
 Financial Goals:
-${data.goals.map((goal) => 
-  `- ${goal.goal}: Target £${goal.target_amount} in ${goal.time_horizon} years`
-).join('\n') || 'No goals set'}
+${data.goals.map((goal) => `- ${goal.goal}: Target £${goal.target_amount} in ${goal.time_horizon} years`).join('\n') || 'No goals set'}
 `;
-
-
 };
-
-export const handler: Handler = async (event) => {
-  console.log('Function invoked');
-  
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
-  }
-
-  try {
-    const { message, userId, messageHistory = [] } = JSON.parse(event.body || '{}');
-    console.log('Received request for userId:', userId);
-    
-    if (!message || !userId) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'Message and userId are required' })
-      };
+export const handler = async (event) => {
+    console.log('Function invoked');
+    if (event.httpMethod !== 'POST') {
+        return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
     }
-
+    try {
+        const { message, userId, messageHistory = [] } = JSON.parse(event.body || '{}');
+        console.log('Received request for userId:', userId);
+        if (!message || !userId) {
+            return {
+                statusCode: 400,
+                body: JSON.stringify({ error: 'Message and userId are required' })
+            };
+        }
         // Test Supabase connection
         console.log('Testing Supabase connection...');
         try {
-          const { data: testData, error: testError } = await supabase
-            .from('profiles')
-            .select('count')
-            .single();
-          console.log('Supabase connection test:', { success: !testError, error: testError });
-        } catch (dbError) {
-          console.error('Supabase connection test failed:', dbError);
+            const { data: testData, error: testError } = await supabase
+                .from('profiles')
+                .select('count')
+                .single();
+            console.log('Supabase connection test:', { success: !testError, error: testError });
         }
-    
+        catch (dbError) {
+            console.error('Supabase connection test failed:', dbError);
+        }
         // Fetch user's financial data
         console.log('Fetching user data from Supabase for userId:', userId);
-        
         // Fetch and log profile first
         const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', userId)
-          .single();
-        
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .single();
         console.log('Profile fetch result:', {
-          success: !profileError,
-          hasProfile: !!profile,
-          profileError
+            success: !profileError,
+            hasProfile: !!profile,
+            profileError
         });
-    
-
-    // Fetch financial data
-    console.log('Fetching financial data...');
-    const [
-      { data: incomes, error: incomesError },
-      { data: expenditures, error: expendituresError },
-      { data: assets, error: assetsError },
-      { data: liabilities, error: liabilitiesError },
-      { data: goals, error: goalsError }
-    ] = await Promise.all([
-      supabase.from('incomes').select('id, client_id, type, amount, frequency').eq('client_id', userId),
-      supabase.from('expenditures').select('id, client_id, category, amount, frequency').eq('client_id', userId),
-      supabase.from('assets').select('id, client_id, type, description, value').eq('client_id', userId),
-      supabase.from('liabilities').select('id, client_id, type, amount, description, interest_rate').eq('client_id', userId),
-      supabase.from('goals').select('id, client_id, goal, target_amount, time_horizon').eq('client_id', userId),
-    ]);
-
-    // Log data retrieval results
-    console.log('Retrieved data:', {
-      incomesCount: incomes?.length || 0,
-      expendituresCount: expenditures?.length || 0,
-      assetsCount: assets?.length || 0,
-      liabilitiesCount: liabilities?.length || 0,
-      goalsCount: goals?.length || 0
-    });
-
-    // Check for errors
-    if (incomesError || expendituresError || assetsError || liabilitiesError || goalsError) {
-      console.error('Database errors:', {
-        incomesError,
-        expendituresError,
-        assetsError,
-        liabilitiesError,
-        goalsError
-      });
-      throw new Error('Error fetching financial data');
-    }
-
-      /*totalIncome: incomes.reduce((sum, income) => 
-        sum + (income.amount * (income.frequency === 'Monthly' ? 1 : 1 / 12)), 0),
-      totalExpenditure: expenditures.reduce((sum, expenditure) => sum + expenditure.amount, 0),
-      totalAssets: assets.reduce((sum, asset) => sum + asset.value, 0),
-      totalLiabilities: liabilities.reduce((sum, liability) => sum + liability.amount, 0)
-      */
-      
-        const mappedIncomes: Income[] = (incomes || []).map(income => ({
-          id: income.id || '', // Ensure `id` is always present
-          client_id: income.client_id || '',
-          type: income.type || 'Unknown', // Provide default values for missing fields
-          amount: Number(income.amount) || 0,
-          frequency: income.frequency || 'Monthly',
+        // Fetch financial data
+        console.log('Fetching financial data...');
+        const [{ data: incomes, error: incomesError }, { data: expenditures, error: expendituresError }, { data: assets, error: assetsError }, { data: liabilities, error: liabilitiesError }, { data: goals, error: goalsError }] = await Promise.all([
+            supabase.from('incomes').select('id, client_id, type, amount, frequency').eq('client_id', userId),
+            supabase.from('expenditures').select('id, client_id, category, amount, frequency').eq('client_id', userId),
+            supabase.from('assets').select('id, client_id, type, description, value').eq('client_id', userId),
+            supabase.from('liabilities').select('id, client_id, type, amount, description, interest_rate').eq('client_id', userId),
+            supabase.from('goals').select('id, client_id, goal, target_amount, time_horizon').eq('client_id', userId),
+        ]);
+        // Log data retrieval results
+        console.log('Retrieved data:', {
+            incomesCount: incomes?.length || 0,
+            expendituresCount: expenditures?.length || 0,
+            assetsCount: assets?.length || 0,
+            liabilitiesCount: liabilities?.length || 0,
+            goalsCount: goals?.length || 0
+        });
+        // Check for errors
+        if (incomesError || expendituresError || assetsError || liabilitiesError || goalsError) {
+            console.error('Database errors:', {
+                incomesError,
+                expendituresError,
+                assetsError,
+                liabilitiesError,
+                goalsError
+            });
+            throw new Error('Error fetching financial data');
+        }
+        /*totalIncome: incomes.reduce((sum, income) =>
+          sum + (income.amount * (income.frequency === 'Monthly' ? 1 : 1 / 12)), 0),
+        totalExpenditure: expenditures.reduce((sum, expenditure) => sum + expenditure.amount, 0),
+        totalAssets: assets.reduce((sum, asset) => sum + asset.value, 0),
+        totalLiabilities: liabilities.reduce((sum, liability) => sum + liability.amount, 0)
+        */
+        const mappedIncomes = (incomes || []).map(income => ({
+            id: income.id || '',
+            client_id: income.client_id || '',
+            type: income.type || 'Unknown',
+            amount: Number(income.amount) || 0,
+            frequency: income.frequency || 'Monthly',
         }));
-
-      const mappedExpenditures: Expenditure[] = (expenditures || []).map(exp => ({
-        id: exp.id || '',
-        client_id: exp.client_id || '',
-        category: exp.category || 'Other',
-        amount: Number(exp.amount) || 0,
-        frequency: exp.frequency || 'Monthly',
-      }));
-
-      const mappedAssets: Asset[] = (assets || []).map(asset => ({
-        id: asset.id || '',
-        client_id: asset.client_id || '',
-        type: asset.type || 'Unknown',
-        description: asset.description || '',
-        value: Number(asset.value) || 0,
-      }));
-
-      const mappedLiabilities: Liability[] = (liabilities || []).map(liability => ({
-        id: liability.id || '',
-        client_id: liability.client_id || '',
-        type: liability.type || 'Other',
-        description: liability.description || '',
-        amount: Number(liability.amount) || 0,
-        interest_rate: Number(liability.interest_rate) || 0,
-      }));
-
-      const mappedGoals: Goal[] = (goals || []).map(goal => ({
-        id: goal.id || '',
-        client_id: goal.client_id || '',
-        goal: goal.goal || 'Unknown',
-        target_amount: Number(goal.target_amount) || 0,
-        time_horizon: Number(goal.time_horizon) || 0,
-      }));
-
-      const financialData: FinancialData = {
-        incomes: mappedIncomes, // Use an empty array if incomes is null
-        expenditures: mappedExpenditures, // Use an empty array if expenditures is null
-        assets: mappedAssets, // Use an empty array if assets is null
-        liabilities: mappedLiabilities, // Use an empty array if liabilities is null
-        goals: mappedGoals // Use an empty array if goals is null
-      };
-
-
-    const financialSummary = createFinancialSummary(financialData);
-    console.log('Generated financial summary:', financialSummary);
-
-    const systemMessage = `You are a financial advisor assistant with access to the user's current financial data. 
+        const mappedExpenditures = (expenditures || []).map(exp => ({
+            id: exp.id || '',
+            client_id: exp.client_id || '',
+            category: exp.category || 'Other',
+            amount: Number(exp.amount) || 0,
+            frequency: exp.frequency || 'Monthly',
+        }));
+        const mappedAssets = (assets || []).map(asset => ({
+            id: asset.id || '',
+            client_id: asset.client_id || '',
+            type: asset.type || 'Unknown',
+            description: asset.description || '',
+            value: Number(asset.value) || 0,
+        }));
+        const mappedLiabilities = (liabilities || []).map(liability => ({
+            id: liability.id || '',
+            client_id: liability.client_id || '',
+            type: liability.type || 'Other',
+            description: liability.description || '',
+            amount: Number(liability.amount) || 0,
+            interest_rate: Number(liability.interest_rate) || 0,
+        }));
+        const mappedGoals = (goals || []).map(goal => ({
+            id: goal.id || '',
+            client_id: goal.client_id || '',
+            goal: goal.goal || 'Unknown',
+            target_amount: Number(goal.target_amount) || 0,
+            time_horizon: Number(goal.time_horizon) || 0,
+        }));
+        const financialData = {
+            incomes: mappedIncomes,
+            expenditures: mappedExpenditures,
+            assets: mappedAssets,
+            liabilities: mappedLiabilities,
+            goals: mappedGoals // Use an empty array if goals is null
+        };
+        const financialSummary = createFinancialSummary(financialData);
+        console.log('Generated financial summary:', financialSummary);
+        const systemMessage = `You are a financial advisor assistant with access to the user's current financial data. 
 Base your advice on their actual financial situation as shown below:
 
 ${financialSummary}
@@ -249,66 +199,61 @@ When responding:
 Provide actionable and personalized advice based on the provided data.
 
 `;
-
-    // Create completion
-    const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo-16k",
-      messages: [
-        { role: "system", content: systemMessage },
-        ...messageHistory,
-        { role: "user", content: message }
-      ],
-      temperature: 0.7,
-      max_tokens: 1500
-    });
-    
-    console.log('Prompt to OpenAI:', [
-      { role: 'system', content: systemMessage },
-      ...messageHistory,
-      { role: 'user', content: message }
-    ]);
-
-    console.log('OpenAI Prompt:', {
-      systemMessage,
-      messageHistory,
-      userMessage: message
-    });
-    
-
-    return {
-      statusCode: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type',
-        'Access-Control-Allow-Methods': 'POST'
-      },
-      body: JSON.stringify({
-        success: true,
-        response: completion.choices[0].message.content,
-        debug: {
-          hasData: {
-            incomes: !!incomes?.length,
-            expenditures: !!expenditures?.length,
-            assets: !!assets?.length,
-            liabilities: !!liabilities?.length,
-            goals: !!goals?.length
-          }
-        }
-      })
-    };
-  } catch (error) {
-    console.error('Error:', error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ 
-        error: 'Server error',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      })
-    };
-  }
+        // Create completion
+        const completion = await openai.chat.completions.create({
+            model: "gpt-3.5-turbo-16k",
+            messages: [
+                { role: "system", content: systemMessage },
+                ...messageHistory,
+                { role: "user", content: message }
+            ],
+            temperature: 0.7,
+            max_tokens: 1500
+        });
+        console.log('Prompt to OpenAI:', [
+            { role: 'system', content: systemMessage },
+            ...messageHistory,
+            { role: 'user', content: message }
+        ]);
+        console.log('OpenAI Prompt:', {
+            systemMessage,
+            messageHistory,
+            userMessage: message
+        });
+        return {
+            statusCode: 200,
+            headers: {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': 'Content-Type',
+                'Access-Control-Allow-Methods': 'POST'
+            },
+            body: JSON.stringify({
+                success: true,
+                response: completion.choices[0].message.content,
+                debug: {
+                    hasData: {
+                        incomes: !!incomes?.length,
+                        expenditures: !!expenditures?.length,
+                        assets: !!assets?.length,
+                        liabilities: !!liabilities?.length,
+                        goals: !!goals?.length
+                    }
+                }
+            })
+        };
+    }
+    catch (error) {
+        console.error('Error:', error);
+        return {
+            statusCode: 500,
+            body: JSON.stringify({
+                error: 'Server error',
+                details: error instanceof Error ? error.message : 'Unknown error'
+            })
+        };
+    }
 };
-
 /*
 // netlify/functions/chatbot.ts
 
@@ -384,7 +329,7 @@ export const handler: Handler = async (event) => {
     console.error('Error:', error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ 
+      body: JSON.stringify({
         error: 'Server error',
         details: error instanceof Error ? error.message : 'Unknown error'
       })
@@ -596,7 +541,7 @@ const handler: Handler = async (event) => {
     console.error('Error:', error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ 
+      body: JSON.stringify({
         error: 'Internal server error',
         details: error instanceof Error ? error.message : 'Unknown error'
       })
@@ -700,7 +645,7 @@ export const handler: Handler = async (event) => {
       body: JSON.stringify({
         response: completion.choices[0].message?.content,
         userProfile: profileData, // Include fetched profile data if needed
-        userGoals: goals || [], 
+        userGoals: goals || [],
       }),
     };
   } catch (error: any) {
@@ -717,4 +662,4 @@ export const handler: Handler = async (event) => {
 
 };
 
-*/
+*/ 
