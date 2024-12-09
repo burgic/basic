@@ -39,12 +39,30 @@ const createFinancialSummary = (data: FinancialData): string => {
   const liabilities = Array.isArray(data.liabilities) ? data.liabilities : [];
   const goals = Array.isArray(data.goals) ? data.goals : [];
 
-  console.log('Validated arrays:', {
-    incomesLength: incomes.length,
-    expendituresLength: expenditures.length,
-    assetsLength: assets.length,
-    liabilitiesLength: liabilities.length,
-    goalsLength: goals.length
+  const arrays = {
+    incomes: Array.isArray(data.incomes),
+    expenditures: Array.isArray(data.expenditures),
+    assets: Array.isArray(data.assets),
+    liabilities: Array.isArray(data.liabilities),
+    goals: Array.isArray(data.goals)
+  };
+  
+  console.log('Array validation:', arrays);
+
+  const processed = {
+    incomes: arrays.incomes ? data.incomes : [],
+    expenditures: arrays.expenditures ? data.expenditures : [],
+    assets: arrays.assets ? data.assets : [],
+    liabilities: arrays.liabilities ? data.liabilities : [],
+    goals: arrays.goals ? data.goals : []
+  };
+
+  console.log('Processed arrays:', {
+    incomesCount: processed.incomes.length,
+    expendituresCount: processed.expenditures.length,
+    assetsCount: processed.assets.length,
+    liabilitiesCount: processed.liabilities.length,
+    goalsCount: processed.goals.length
   });
 
   const totalIncome = data.incomes.reduce((sum, inc) => sum + inc.amount, 0);
@@ -151,127 +169,133 @@ const fetchFinancialData = async (userId: string) => {
       };
 
 
-      export const handler: Handler = async (event: HandlerEvent) => {
-        // Ensure the method is POST
-        if (event.httpMethod !== 'POST') {
-          return {
-            statusCode: 405,
-            body: JSON.stringify({ error: 'Method not allowed' }),
-          };
-        }
-      
-        let clientFinancialData: FinancialData;
-        let message: string;
-        let messageHistory: ChatCompletionMessageParam[] = [];
-      
-        try {
-          // Parse and validate request body
-          const { message: parsedMessage, userId, financialData, messageHistory: parsedMessageHistory = [] } = JSON.parse(event.body || '{}') as RequestBody;
-      
-          if (!parsedMessage || !userId || !financialData) {
-            throw new Error('Missing required fields in request body');
-          }
-
-          message = parsedMessage; // Assign parsed message
-          messageHistory = parsedMessageHistory; // Assign parsed message history
-          clientFinancialData = financialData;
-
-          // Log each piece of data separately
-            console.log('Financial Data Received:', {
-              message,
-              userId,
-              financialDataPresent: !!financialData,
-              financialDataContents: financialData ? {
-                incomes: financialData.incomes?.length,
-                expenditures: financialData.expenditures?.length,
-                assets: financialData.assets?.length,
-                liabilities: financialData.liabilities?.length,
-                goals: financialData.goals?.length,
-              } : null
-            });
-
-          console.log('Received financial data:', JSON.stringify(clientFinancialData, null, 2));
-        } catch (error) {
-          console.error('Error parsing event.body:', error);
-          return {
-            statusCode: 400,
-            body: JSON.stringify({
-              error: 'Failed to parse request body',
-              details: error instanceof Error ? error.message : 'Unknown error',
-            }),
-          };
-        }
-      
-        // Validate the financial data structure
-        const dataValidation = {
-          hasIncomes: Array.isArray(clientFinancialData?.incomes) && clientFinancialData.incomes.length > 0,
-          hasExpenditures: Array.isArray(clientFinancialData?.expenditures) && clientFinancialData.expenditures.length > 0,
-          hasAssets: Array.isArray(clientFinancialData?.assets) && clientFinancialData.assets.length > 0,
-          hasLiabilities: Array.isArray(clientFinancialData?.liabilities) && clientFinancialData.liabilities.length > 0,
-          hasGoals: Array.isArray(clientFinancialData?.goals) && clientFinancialData.goals.length > 0,
-        };
-      
-        console.log('Data validation results:', dataValidation);
-      
-        if (!dataValidation.hasIncomes && !dataValidation.hasExpenditures && !dataValidation.hasAssets && !dataValidation.hasLiabilities && !dataValidation.hasGoals) {
-          return {
-            statusCode: 400,
-            body: JSON.stringify({
-              error: 'No financial data provided',
-              debug: dataValidation,
-            }),
-          };
-        }
-      
-        try {
-          // Generate financial summary and system prompt
-          const financialSummary = createFinancialSummary(clientFinancialData);
-          console.log('Generated financial summary:', financialSummary);
-      
-          // const systemPrompt = createSystemPrompt(financialSummary);
-      
-          // Interact with OpenAI
-          const completion = await openai.chat.completions.create({
-            model: 'gpt-3.5-turbo-16k',
-            messages: [
-              { role: 'system', content: createSystemPrompt(financialSummary) },
-              ...messageHistory,
-              { role: 'user', content: message },
-            ],
-            temperature: 0.7,
-            max_tokens: 1000,
-          });
-      
-          return {
-            statusCode: 200,
-            headers: {
-              'Content-Type': 'application/json',
-              'Access-Control-Allow-Origin': '*',
-              'Access-Control-Allow-Headers': 'Content-Type',
-              'Access-Control-Allow-Methods': 'POST',
-            },
-            body: JSON.stringify({
-              success: true,
-              response: completion.choices[0].message.content,
-              debug: { hasIncomes: clientFinancialData.incomes?.length > 0,
-                incomesCount: clientFinancialData.incomes?.length,
-                expendituresCount: clientFinancialData.expenditures?.length,
-                assetsCount: clientFinancialData.assets?.length,
-                liabilitiesCount: clientFinancialData.liabilities?.length,
-                goalsCount: clientFinancialData.goals?.length },
-            }),
-          };
-        } catch (error) {
-          console.error('Handler error:', error);
-          return {
-            statusCode: 500,
-            body: JSON.stringify({
-              error: 'Server error',
-              details: error instanceof Error ? error.message : 'Unknown error',
-            }),
-          };
-        }
+  export const handler: Handler = async (event: HandlerEvent) => {
+    // Ensure the method is POST
+    if (event.httpMethod !== 'POST') {
+      return {
+        statusCode: 405,
+        body: JSON.stringify({ error: 'Method not allowed' }),
       };
+    }
+
+  
+    let clientFinancialData: FinancialData;
+    let message: string;
+    let messageHistory: ChatCompletionMessageParam[] = [];
+  
+    try {
+      console.log('Raw event body:', event.body);
+    
+      const parsedBody = JSON.parse(event.body || '{}');
+      console.log('Parsed body:', JSON.stringify(parsedBody, null, 2));
+      // Parse and validate request body
+      const { message: parsedMessage, userId, financialData, messageHistory: parsedMessageHistory = [] } = JSON.parse(event.body || '{}') as RequestBody;
+  
+      if (!parsedMessage || !userId || !financialData) {
+        throw new Error('Missing required fields in request body');
+      }
+
+      message = parsedMessage; // Assign parsed message
+      messageHistory = parsedMessageHistory; // Assign parsed message history
+      clientFinancialData = financialData;
+
+      // Log each piece of data separately
+        console.log('Financial Data Received:', {
+          hasMessage: Boolean(message),
+        hasUserId: Boolean(userId),
+        financialDataExists: Boolean(financialData),
+        financialDataStructure: financialData ? {
+        hasIncomes: Array.isArray(financialData.incomes),
+        incomesLength: financialData.incomes?.length,
+        firstIncome: financialData.incomes?.[0],
+        hasExpenditures: Array.isArray(financialData.expenditures),
+        expendituresLength: financialData.expenditures?.length,
+        firstExpenditure: financialData.expenditures?.[0],
+          } : null
+        });
+
+      console.log('Received financial data:', JSON.stringify(clientFinancialData, null, 2));
+    } catch (error) {
+      console.error('Error parsing event.body:', error);
+      return {
+        statusCode: 400,
+        body: JSON.stringify({
+          error: 'Failed to parse request body',
+          details: error instanceof Error ? error.message : 'Unknown error',
+        }),
+      };
+    }
+  
+    // Validate the financial data structure
+    const dataValidation = {
+      hasIncomes: Array.isArray(clientFinancialData?.incomes) && clientFinancialData.incomes.length > 0,
+      hasExpenditures: Array.isArray(clientFinancialData?.expenditures) && clientFinancialData.expenditures.length > 0,
+      hasAssets: Array.isArray(clientFinancialData?.assets) && clientFinancialData.assets.length > 0,
+      hasLiabilities: Array.isArray(clientFinancialData?.liabilities) && clientFinancialData.liabilities.length > 0,
+      hasGoals: Array.isArray(clientFinancialData?.goals) && clientFinancialData.goals.length > 0,
+    };
+  
+    console.log('Data validation results:', dataValidation);
+  
+    if (!dataValidation.hasIncomes && !dataValidation.hasExpenditures && !dataValidation.hasAssets && !dataValidation.hasLiabilities && !dataValidation.hasGoals) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({
+          error: 'No financial data provided',
+          debug: dataValidation,
+        }),
+      };
+    }
+  
+    try {
+      // Generate financial summary and system prompt
+      const financialSummary = createFinancialSummary(clientFinancialData);
+      console.log('Generated financial summary:', financialSummary);
+  
+      // const systemPrompt = createSystemPrompt(financialSummary);
+  
+      // Interact with OpenAI
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-3.5-turbo-16k',
+        messages: [
+          { role: 'system', content: createSystemPrompt(financialSummary) },
+          ...messageHistory,
+          { role: 'user', content: message },
+        ],
+        temperature: 0.7,
+        max_tokens: 1000,
+      });
+  
+      return {
+        statusCode: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Access-Control-Allow-Methods': 'POST',
+        },
+        body: JSON.stringify({
+          success: true,
+          response: completion.choices[0].message.content,
+          debug: { hasIncomes: clientFinancialData.incomes?.length > 0,
+            incomesCount: clientFinancialData.incomes?.length,
+            expendituresCount: clientFinancialData.expenditures?.length,
+            assetsCount: clientFinancialData.assets?.length,
+            liabilitiesCount: clientFinancialData.liabilities?.length,
+            goalsCount: clientFinancialData.goals?.length },
+        }),
+      };
+    } catch (error) {
+      console.error('Handler error:', error);
+      return {
+        statusCode: 500,
+        body: JSON.stringify({
+          error: 'Server error',
+          details: error instanceof Error ? error.message : 'Unknown error',
+        }),
+      };
+    }
+  };
 
       /*
 

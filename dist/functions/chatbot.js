@@ -17,12 +17,27 @@ const createFinancialSummary = (data) => {
     const assets = Array.isArray(data.assets) ? data.assets : [];
     const liabilities = Array.isArray(data.liabilities) ? data.liabilities : [];
     const goals = Array.isArray(data.goals) ? data.goals : [];
-    console.log('Validated arrays:', {
-        incomesLength: incomes.length,
-        expendituresLength: expenditures.length,
-        assetsLength: assets.length,
-        liabilitiesLength: liabilities.length,
-        goalsLength: goals.length
+    const arrays = {
+        incomes: Array.isArray(data.incomes),
+        expenditures: Array.isArray(data.expenditures),
+        assets: Array.isArray(data.assets),
+        liabilities: Array.isArray(data.liabilities),
+        goals: Array.isArray(data.goals)
+    };
+    console.log('Array validation:', arrays);
+    const processed = {
+        incomes: arrays.incomes ? data.incomes : [],
+        expenditures: arrays.expenditures ? data.expenditures : [],
+        assets: arrays.assets ? data.assets : [],
+        liabilities: arrays.liabilities ? data.liabilities : [],
+        goals: arrays.goals ? data.goals : []
+    };
+    console.log('Processed arrays:', {
+        incomesCount: processed.incomes.length,
+        expendituresCount: processed.expenditures.length,
+        assetsCount: processed.assets.length,
+        liabilitiesCount: processed.liabilities.length,
+        goalsCount: processed.goals.length
     });
     const totalIncome = data.incomes.reduce((sum, inc) => sum + inc.amount, 0);
     const totalExpenditure = data.expenditures.reduce((sum, exp) => sum + exp.amount, 0);
@@ -123,6 +138,9 @@ export const handler = async (event) => {
     let message;
     let messageHistory = [];
     try {
+        console.log('Raw event body:', event.body);
+        const parsedBody = JSON.parse(event.body || '{}');
+        console.log('Parsed body:', JSON.stringify(parsedBody, null, 2));
         // Parse and validate request body
         const { message: parsedMessage, userId, financialData, messageHistory: parsedMessageHistory = [] } = JSON.parse(event.body || '{}');
         if (!parsedMessage || !userId || !financialData) {
@@ -133,15 +151,16 @@ export const handler = async (event) => {
         clientFinancialData = financialData;
         // Log each piece of data separately
         console.log('Financial Data Received:', {
-            message,
-            userId,
-            financialDataPresent: !!financialData,
-            financialDataContents: financialData ? {
-                incomes: financialData.incomes?.length,
-                expenditures: financialData.expenditures?.length,
-                assets: financialData.assets?.length,
-                liabilities: financialData.liabilities?.length,
-                goals: financialData.goals?.length,
+            hasMessage: Boolean(message),
+            hasUserId: Boolean(userId),
+            financialDataExists: Boolean(financialData),
+            financialDataStructure: financialData ? {
+                hasIncomes: Array.isArray(financialData.incomes),
+                incomesLength: financialData.incomes?.length,
+                firstIncome: financialData.incomes?.[0],
+                hasExpenditures: Array.isArray(financialData.expenditures),
+                expendituresLength: financialData.expenditures?.length,
+                firstExpenditure: financialData.expenditures?.[0],
             } : null
         });
         console.log('Received financial data:', JSON.stringify(clientFinancialData, null, 2));

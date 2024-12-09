@@ -114,6 +114,18 @@ export default function Chat() {
       })) || []
     };
     
+    // Log the request payload
+  const payload = {
+    message: text,
+    userId: user.id,
+    financialData: formattedFinancialData,
+    messageHistory: messages.map(msg => ({
+      role: msg.role,
+      content: msg.content
+    }))
+  };
+
+    console.log('Sending payload:', JSON.stringify(payload, null, 2));
     console.log('Raw financial data:', financialData);
     console.log('Formatted data being sent:', formattedFinancialData);
   
@@ -138,14 +150,11 @@ export default function Chat() {
         headers: { 
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ 
-          message: text,
-          messageHistory,
-          userId: user.id,
-          financialData: formattedFinancialData
-        })
+        body: JSON.stringify(payload)
       });
 
+      const rawResponse = await response.clone().text();
+      
       console.log('Full request body:', JSON.stringify(message, null, 2));
       console.log('Raw server response:', await response.clone().text());
 
