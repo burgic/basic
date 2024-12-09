@@ -6,7 +6,7 @@ const openai = new OpenAI({
 });
 const supabase = createClient(process.env.REACT_APP_SUPABASE_DATABASE_URL, process.env.REACT_APP_SUPABASE_ANON_KEY);
 const createFinancialSummary = (data) => {
-    console.log('Generating summary for data:', JSON.stringify(data, null, 2));
+    console.log('Incoming financial data:', JSON.stringify(data, null, 2));
     const totalIncome = data.incomes.reduce((sum, inc) => sum + inc.amount, 0);
     const totalExpenditure = data.expenditures.reduce((sum, exp) => sum + exp.amount, 0);
     const totalAssets = data.assets.reduce((sum, asset) => sum + asset.value, 0);

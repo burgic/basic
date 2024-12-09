@@ -16,42 +16,7 @@ const supabase = createClient(
   process.env.REACT_APP_SUPABASE_DATABASE_URL!,
   process.env.REACT_APP_SUPABASE_ANON_KEY!
 );
-/*
-interface RequestFinancialData {
-  
-    incomes: Array<{
-      client_id: string;
-      type: string;
-      amount: number;
-      frequency: string;
-    }>;
-    expenditures: Array<{
-      client_id: string;
-      category: string;
-      amount: number;
-      frequency: string;
-    }>;
-    assets: Array<{
-      client_id: string;
-      type: string;
-      value: number;
-      description: string;
-    }>;
-    liabilities: Array<{
-      client_id: string;
-      type: string;
-      amount: number;
-      interest_rate: number;
-    }>;
-    goals: Array<{
-      id: string;
-      client_id: string;
-      goal: string;
-      target_amount: number;
-      time_horizon: number;
-    }>;
-  };
-*/
+
 interface RequestBody {
   message: string;
   userId: string;
@@ -60,7 +25,7 @@ interface RequestBody {
 }
 
 const createFinancialSummary = (data: FinancialData): string => {
-  console.log('Generating summary for data:', JSON.stringify(data, null, 2));
+  console.log('Incoming financial data:', JSON.stringify(data, null, 2));
 
   const totalIncome = data.incomes.reduce((sum, inc) => sum + inc.amount, 0);
   const totalExpenditure = data.expenditures.reduce((sum, exp) => sum + exp.amount, 0);

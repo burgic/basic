@@ -147,6 +147,7 @@ export default function Chat() {
       });
 
       console.log('Full request body:', JSON.stringify(message, null, 2));
+      console.log('Raw server response:', await response.clone().text());
 
       const data = await response.json();
       console.log('Response from server:', data);
@@ -174,7 +175,7 @@ export default function Chat() {
 
   return (
     <div className="max-w-2xl mx-auto p-4">
-      
+
       {dataLoading && (
       <div className="mb-4 p-3 bg-blue-100 border border-blue-400 text-blue-700 rounded">
         Loading your financial data...
