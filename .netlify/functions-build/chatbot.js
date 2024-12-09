@@ -1,3 +1,5 @@
+/*
+
 "use strict";
 // netlify/functions/chatbot.ts
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -36,8 +38,8 @@ const createFinancialSummary = (data) => {
       ... (existing summary logic)
     `;
     console.log('Generated Financial Summary:', summary);
-    */
-    return `
+    
+    return 
 FINANCIAL OVERVIEW
 =================
 Monthly Income: £${totalIncome.toFixed(2)}
@@ -63,7 +65,7 @@ ${data.liabilities.map((liability) => `- ${liability.type}: £${liability.amount
 
 Financial Goals:
 ${data.goals.map((goal) => `- ${goal.goal}: Target £${goal.target_amount} in ${goal.time_horizon} years`).join('\n') || 'No goals set'}
-`;
+;
 };
 const handler = async (event) => {
     console.log('Function invoked');
@@ -139,12 +141,12 @@ const handler = async (event) => {
             liabilities: liabilities || [],
             goals: goals || [] // Use an empty array if goals is null
         };
-        /*totalIncome: incomes.reduce((sum, income) =>
+        totalIncome: incomes.reduce((sum, income) =>
           sum + (income.amount * (income.frequency === 'Monthly' ? 1 : 1 / 12)), 0),
         totalExpenditure: expenditures.reduce((sum, expenditure) => sum + expenditure.amount, 0),
         totalAssets: assets.reduce((sum, asset) => sum + asset.value, 0),
         totalLiabilities: liabilities.reduce((sum, liability) => sum + liability.amount, 0)
-        */
+        
         const financialSummary = createFinancialSummary(financialData);
         console.log('Generated financial summary:', financialSummary);
         const systemMessage = `You are a financial advisor assistant with access to the user's current financial data. 
@@ -153,9 +155,9 @@ Base your advice on their actual financial situation as shown below:
 ${financialSummary}
 
 Please use this data to answer the user's question in detail, considering their:
-1. Income
-2. Expenses
-3. Assets
+1. Income - 70000 per annum
+2. Expenses - 2000 per month
+3. Assets - 
 4. Liabilities
 5. Financial Goals
 
@@ -225,7 +227,9 @@ Provide actionable and personalized advice based on the provided data.
     }
 };
 exports.handler = handler;
-/*
+
+
+
 // netlify/functions/chatbot.ts
 
 import { Handler } from '@netlify/functions';

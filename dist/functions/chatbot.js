@@ -133,6 +133,7 @@ export const handler = async (event) => {
             body: JSON.stringify({ error: 'Method not allowed' }),
         };
     }
+    console.log('Handler function started');
     let clientFinancialData;
     let message;
     let messageHistory = [];
@@ -227,16 +228,16 @@ export const handler = async (event) => {
         let completion;
         try {
             completion = await openai.chat.completions.create({
-                model: 'gpt-3.5-turbo-16k',
+                model: 'gpt-3.5-turbo',
                 messages: [
                     { role: 'system', content: createSystemPrompt(financialSummary) },
                     ...messageHistory,
                     { role: 'user', content: message },
                 ],
                 temperature: 0.7,
-                max_tokens: 1000,
+                max_tokens: 150,
             });
-            console.log('OpenAI API response:', completion);
+            console.log('OpenAI API response:', JSON.stringify(completion, null, 2));
             if (completion.choices && completion.choices.length > 0) {
                 const responseMessage = completion.choices[0].message.content;
                 console.log('Response message:', responseMessage);

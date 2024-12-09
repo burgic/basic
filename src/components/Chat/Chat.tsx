@@ -4,8 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import { useFinancialData } from '../../hooks/useFinancialData';
-import { Income, Expenditure, Asset, Liability, Goal } from '../../../netlify/functions/types/financial';
-import { supabase } from '../../services/supabaseClient';
+// import { Income, Expenditure, Asset, Liability, Goal } from '../../../netlify/functions/types/financial';
+// import { supabase } from '../../services/supabaseClient';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -153,7 +153,7 @@ export default function Chat() {
         body: JSON.stringify(payload)
       });
 
-      const rawResponse = await response.clone().text();
+      // const rawResponse = await response.clone().text();
       
       console.log('Full request body:', JSON.stringify(message, null, 2));
       console.log('Raw server response:', await response.clone().text());

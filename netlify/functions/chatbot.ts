@@ -3,7 +3,7 @@
 import { Handler, HandlerEvent } from '@netlify/functions';
 import OpenAI from 'openai';
 import { createClient } from '@supabase/supabase-js';
-import { FinancialData, Income, Expenditure, Asset, Liability, Goal } from './types/financial';
+import { FinancialData } from './types/financial';
 import { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
 
 
@@ -179,6 +179,7 @@ Note: All monetary values are in GBP.
       };
     }
 
+    console.log('Handler function started');
   
     let clientFinancialData: FinancialData;
     let message: string;
@@ -290,16 +291,16 @@ Note: All monetary values are in GBP.
 
       try {
         completion = await openai.chat.completions.create({
-          model: 'gpt-3.5-turbo-16k',
+          model: 'gpt-3.5-turbo',
           messages: [
             { role: 'system', content: createSystemPrompt(financialSummary) },
             ...messageHistory,
             { role: 'user', content: message },
           ],
           temperature: 0.7,
-          max_tokens: 1000,
+          max_tokens: 150,
         });
-            console.log('OpenAI API response:', completion);
+            console.log('OpenAI API response:', JSON.stringify(completion, null, 2));
 
             if (completion.choices && completion.choices.length > 0) {
               const responseMessage = completion.choices[0].message.content;
