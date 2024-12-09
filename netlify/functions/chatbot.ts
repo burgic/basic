@@ -137,6 +137,7 @@ Note: All monetary values are in GBP.`;
 
 };
 
+/*
 const staticFinancialData = {
   incomes: [
     {
@@ -213,6 +214,8 @@ const staticFinancialData = {
     }
   ]
 };
+
+*/
 
 const fetchFinancialData = async (userId: string) => {
     const [
@@ -336,10 +339,37 @@ const fetchFinancialData = async (userId: string) => {
         }),
       };
     }
+
+    const validateFinancialData = (data: FinancialData): boolean => {
+        if (typeof data !== 'object' || data === null) {
+            console.error('Invalid financial data: not an object');
+            return false;
+        }
+
+        const requiredKeys = ['incomes', 'expenditures', 'assets', 'liabilities', 'goals'] as const;
+        for (const key of requiredKeys) {
+            if (!Array.isArray(data[key])) {
+                console.error(`Invalid financial data: ${key} is not an array`);
+                return false;
+            }
+        }
+
+        return true;
+    };
+  
+    // Before sending the data to OpenAI
+    if (!validateFinancialData(clientFinancialData)) {
+        return {
+            statusCode: 400,
+            body: JSON.stringify({
+                error: 'Invalid financial data structure',
+            }),
+        };
+    }
   
     try {
       // Generate financial summary and system prompt
-      const financialSummary = createFinancialSummary(staticFinancialData);
+      const financialSummary = createFinancialSummary(clientFinancialData);
       console.log('Generated financial summary:', financialSummary);
   
       // const systemPrompt = createSystemPrompt(financialSummary);
@@ -362,6 +392,14 @@ const fetchFinancialData = async (userId: string) => {
           max_tokens: 1000,
         });
             console.log('OpenAI API response:', completion);
+
+            if (completion.choices && completion.choices.length > 0) {
+              const responseMessage = completion.choices[0].message.content;
+              console.log('Response message:', responseMessage);
+          } else {
+              console.error('No choices found in the response.');
+          }
+
         } catch (error) {
             console.error('Error calling OpenAI API:', error);
             // Handle the error appropriately, e.g., set a default response or return an error message

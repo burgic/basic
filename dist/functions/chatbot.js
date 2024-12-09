@@ -97,82 +97,85 @@ ${data.goals.map((goal) => `- ${goal.goal}: Target £${goal.target_amount} in ${
 
 Note: All monetary values are in GBP.`;
 };
+/*
 const staticFinancialData = {
-    incomes: [
-        {
-            id: "income-1",
-            client_id: "f8ea9d9e-a6b6-43b7-baef-e8a13fff8fa9",
-            type: "Total Income",
-            amount: 78000,
-            frequency: "Annual"
-        }
-    ],
-    expenditures: [
-        {
-            id: "expenditure-1",
-            client_id: "f8ea9d9e-a6b6-43b7-baef-e8a13fff8fa9",
-            category: "Rent/Mortgage",
-            amount: 700,
-            frequency: "Monthly"
-        },
-        {
-            id: "expenditure-2",
-            client_id: "f8ea9d9e-a6b6-43b7-baef-e8a13fff8fa9",
-            category: "Utilities",
-            amount: 150,
-            frequency: "Monthly"
-        },
-        {
-            id: "expenditure-3",
-            client_id: "f8ea9d9e-a6b6-43b7-baef-e8a13fff8fa9",
-            category: "Groceries",
-            amount: 300,
-            frequency: "Monthly"
-        },
-        {
-            id: "expenditure-4",
-            client_id: "f8ea9d9e-a6b6-43b7-baef-e8a13fff8fa9",
-            category: "Entertainment",
-            amount: 300,
-            frequency: "Monthly"
-        }
-    ],
-    assets: [
-        {
-            id: "asset-1",
-            client_id: "f8ea9d9e-a6b6-43b7-baef-e8a13fff8fa9",
-            type: "Total Assets",
-            value: 730000,
-            description: "Combined assets"
-        }
-    ],
-    liabilities: [
-        {
-            id: "liability-1",
-            client_id: "f8ea9d9e-a6b6-43b7-baef-e8a13fff8fa9",
-            type: "Total Liabilities",
-            amount: 140000,
-            interest_rate: 0,
-            description: "liability"
-        }
-    ],
-    goals: [
-        {
-            id: "goal-1",
-            client_id: "f8ea9d9e-a6b6-43b7-baef-e8a13fff8fa9",
-            goal: "Retire",
-            target_amount: 100000,
-            time_horizon: 30
-        },
-        {
-            id: "goal-2",
-            client_id: "f8ea9d9e-a6b6-43b7-baef-e8a13fff8fa9",
-            goal: "Pay off mortgage",
-            target_amount: 200000,
-            time_horizon: 15
-        }
-    ]
+  incomes: [
+    {
+      id: "income-1", // Add an ID for the income
+      client_id: "f8ea9d9e-a6b6-43b7-baef-e8a13fff8fa9",
+      type: "Total Income",
+      amount: 78000,
+      frequency: "Annual"
+    }
+  ],
+  expenditures: [
+    {
+      id: "expenditure-1", // Add an ID for the expenditure
+      client_id: "f8ea9d9e-a6b6-43b7-baef-e8a13fff8fa9",
+      category: "Rent/Mortgage",
+      amount: 700,
+      frequency: "Monthly"
+    },
+    {
+      id: "expenditure-2", // Add an ID for the expenditure
+      client_id: "f8ea9d9e-a6b6-43b7-baef-e8a13fff8fa9",
+      category: "Utilities",
+      amount: 150,
+      frequency: "Monthly"
+    },
+    {
+      id: "expenditure-3", // Add an ID for the expenditure
+      client_id: "f8ea9d9e-a6b6-43b7-baef-e8a13fff8fa9",
+      category: "Groceries",
+      amount: 300,
+      frequency: "Monthly"
+    },
+    {
+      id: "expenditure-4", // Add an ID for the expenditure
+      client_id: "f8ea9d9e-a6b6-43b7-baef-e8a13fff8fa9",
+      category: "Entertainment",
+      amount: 300,
+      frequency: "Monthly"
+    }
+  ],
+  assets: [
+    {
+      id: "asset-1", // Add an ID for the asset
+      client_id: "f8ea9d9e-a6b6-43b7-baef-e8a13fff8fa9",
+      type: "Total Assets",
+      value: 730000,
+      description: "Combined assets"
+    }
+  ],
+  liabilities: [
+    {
+      id: "liability-1", // Add an ID for the liability
+      client_id: "f8ea9d9e-a6b6-43b7-baef-e8a13fff8fa9",
+      type: "Total Liabilities",
+      amount: 140000,
+      interest_rate: 0,
+      description: "liability"
+    }
+  ],
+  goals: [
+    {
+      id: "goal-1", // Add an ID for the goal
+      client_id: "f8ea9d9e-a6b6-43b7-baef-e8a13fff8fa9",
+      goal: "Retire",
+      target_amount: 100000,
+      time_horizon: 30
+    },
+    {
+      id: "goal-2", // Add an ID for the goal
+      client_id: "f8ea9d9e-a6b6-43b7-baef-e8a13fff8fa9",
+      goal: "Pay off mortgage",
+      target_amount: 200000,
+      time_horizon: 15
+    }
+  ]
 };
+
+*/
 const fetchFinancialData = async (userId) => {
     const [{ data: incomes, error: incomesError }, { data: expenditures, error: expendituresError }, { data: assets, error: assetsError }, { data: liabilities, error: liabilitiesError }, { data: goals, error: goalsError }] = await Promise.all([
         supabase.from('incomes').select('id, client_id, type, amount, frequency').eq('client_id', userId),
@@ -274,9 +277,32 @@ export const handler = async (event) => {
             }),
         };
     }
+    const validateFinancialData = (data) => {
+        if (typeof data !== 'object' || data === null) {
+            console.error('Invalid financial data: not an object');
+            return false;
+        }
+        const requiredKeys = ['incomes', 'expenditures', 'assets', 'liabilities', 'goals'];
+        for (const key of requiredKeys) {
+            if (!Array.isArray(data[key])) {
+                console.error(`Invalid financial data: ${key} is not an array`);
+                return false;
+            }
+        }
+        return true;
+    };
+    // Before sending the data to OpenAI
+    if (!validateFinancialData(clientFinancialData)) {
+        return {
+            statusCode: 400,
+            body: JSON.stringify({
+                error: 'Invalid financial data structure',
+            }),
+        };
+    }
     try {
         // Generate financial summary and system prompt
-        const financialSummary = createFinancialSummary(staticFinancialData);
+        const financialSummary = createFinancialSummary(clientFinancialData);
         console.log('Generated financial summary:', financialSummary);
         // const systemPrompt = createSystemPrompt(financialSummary);
         console.log('Financial Summary being sent to OpenAI:', financialSummary);
@@ -296,6 +322,13 @@ export const handler = async (event) => {
                 max_tokens: 1000,
             });
             console.log('OpenAI API response:', completion);
+            if (completion.choices && completion.choices.length > 0) {
+                const responseMessage = completion.choices[0].message.content;
+                console.log('Response message:', responseMessage);
+            }
+            else {
+                console.error('No choices found in the response.');
+            }
         }
         catch (error) {
             console.error('Error calling OpenAI API:', error);
