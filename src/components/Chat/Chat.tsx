@@ -84,34 +84,34 @@ export default function Chat() {
       incomes: [{ 
         client_id: user.id,
         type: 'Total Income', 
-        amount: financialData.income,
+        amount: Number(financialData.income),
         frequency: 'Annual' 
       }],
       expenditures: financialData.expenditure.map((exp, index) => ({
         client_id: user.id,
         category: exp.category,
-        amount: exp.amount,
+        amount: Number(exp.amount),
         frequency: 'Monthly'
       })),
       assets: [{
         client_id: user.id,
         type: 'Total Assets',
-        value: financialData.assets,
+        value: Number(financialData.assets),
         description: 'Combined assets'
       }],
       liabilities: [{
         client_id: user.id,
         type: 'Total Liabilities',
-        amount: financialData.liabilities,
+        amount: Number(financialData.liabilities),
         interest_rate: 0
       }],
       goals: (financialData.goals || []).map(goal => ({
         id: goal.id,
         client_id: user.id,
         goal: goal.goal,
-        target_amount: goal.target_amount,
-        time_horizon: goal.time_horizon
-      }))
+        target_amount: Number(goal.target_amount),
+        time_horizon: Number(goal.time_horizon)
+      })) || []
     };
     
     console.log('Raw financial data:', financialData);
