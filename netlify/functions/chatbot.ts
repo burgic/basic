@@ -3,12 +3,56 @@
 import { Handler, HandlerEvent } from '@netlify/functions';
 import OpenAI from 'openai';
 import { createClient } from '@supabase/supabase-js';
-import { Goal, Expenditure, FinancialData, Income, Asset, Liability } from './types/financial';
+import { Goal, Expenditure, FinancialData, Income, Asset, Liability, RequestBody } from './types/financial';
 
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
+
+
+export const handler: Handler = async (event) => {
+  if (event.httpMethod !== 'POST') {
+    return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
+  }
+
+  try {
+    const { message, financialData } = JSON.parse(event.body || '{}') as RequestBody;
+
+    const summary = `
+      Annual Income: £${financialData.incomes}
+      Assets: £${financialData.assets}
+      Liabilities: £${financialData.liabilities}
+      Monthly Expenses: ${financialData.expenditures.map((e: Expenditure) => `${e.category}: £${e.amount}`).join(', ')}
+      Goals: ${financialData.goals.map((g: Goal) => `${g.goal}: £${g.target_amount} in ${g.time_horizon} years`).join(', ')}`;
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        { role: "system", content: `You are a financial advisor. Here's the client's data:\n${summary}` },
+        { role: "user", content: message }
+      ]
+    });
+
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type'
+      },
+      body: JSON.stringify({ response: completion.choices[0].message.content })
+    };
+
+  } catch (error) {
+    console.error('Error:', error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Server error' })
+    };
+  }
+};
+/*
 
 const supabase = createClient(
   process.env.REACT_APP_SUPABASE_DATABASE_URL!,
@@ -60,27 +104,7 @@ export const handler: Handler = async (event: HandlerEvent) => {
     };
     
 
-/*
-// Format financial summary
-const summary = `
-Financial Overview:
-Annual Income: £${financialData.income}
-Monthly Income: £${financialData.income / 12}
-Assets: £${financialData.assets}
-Liabilities: £${financialData.liabilities}
-Net Worth: £${financialData.assets - financialData.liabilities}
 
-Monthly Expenses:
-${financialData.expenditure.map((exp: Expenditure) => 
-  `- ${exp.category}: £${exp.amount}`
-).join('\n')}
-
-Financial Goals:
-${financialData.goals.map((goal: Goal) => 
-  `- ${goal.goal}: £${goal.target_amount} in ${goal.time_horizon} years`
-).join('\n')}
-`;
-*/
 
     const financialSummary = createFinancialSummary
 
@@ -128,8 +152,29 @@ ${financialData.goals.map((goal: Goal) =>
     };
 
 
+    
+// Format financial summary
+const summary = `
+Financial Overview:
+Annual Income: £${financialData.income}
+Monthly Income: £${financialData.income / 12}
+Assets: £${financialData.assets}
+Liabilities: £${financialData.liabilities}
+Net Worth: £${financialData.assets - financialData.liabilities}
 
-/*
+Monthly Expenses:
+${financialData.expenditure.map((exp: Expenditure) => 
+  `- ${exp.category}: £${exp.amount}`
+).join('\n')}
+
+Financial Goals:
+${financialData.goals.map((goal: Goal) => 
+  `- ${goal.goal}: £${goal.target_amount} in ${goal.time_horizon} years`
+).join('\n')}
+`;
+
+
+
 // netlify/functions/chatbot.ts
 
 import { Handler, HandlerEvent } from '@netlify/functions';

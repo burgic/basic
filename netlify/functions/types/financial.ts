@@ -49,3 +49,9 @@ export interface Income {
     goals: Goal[];
   }
   
+  export interface RequestBody {
+    message: string;
+    userId: string;
+    financialData: FinancialData;
+    messageHistory?: { role: string; content: string }[];
+  }
