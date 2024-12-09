@@ -20,18 +20,42 @@ export default function Chat() {
   const { data: financialData, loading: dataLoading } = useFinancialData();
 
   const sendMessage = async (text: string) => {
-    console.log('Payload:', { 
-      message: text,
-      userId: user?.id,
-      financialContext: financialData 
-    });
-    
-
     if (!text.trim() || !user?.id || !financialData) return;
     
     setIsLoading(true);
     setError(null);
-
+  
+    // Transform financialContext into the expected financialData structure
+    const formattedFinancialData = {
+      incomes: [{ 
+        type: 'Total Income', 
+        amount: financialData.income,
+        frequency: 'Annual' 
+      }],
+      expenditures: financialData.expenditure.map(exp => ({
+        category: exp.category,
+        amount: exp.amount,
+        frequency: 'Monthly'
+      })),
+      assets: [{
+        type: 'Total Assets',
+        value: financialData.assets,
+        description: 'Combined assets'
+      }],
+      liabilities: [{
+        type: 'Total Liabilities',
+        amount: financialData.liabilities,
+        interest_rate: 0
+      }],
+      goals: (financialData.goals || []).map(goal => ({
+        id: goal.id,
+        client_id: user.id,
+        goal: goal.goal,
+        target_amount: goal.target_amount,
+        time_horizon: goal.time_horizon
+      }))
+    };
+  
     // Create message history in the format OpenAI expects
     const messageHistory = messages.map(msg => ({
       role: msg.role,
@@ -47,20 +71,18 @@ export default function Chat() {
         body: JSON.stringify({ 
           message: text,
           messageHistory,
-          userId: user.id,  // Add this line
-          financialContext: financialData
+          userId: user.id,
+          financialData: formattedFinancialData  // Changed from financialContext
         })
       });
-
-      
-
+  
       console.log('Response status:', response.status);
       const contentType = response.headers.get('content-type');
       console.log('Content-Type:', contentType);
       
       const data = await response.json();
       console.log('Response data:', data);
-
+  
       if (data.error) {
         throw new Error(data.error);
       }
@@ -80,6 +102,7 @@ export default function Chat() {
       setMessage('');
     }
   };
+
 
   return (
     <div className="max-w-2xl mx-auto p-4">

@@ -83,8 +83,19 @@ export const handler = async (event) => {
         return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
     }
     try {
-        const { message, userId, messageHistory = [] } = JSON.parse(event.body || '{}');
-        if (!message || !userId) {
+        const { message, userId, financialData: clientFinancialData, messageHistory = [] } = JSON.parse(event.body || '{}');
+        console.log('Received request:', {
+            message,
+            userId,
+            financialData: {
+                hasIncomes: clientFinancialData?.incomes?.length > 0,
+                hasExpenditures: clientFinancialData?.expenditures?.length > 0,
+                hasAssets: clientFinancialData?.assets?.length > 0,
+                hasLiabilities: clientFinancialData?.liabilities?.length > 0,
+                hasGoals: clientFinancialData?.goals?.length > 0,
+            }
+        });
+        if (!message || !userId || !clientFinancialData) {
             return {
                 statusCode: 400,
                 body: JSON.stringify({ error: 'Message and userId are required' })
@@ -118,11 +129,11 @@ export const handler = async (event) => {
                 response: completion.choices[0].message.content,
                 debug: {
                     hasData: {
-                        incomes: financialData.incomes.length > 0,
-                        expenditures: financialData.expenditures.length > 0,
-                        assets: financialData.assets.length > 0,
-                        liabilities: financialData.liabilities.length > 0,
-                        goals: financialData.goals.length > 0
+                        incomes: clientFinancialData.incomes.length > 0,
+                        expenditures: clientFinancialData.expenditures.length > 0,
+                        assets: clientFinancialData.assets.length > 0,
+                        liabilities: clientFinancialData.liabilities.length > 0,
+                        goals: clientFinancialData.goals.length > 0
                     }
                 }
             })

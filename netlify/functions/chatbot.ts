@@ -19,7 +19,35 @@ const supabase = createClient(
 interface RequestBody {
   message: string;
   userId: string;
-  financialData: FinancialData;
+  financialData: {
+    incomes: Array<{
+      type: string;
+      amount: number;
+      frequency: string;
+    }>;
+    expenditures: Array<{
+      category: string;
+      amount: number;
+      frequency: string;
+    }>;
+    assets: Array<{
+      type: string;
+      value: number;
+      description: string;
+    }>;
+    liabilities: Array<{
+      type: string;
+      amount: number;
+      interest_rate: number;
+    }>;
+    goals: Array<{
+      id: string;
+      client_id: string;
+      goal: string;
+      target_amount: number;
+      time_horizon: number;
+    }>;
+  };
   messageHistory?: ChatCompletionMessageParam[];
 }
 
@@ -115,11 +143,26 @@ const fetchFinancialData = async (userId: string) => {
       if (event.httpMethod !== 'POST') {
         return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
       }
+
+      
     
       try {
-        const { message, userId, messageHistory = [] } = JSON.parse(event.body || '{}') as RequestBody;
+        const { message, userId, financialData: clientFinancialData, messageHistory = [] } = JSON.parse(event.body || '{}') as RequestBody;
     
-        if (!message || !userId) {
+        console.log('Received request:', {
+          message,
+          userId,
+          financialData: {
+            hasIncomes: clientFinancialData?.incomes?.length > 0,
+            hasExpenditures: clientFinancialData?.expenditures?.length > 0,
+            hasAssets: clientFinancialData?.assets?.length > 0,
+            hasLiabilities: clientFinancialData?.liabilities?.length > 0,
+            hasGoals: clientFinancialData?.goals?.length > 0,
+          }
+        });
+
+
+        if (!message || !userId || !clientFinancialData) {
           return {
             statusCode: 400,
             body: JSON.stringify({ error: 'Message and userId are required' })
@@ -156,11 +199,11 @@ const fetchFinancialData = async (userId: string) => {
             response: completion.choices[0].message.content,
             debug: {
               hasData: {
-                incomes: financialData.incomes.length > 0,
-                expenditures: financialData.expenditures.length > 0,
-                assets: financialData.assets.length > 0,
-                liabilities: financialData.liabilities.length > 0,
-                goals: financialData.goals.length > 0
+                incomes: clientFinancialData.incomes.length > 0,
+                expenditures: clientFinancialData.expenditures.length > 0,
+                assets: clientFinancialData.assets.length > 0,
+                liabilities: clientFinancialData.liabilities.length > 0,
+                goals: clientFinancialData.goals.length > 0
               }
             }
           })
