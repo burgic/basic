@@ -105,47 +105,70 @@ const createSystemPrompt = (financialSummary) => {
       Keep responses clear, practical, and data-driven.`;
 };
 export const handler = async (event) => {
+    // Ensure the method is POST
     if (event.httpMethod !== 'POST') {
         return {
             statusCode: 405,
-            body: JSON.stringify({ error: 'Method not allowed' })
+            body: JSON.stringify({ error: 'Method not allowed' }),
+        };
+    }
+    let clientFinancialData;
+    let message;
+    let messageHistory = [];
+    try {
+        // Parse and validate request body
+        const { message: parsedMessage, userId, financialData, messageHistory: parsedMessageHistory = [] } = JSON.parse(event.body || '{}');
+        if (!parsedMessage || !userId || !financialData) {
+            throw new Error('Missing required fields in request body');
+        }
+        message = parsedMessage; // Assign parsed message
+        messageHistory = parsedMessageHistory; // Assign parsed message history
+        clientFinancialData = financialData;
+        console.log('Received financial data:', JSON.stringify(clientFinancialData, null, 2));
+    }
+    catch (error) {
+        console.error('Error parsing event.body:', error);
+        return {
+            statusCode: 400,
+            body: JSON.stringify({
+                error: 'Failed to parse request body',
+                details: error instanceof Error ? error.message : 'Unknown error',
+            }),
+        };
+    }
+    // Validate the financial data structure
+    const dataValidation = {
+        hasIncomes: Array.isArray(clientFinancialData?.incomes) && clientFinancialData.incomes.length > 0,
+        hasExpenditures: Array.isArray(clientFinancialData?.expenditures) && clientFinancialData.expenditures.length > 0,
+        hasAssets: Array.isArray(clientFinancialData?.assets) && clientFinancialData.assets.length > 0,
+        hasLiabilities: Array.isArray(clientFinancialData?.liabilities) && clientFinancialData.liabilities.length > 0,
+        hasGoals: Array.isArray(clientFinancialData?.goals) && clientFinancialData.goals.length > 0,
+    };
+    console.log('Data validation results:', dataValidation);
+    if (!dataValidation.hasIncomes && !dataValidation.hasExpenditures && !dataValidation.hasAssets && !dataValidation.hasLiabilities && !dataValidation.hasGoals) {
+        return {
+            statusCode: 400,
+            body: JSON.stringify({
+                error: 'No financial data provided',
+                debug: dataValidation,
+            }),
         };
     }
     try {
-        const { message, userId, financialData: clientFinancialData, messageHistory = [] } = JSON.parse(event.body || '{}');
-        console.log('Received financial data:', JSON.stringify(clientFinancialData, null, 2));
-        // Validate the data structure
-        const dataValidation = {
-            hasIncomes: Array.isArray(clientFinancialData?.incomes) && clientFinancialData.incomes.length > 0,
-            hasExpenditures: Array.isArray(clientFinancialData?.expenditures) && clientFinancialData.expenditures.length > 0,
-            hasAssets: Array.isArray(clientFinancialData?.assets) && clientFinancialData.assets.length > 0,
-            hasLiabilities: Array.isArray(clientFinancialData?.liabilities) && clientFinancialData.liabilities.length > 0,
-            hasGoals: Array.isArray(clientFinancialData?.goals) && clientFinancialData.goals.length > 0
-        };
-        console.log('Data validation results:', dataValidation);
-        if (!clientFinancialData || !message || !userId) {
-            return {
-                statusCode: 400,
-                body: JSON.stringify({
-                    error: 'Missing required data',
-                    debug: { receivedData: { hasFinancialData: !!clientFinancialData, hasMessage: !!message, hasUserId: !!userId } }
-                })
-            };
-        }
-        // Generate financial summary with validated data
+        // Generate financial summary and system prompt
         const financialSummary = createFinancialSummary(clientFinancialData);
         console.log('Generated financial summary:', financialSummary);
-        // Create system prompt with validated summary
         const systemPrompt = createSystemPrompt(financialSummary);
+        // Interact with OpenAI
         const completion = await openai.chat.completions.create({
-            model: "gpt-3.5-turbo-16k",
+            model: 'gpt-3.5-turbo-16k',
             messages: [
-                { role: "system", content: systemPrompt },
+                { role: 'system', content: systemPrompt },
                 ...messageHistory,
-                { role: "user", content: message }
+                { role: 'user', content: message },
             ],
             temperature: 0.7,
-            max_tokens: 1000
+            max_tokens: 1000,
         });
         return {
             statusCode: 200,
@@ -153,17 +176,14 @@ export const handler = async (event) => {
                 'Content-Type': 'application/json',
                 'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Headers': 'Content-Type',
-                'Access-Control-Allow-Methods': 'POST'
+                'Access-Control-Allow-Methods': 'POST',
             },
             body: JSON.stringify({
                 success: true,
                 response: completion.choices[0].message.content,
-                debug: {
-                    hasData: dataValidation
-                }
-            })
+                debug: { hasData: dataValidation },
+            }),
         };
-        // Rest of the handler code...
     }
     catch (error) {
         console.error('Handler error:', error);
@@ -172,8 +192,7 @@ export const handler = async (event) => {
             body: JSON.stringify({
                 error: 'Server error',
                 details: error instanceof Error ? error.message : 'Unknown error',
-                debug: { errorType: typeof error }
-            })
+            }),
         };
     }
 };
