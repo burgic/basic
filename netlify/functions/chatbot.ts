@@ -39,6 +39,14 @@ const createFinancialSummary = (data: FinancialData): string => {
   const liabilities = Array.isArray(data.liabilities) ? data.liabilities : [];
   const goals = Array.isArray(data.goals) ? data.goals : [];
 
+  console.log('Validated arrays:', {
+    incomesLength: incomes.length,
+    expendituresLength: expenditures.length,
+    assetsLength: assets.length,
+    liabilitiesLength: liabilities.length,
+    goalsLength: goals.length
+  });
+
   const totalIncome = data.incomes.reduce((sum, inc) => sum + inc.amount, 0);
   const totalExpenditure = data.expenditures.reduce((sum, exp) => sum + exp.amount, 0);
   const totalAssets = data.assets.reduce((sum, asset) => sum + asset.value, 0);
