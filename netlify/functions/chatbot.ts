@@ -103,17 +103,25 @@ const createFinancialSummary = (data: FinancialData): string => {
     console.log('No income data available');
     return 'No income data available';
   }
-  
-  return `
-FINANCIAL OVERVIEW
-=================
-
-Annual Income: £${totalAnnualIncome.toLocaleString()}
+  /*
+  Annual Income: £${totalAnnualIncome.toLocaleString()}
 Monthly Income: £${monthlyIncome.toLocaleString()}
 Monthly Expenses: £${totalMonthlyExpenses.toLocaleString()}
 Total Assets: £${totalAssets.toLocaleString()}
 Total Liabilities: £${totalLiabilities.toLocaleString()}
 Net Worth: £${netWorth.toLocaleString()}
+*/
+
+  return `
+FINANCIAL OVERVIEW
+=================
+
+Annual Income: £70000
+Monthly Income: £6200
+Monthly Expenses: £2000
+Total Assets: £750000
+Total Liabilities: £250000
+Net Worth: £500000
 
 DETAILED BREAKDOWN
 =================
@@ -132,7 +140,7 @@ ${data.liabilities.map((liability) => `- ${liability.type}: £${liability.amount
 Financial Goals:
 ${data.goals.map((goal) => `- ${goal.goal}: Target £${goal.target_amount} in ${goal.time_horizon} years`).join('\n') || 'No goals set'}
 
-Note: All monetary values are in GBP.`;
+Note: All monetary values are in GBP.;`
 
 
 };
@@ -246,7 +254,7 @@ const fetchFinancialData = async (userId: string) => {
   };
 
     const createSystemPrompt = (financialSummary: string): string => {
-        return `You are a financial advisor assistant with access to the user's current financial data. 
+        const systemPrompt = `You are a financial advisor assistant with access to the user's current financial data. 
       Please use this data to provide specific, actionable advice:
       
       ${financialSummary}
@@ -259,7 +267,10 @@ const fetchFinancialData = async (userId: string) => {
       5. Keep responses clear and data-driven
 
       Please provide specific, actionable advice based on these exact numbers and circumstances.`;
-      };
+
+        console.log('System prompt:', systemPrompt);
+        return systemPrompt;
+    };
 
 
   export const handler: Handler = async (event: HandlerEvent) => {
@@ -443,81 +454,3 @@ const fetchFinancialData = async (userId: string) => {
     }
   };
 
-      /*
-
-    export const handler: Handler = async (event) => {
-      if (event.httpMethod !== 'POST') {
-        return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
-      }
-    
-      try {
-        console.log('Raw event body:', event.body);
-        
-
-        const { message, userId, financialData: clientFinancialData, messageHistory = [] } = JSON.parse(event.body || '{}') as RequestBody;
-        
-        console.log('Parsed financial data:', JSON.stringify(clientFinancialData, null, 2));
-
-        if (!message || !userId || !clientFinancialData) {
-          return {
-            statusCode: 400,
-            body: JSON.stringify({ error: 'Message and userId are required' })
-          };
-        }
-    
-        // Fetch financial data
-
-        const financialSummary = createFinancialSummary(clientFinancialData);
-        console.log('Generated financial summary:', financialSummary);
-
-        const systemPrompt = createSystemPrompt(financialSummary);
-        console.log('System prompt:', systemPrompt);
-    
-        // Create completion
-        const completion = await openai.chat.completions.create({
-          model: "gpt-3.5-turbo-16k",
-          messages: [
-            { role: "system", content: systemPrompt },
-            ...messageHistory,
-            { role: "user", content: message }
-          ],
-          temperature: 0.7,
-          max_tokens: 1000
-        });
-    
-        return {
-          statusCode: 200,
-          headers: {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Headers': 'Content-Type',
-            'Access-Control-Allow-Methods': 'POST'
-          },
-          body: JSON.stringify({
-            success: true,
-            response: completion.choices[0].message.content,
-            debug: {
-              hasData: {
-                incomes: clientFinancialData.incomes.length > 0,
-                expenditures: clientFinancialData.expenditures.length > 0,
-                assets: clientFinancialData.assets.length > 0,
-                liabilities: clientFinancialData.liabilities.length > 0,
-                goals: clientFinancialData.goals.length > 0
-              }
-            }
-          })
-        };
-    
-      } catch (error) {
-        console.error('Error:', error);
-        return {
-          statusCode: 500,
-          body: JSON.stringify({ 
-            error: 'Server error',
-            details: error instanceof Error ? error.message : 'Unknown error'
-          })
-        };
-      }
-    };
-
-    */
