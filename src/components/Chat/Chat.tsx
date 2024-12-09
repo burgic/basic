@@ -28,21 +28,25 @@ export default function Chat() {
     // Transform financialContext into the expected financialData structure
     const formattedFinancialData = {
       incomes: [{ 
+        client_id: user.id,
         type: 'Total Income', 
         amount: financialData.income,
         frequency: 'Annual' 
       }],
       expenditures: financialData.expenditure.map(exp => ({
+        client_id: user.id,
         category: exp.category,
         amount: exp.amount,
         frequency: 'Monthly'
       })),
       assets: [{
+        client_id: user.id,
         type: 'Total Assets',
         value: financialData.assets,
         description: 'Combined assets'
       }],
       liabilities: [{
+        client_id: user.id,
         type: 'Total Liabilities',
         amount: financialData.liabilities,
         interest_rate: 0
@@ -55,6 +59,9 @@ export default function Chat() {
         time_horizon: goal.time_horizon
       }))
     };
+    
+    console.log('Raw financial data:', financialData);
+    console.log('Formatted data being sent:', formattedFinancialData);
   
     // Create message history in the format OpenAI expects
     const messageHistory = messages.map(msg => ({
@@ -63,25 +70,25 @@ export default function Chat() {
     }));
     
     try {
+      const requestBody = { 
+        message: text,
+        messageHistory,
+        userId: user.id,
+        financialData: formattedFinancialData
+      };
+
+      console.log('Full request body:', JSON.stringify(requestBody, null, 2));
+
       const response = await fetch('/.netlify/functions/chatbot', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ 
-          message: text,
-          messageHistory,
-          userId: user.id,
-          financialData: formattedFinancialData  // Changed from financialContext
-        })
+        body: JSON.stringify(requestBody)
       });
-  
-      console.log('Response status:', response.status);
-      const contentType = response.headers.get('content-type');
-      console.log('Content-Type:', contentType);
-      
+
       const data = await response.json();
-      console.log('Response data:', data);
+      console.log('Response from server:', data);
   
       if (data.error) {
         throw new Error(data.error);

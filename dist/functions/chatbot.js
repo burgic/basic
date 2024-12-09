@@ -83,7 +83,9 @@ export const handler = async (event) => {
         return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
     }
     try {
+        console.log('Raw event body:', event.body);
         const { message, userId, financialData: clientFinancialData, messageHistory = [] } = JSON.parse(event.body || '{}');
+        console.log('Parsed financial data:', JSON.stringify(clientFinancialData, null, 2));
         console.log('Received request:', {
             message,
             userId,
@@ -104,7 +106,9 @@ export const handler = async (event) => {
         // Fetch financial data
         const financialData = await fetchFinancialData(userId);
         const financialSummary = createFinancialSummary(financialData);
+        console.log('Generated financial summary:', financialSummary);
         const systemPrompt = createSystemPrompt(financialSummary);
+        console.log('System prompt:', systemPrompt);
         // Create completion
         const completion = await openai.chat.completions.create({
             model: "gpt-3.5-turbo-16k",
