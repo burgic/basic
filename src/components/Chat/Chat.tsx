@@ -1,6 +1,6 @@
 // src/components/Chat/Chat.tsx
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import { useFinancialData } from '../../hooks/useFinancialData';
@@ -19,9 +19,62 @@ export default function Chat() {
   const [error, setError] = useState<string | null>(null);
   const { user } = useContext(AuthContext);
   const { data: financialData, loading: dataLoading } = useFinancialData();
+  const [dataReady, setDataReady] = useState(false);
+
+
+  useEffect(() => {
+    if (!financialData) {
+      setDataReady(false);
+      return;
+    }
+  
+    // Validate required data is present
+    const isValid = Boolean(
+      financialData.income !== undefined &&
+      Array.isArray(financialData.expenditure) &&
+      financialData.assets !== undefined &&
+      financialData.liabilities !== undefined &&
+      Array.isArray(financialData.goals)
+    );
+  
+    setDataReady(isValid);
+  }, [financialData]);
 
   const sendMessage = async (text: string) => {
-    if (!text.trim() || !user?.id || !financialData) return;
+    if (!text.trim() || !user?.id) {
+      setError('Please enter a message and ensure you are logged in');
+      return;
+    }
+  
+    if (dataLoading) {
+      setError('Still loading your financial data. Please wait...');
+      return;
+    }
+  
+    if (!dataReady) {
+      setError('Your financial data is not completely loaded. Please try again in a moment.');
+      return;
+    }
+  
+    if (!financialData) {
+      setError('Unable to access your financial information. Please refresh the page.');
+      return;
+    }
+  
+    setIsLoading(true);
+    setError(null);
+  
+    // Validate specific data points before formatting
+    if (
+      typeof financialData.income !== 'number' ||
+      !Array.isArray(financialData.expenditure) ||
+      typeof financialData.assets !== 'number' ||
+      typeof financialData.liabilities !== 'number'
+    ) {
+      setError('Some required financial information is missing. Please complete your profile.');
+      setIsLoading(false);
+      return;
+    }
     
     setIsLoading(true);
     setError(null);
@@ -72,6 +125,14 @@ export default function Chat() {
     
     try {
 
+      console.log('Financial data validation passed:', {
+        hasIncome: Boolean(financialData.income),
+        expenditureCount: financialData.expenditure.length,
+        hasAssets: Boolean(financialData.assets),
+        hasLiabilities: Boolean(financialData.liabilities),
+        goalsCount: financialData.goals?.length || 0
+      });
+
       const response = await fetch('/.netlify/functions/chatbot', {
         method: 'POST',
         headers: { 
@@ -113,6 +174,19 @@ export default function Chat() {
 
   return (
     <div className="max-w-2xl mx-auto p-4">
+      
+      {dataLoading && (
+      <div className="mb-4 p-3 bg-blue-100 border border-blue-400 text-blue-700 rounded">
+        Loading your financial data...
+      </div>
+    )}
+
+    {!dataReady && !dataLoading && (
+      <div className="mb-4 p-3 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded">
+        Financial data not fully loaded. Some features may be limited.
+      </div>
+    )}
+
       {error && (
         <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
           {error}

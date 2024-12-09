@@ -33,7 +33,7 @@
     "start": "react-scripts start",
     "build": "npm run build:app && npm run build:functions",
     "build:app": "react-scripts build",
-    "build:functions": "tsc -p netlify/functions/tsconfig.functions.json --listFiles",
+    "build:functions": "tsc -p netlify/functions/tsconfig.functions.json",
 
     "test": "react-scripts test",
     "eject": "react-scripts eject",
