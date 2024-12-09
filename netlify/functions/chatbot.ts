@@ -28,7 +28,7 @@ export const handler: Handler = async (event: HandlerEvent) => {
   try {
     const { userId, message, financialData, messageHistory = [] } = JSON.parse(event.body || '{}');
 
-    if (!userId || !message) {
+    if (!userId || !message || !financialData) {
       return {
         statusCode: 400,
         body: JSON.stringify({ error: 'Missing userId or message' })
@@ -84,6 +84,11 @@ ${financialData.goals.map((goal: Goal) =>
 
     const financialSummary = createFinancialSummary
 
+
+    console.log('Sending the following data to OpenAI API:');
+    console.log('Summary:', financialSummary);
+    console.log('User Message:', message);
+
           const completion = await openai.chat.completions.create({
           model: "gpt-3.5-turbo",
           messages: [
@@ -118,9 +123,9 @@ ${financialData.goals.map((goal: Goal) =>
             error: 'Server error',
             details: error instanceof Error ? error.message : 'Unknown error'
           })
-          };
-          }
-          };
+        };
+      }
+    };
 
 
 
