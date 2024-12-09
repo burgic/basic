@@ -284,7 +284,7 @@ const fetchFinancialData = async (userId: string) => {
           temperature: 0.7,
           max_tokens: 1000,
         });
-        console.log('OpenAI API response:', completion);
+            console.log('OpenAI API response:', completion);
         } catch (error) {
             console.error('Error calling OpenAI API:', error);
             // Handle the error appropriately, e.g., set a default response or return an error message
