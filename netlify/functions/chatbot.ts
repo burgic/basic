@@ -1,3 +1,137 @@
+import { Handler, HandlerEvent } from '@netlify/functions';
+import OpenAI from 'openai';
+import { createClient } from '@supabase/supabase-js';
+
+interface FinancialMetrics {
+  totalIncome: number;
+  totalExpenses: number;
+  totalAssets: number;
+  totalLiabilities: number;
+  netWorth: number;
+}
+
+interface RequestBody {
+  userId: string;
+  message: string;
+}
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
+
+const supabase = createClient(
+  process.env.REACT_APP_SUPABASE_DATABASE_URL!,
+  process.env.REACT_APP_SUPABASE_ANON_KEY!
+);
+
+export const handler: Handler = async (event: HandlerEvent) => {
+  if (event.httpMethod !== 'POST') {
+    return {
+      statusCode: 405,
+      body: JSON.stringify({ error: 'Method not allowed' })
+    };
+  }
+
+  try {
+    const { userId, message } = JSON.parse(event.body || '{}') as RequestBody;
+
+    if (!userId || !message) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Missing userId or message' })
+      };
+    }
+
+    // Fetch user's profile and financial data
+    const [profileResult, goalsResult, incomesResult, expendituresResult, assetsResult, liabilitiesResult] = 
+      await Promise.all([
+        supabase.from('profiles').select('*').eq('id', userId).single(),
+        supabase.from('goals').select('*').eq('client_id', userId),
+        supabase.from('incomes').select('*').eq('client_id', userId),
+        supabase.from('expenditures').select('*').eq('client_id', userId),
+        supabase.from('assets').select('*').eq('client_id', userId),
+        supabase.from('liabilities').select('*').eq('client_id', userId)
+      ]);
+
+    if (profileResult.error) {
+      throw new Error(`Error fetching profile: ${profileResult.error.message}`);
+    }
+
+    const userProfile = profileResult.data;
+    const financialData = {
+      goals: goalsResult.data || [],
+      incomes: incomesResult.data || [],
+      expenditures: expendituresResult.data || [],
+      assets: assetsResult.data || [],
+      liabilities: liabilitiesResult.data || []
+    };
+
+    const metrics: FinancialMetrics = {
+      totalIncome: financialData.incomes.reduce((sum, income) => sum + Number(income.amount), 0),
+      totalExpenses: financialData.expenditures.reduce((sum, exp) => sum + Number(exp.amount), 0),
+      totalAssets: financialData.assets.reduce((sum, asset) => sum + Number(asset.value), 0),
+      totalLiabilities: financialData.liabilities.reduce((sum, liability) => sum + Number(liability.amount), 0),
+      netWorth: 0
+    };
+    
+    metrics.netWorth = metrics.totalAssets - metrics.totalLiabilities;
+
+    const userContext = `
+      User Profile: ${JSON.stringify(userProfile)}
+      Financial Overview:
+      - Goals: ${financialData.goals.length} financial goals set
+      - Total Monthly Income: £${metrics.totalIncome}
+      - Total Monthly Expenses: £${metrics.totalExpenses}
+      - Net Worth: £${metrics.netWorth}
+      - Total Assets: £${metrics.totalAssets}
+      - Total Liabilities: £${metrics.totalLiabilities}
+
+      Detailed Goals:
+      ${financialData.goals.map(goal => 
+        `- ${goal.goal}: £${goal.target_amount} in ${goal.time_horizon} years`
+      ).join('\n')}
+    `;
+
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-3.5-turbo',
+      messages: [
+        {
+          role: 'system',
+          content: `You are a financial advisor assistant. Your role is to provide helpful financial guidance based on the user's current financial situation. Here's the context about the user:\n${userContext}`
+        },
+        { role: 'user', content: message }
+      ]
+    });
+
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'POST'
+      },
+      body: JSON.stringify({
+        response: completion.choices[0].message.content,
+        userProfile,
+        financialData,
+        metrics
+      })
+    };
+
+  } catch (error) {
+    console.error('Error:', error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      })
+    };
+  }
+};
+
+/*
 // netlify/functions/chatbot.ts
 
 import { Handler, HandlerEvent } from '@netlify/functions';
@@ -81,14 +215,7 @@ const createFinancialSummary = (data: FinancialData): string => {
     sum + (Number(liability.amount) || 0), 0);
   
   const netWorth = totalAssets - totalLiabilities;
-  /*
-  const totalIncome = data.incomes.reduce((sum, inc) => sum + inc.amount, 0);
-  const totalExpenditure = data.expenditures.reduce((sum, exp) => sum + exp.amount, 0);
-  const totalAssets = data.assets.reduce((sum, asset) => sum + asset.value, 0);
-  const totalLiabilities = data.liabilities.reduce((sum, liability) => sum + liability.amount, 0);
-  const netWorth = totalAssets - totalLiabilities;
-  const monthlyIncome = totalIncome / 12;
-*/
+
     // Log the calculated values
     console.log('Calculated values:', {
       totalAnnualIncome,
@@ -352,3 +479,4 @@ Note: All monetary values are in GBP.
     }
   };
 
+*/
