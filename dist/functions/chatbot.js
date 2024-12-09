@@ -1,3 +1,4 @@
+// netlify/fucntions/chatbot.ts
 import OpenAI from 'openai';
 import { createClient } from '@supabase/supabase-js';
 const openai = new OpenAI({
@@ -12,63 +13,68 @@ export const handler = async (event) => {
         };
     }
     try {
-        const { userId, message } = JSON.parse(event.body || '{}');
+        const { userId, message, financialData, messageHistory = [] } = JSON.parse(event.body || '{}');
         if (!userId || !message) {
             return {
                 statusCode: 400,
                 body: JSON.stringify({ error: 'Missing userId or message' })
             };
         }
-        // Fetch user's profile and financial data
-        const [profileResult, goalsResult, incomesResult, expendituresResult, assetsResult, liabilitiesResult] = await Promise.all([
-            supabase.from('profiles').select('*').eq('id', userId).single(),
-            supabase.from('goals').select('*').eq('client_id', userId),
-            supabase.from('incomes').select('*').eq('client_id', userId),
-            supabase.from('expenditures').select('*').eq('client_id', userId),
-            supabase.from('assets').select('*').eq('client_id', userId),
-            supabase.from('liabilities').select('*').eq('client_id', userId)
-        ]);
-        if (profileResult.error) {
-            throw new Error(`Error fetching profile: ${profileResult.error.message}`);
-        }
-        const userProfile = profileResult.data;
-        const financialData = {
-            goals: goalsResult.data || [],
-            incomes: incomesResult.data || [],
-            expenditures: expendituresResult.data || [],
-            assets: assetsResult.data || [],
-            liabilities: liabilitiesResult.data || []
-        };
-        const metrics = {
-            totalIncome: financialData.incomes.reduce((sum, income) => sum + Number(income.amount), 0),
-            totalExpenses: financialData.expenditures.reduce((sum, exp) => sum + Number(exp.amount), 0),
-            totalAssets: financialData.assets.reduce((sum, asset) => sum + Number(asset.value), 0),
-            totalLiabilities: financialData.liabilities.reduce((sum, liability) => sum + Number(liability.amount), 0),
-            netWorth: 0
-        };
-        metrics.netWorth = metrics.totalAssets - metrics.totalLiabilities;
-        const userContext = `
-      User Profile: ${JSON.stringify(userProfile)}
-      Financial Overview:
-      - Goals: ${financialData.goals.length} financial goals set
-      - Total Monthly Income: £${metrics.totalIncome}
-      - Total Monthly Expenses: £${metrics.totalExpenses}
-      - Net Worth: £${metrics.netWorth}
-      - Total Assets: £${metrics.totalAssets}
-      - Total Liabilities: £${metrics.totalLiabilities}
-
-      Detailed Goals:
-      ${financialData.goals.map(goal => `- ${goal.goal}: £${goal.target_amount} in ${goal.time_horizon} years`).join('\n')}
+        const createFinancialSummary = (data) => {
+            const monthlyIncome = data.incomes.reduce((sum, income) => sum + income.amount, 0) / 12;
+            const totalMonthlyExpenses = data.expenditures.reduce((sum, exp) => sum + exp.amount, 0);
+            const totalAssets = data.assets.reduce((sum, asset) => sum + (Number(asset.value) || 0), 0);
+            const totalLiabilities = data.liabilities.reduce((sum, liability) => sum + (Number(liability.amount) || 0), 0);
+            const netWorth = totalAssets - totalLiabilities;
+            return `
+    Financial Overview:
+    - Annual Income: £${data.incomes.toLocaleString()}
+    - Monthly Income: £${monthlyIncome.toLocaleString()}
+    - Monthly Expenses: £${totalMonthlyExpenses.toLocaleString()}
+    - Total Assets: £${data.assets.toLocaleString()}
+    - Total Liabilities: £${data.liabilities.toLocaleString()}
+    - Net Worth: £${netWorth.toLocaleString()}
+    
+    Monthly Expenses Breakdown:
+    ${data.expenditures.map((exp) => `- ${exp.category}: £${exp.amount.toLocaleString()}`).join('\n')}
+    
+    Financial Goals:
+    ${data.goals.map((goal) => `- ${goal.goal}: Target £${goal.target_amount.toLocaleString()} in ${goal.time_horizon} years`).join('\n')}
     `;
+        };
+        /*
+        // Format financial summary
+        const summary = `
+        Financial Overview:
+        Annual Income: £${financialData.income}
+        Monthly Income: £${financialData.income / 12}
+        Assets: £${financialData.assets}
+        Liabilities: £${financialData.liabilities}
+        Net Worth: £${financialData.assets - financialData.liabilities}
+        
+        Monthly Expenses:
+        ${financialData.expenditure.map((exp: Expenditure) =>
+          `- ${exp.category}: £${exp.amount}`
+        ).join('\n')}
+        
+        Financial Goals:
+        ${financialData.goals.map((goal: Goal) =>
+          `- ${goal.goal}: £${goal.target_amount} in ${goal.time_horizon} years`
+        ).join('\n')}
+        `;
+        */
+        const financialSummary = createFinancialSummary;
         const completion = await openai.chat.completions.create({
-            model: 'gpt-3.5-turbo',
+            model: "gpt-3.5-turbo",
             messages: [
                 {
-                    role: 'system',
-                    content: `You are a financial advisor assistant. Your role is to provide helpful financial guidance based on the user's current financial situation. Here's the context about the user:\n${userContext}`
+                    role: "system",
+                    content: `You are a financial advisor assistant. Use this data to provide specific advice:\n${financialSummary}`
                 },
-                { role: 'user', content: message }
-            ]
+                { role: "user", content: message }
+            ],
+            temperature: 0.7,
+            max_tokens: 1000
         });
         return {
             statusCode: 200,
@@ -79,10 +85,7 @@ export const handler = async (event) => {
                 'Access-Control-Allow-Methods': 'POST'
             },
             body: JSON.stringify({
-                response: completion.choices[0].message.content,
-                userProfile,
-                financialData,
-                metrics
+                response: completion.choices[0].message.content
             })
         };
     }
@@ -91,7 +94,7 @@ export const handler = async (event) => {
         return {
             statusCode: 500,
             body: JSON.stringify({
-                error: 'Internal server error',
+                error: 'Server error',
                 details: error instanceof Error ? error.message : 'Unknown error'
             })
         };

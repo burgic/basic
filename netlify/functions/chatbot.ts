@@ -3,7 +3,7 @@
 import { Handler, HandlerEvent } from '@netlify/functions';
 import OpenAI from 'openai';
 import { createClient } from '@supabase/supabase-js';
-import { Goal, Expenditure } from './types/financial';
+import { Goal, Expenditure, FinancialData, Income, Asset, Liability } from './types/financial';
 
 
 const openai = new OpenAI({
@@ -15,6 +15,8 @@ const supabase = createClient(
   process.env.REACT_APP_SUPABASE_ANON_KEY!
 );
 
+
+
 export const handler: Handler = async (event: HandlerEvent) => {
   if (event.httpMethod !== 'POST') {
     return {
@@ -24,7 +26,7 @@ export const handler: Handler = async (event: HandlerEvent) => {
   }
 
   try {
-    const { userId, message, financialData } = JSON.parse(event.body || '{}');
+    const { userId, message, financialData, messageHistory = [] } = JSON.parse(event.body || '{}');
 
     if (!userId || !message) {
       return {
@@ -32,6 +34,33 @@ export const handler: Handler = async (event: HandlerEvent) => {
         body: JSON.stringify({ error: 'Missing userId or message' })
       };
     }
+
+    const createFinancialSummary = (data: FinancialData): string => {
+      const monthlyIncome = data.incomes.reduce((sum, income) => sum + income.amount, 0) / 12;
+      const totalMonthlyExpenses = data.expenditures.reduce((sum: number, exp: Expenditure) => sum + exp.amount, 0);
+      const totalAssets = data.assets.reduce((sum, asset) => sum + (Number(asset.value) || 0), 0);
+      const totalLiabilities = data.liabilities.reduce((sum, liability) => sum + (Number(liability.amount) || 0), 0);
+      const netWorth = totalAssets - totalLiabilities;
+
+      return `
+    Financial Overview:
+    - Annual Income: £${data.incomes.toLocaleString()}
+    - Monthly Income: £${monthlyIncome.toLocaleString()}
+    - Monthly Expenses: £${totalMonthlyExpenses.toLocaleString()}
+    - Total Assets: £${data.assets.toLocaleString()}
+    - Total Liabilities: £${data.liabilities.toLocaleString()}
+    - Net Worth: £${netWorth.toLocaleString()}
+    
+    Monthly Expenses Breakdown:
+    ${data.expenditures.map((exp: Expenditure) => `- ${exp.category}: £${exp.amount.toLocaleString()}`).join('\n')}
+    
+    Financial Goals:
+    ${data.goals.map((goal: Goal) => `- ${goal.goal}: Target £${goal.target_amount.toLocaleString()} in ${goal.time_horizon} years`).join('\n')}
+    `;
+    };
+    
+
+/*
 // Format financial summary
 const summary = `
 Financial Overview:
@@ -51,44 +80,47 @@ ${financialData.goals.map((goal: Goal) =>
   `- ${goal.goal}: £${goal.target_amount} in ${goal.time_horizon} years`
 ).join('\n')}
 `;
+*/
 
-const completion = await openai.chat.completions.create({
-model: "gpt-3.5-turbo",
-messages: [
-  {
-    role: "system",
-    content: `You are a financial advisor assistant. Use this data to provide specific advice:\n${summary}`
-  },
-  { role: "user", content: message }
-],
-temperature: 0.7,
-max_tokens: 1000
-});
+    const financialSummary = createFinancialSummary
 
-return {
-statusCode: 200,
-headers: {
-  'Content-Type': 'application/json',
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type',
-  'Access-Control-Allow-Methods': 'POST'
-},
-body: JSON.stringify({
-  response: completion.choices[0].message.content
-})
-};
+          const completion = await openai.chat.completions.create({
+          model: "gpt-3.5-turbo",
+          messages: [
+            {
+              role: "system",
+              content: `You are a financial advisor assistant. Use this data to provide specific advice:\n${financialSummary}`
+            },
+            { role: "user", content: message }
+          ],
+          temperature: 0.7,
+          max_tokens: 1000
+          });
 
-} catch (error) {
-console.error('Error:', error);
-return {
-statusCode: 500,
-body: JSON.stringify({ 
-  error: 'Server error',
-  details: error instanceof Error ? error.message : 'Unknown error'
-})
-};
-}
-};
+          return {
+          statusCode: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Headers': 'Content-Type',
+            'Access-Control-Allow-Methods': 'POST'
+          },
+          body: JSON.stringify({
+            response: completion.choices[0].message.content
+          })
+          };
+
+          } catch (error) {
+          console.error('Error:', error);
+          return {
+          statusCode: 500,
+          body: JSON.stringify({ 
+            error: 'Server error',
+            details: error instanceof Error ? error.message : 'Unknown error'
+          })
+          };
+          }
+          };
 
 
 
