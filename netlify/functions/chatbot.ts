@@ -168,6 +168,20 @@ const fetchFinancialData = async (userId: string) => {
           messageHistory = parsedMessageHistory; // Assign parsed message history
           clientFinancialData = financialData;
 
+          // Log each piece of data separately
+            console.log('Financial Data Received:', {
+              message,
+              userId,
+              financialDataPresent: !!financialData,
+              financialDataContents: financialData ? {
+                incomes: financialData.incomes?.length,
+                expenditures: financialData.expenditures?.length,
+                assets: financialData.assets?.length,
+                liabilities: financialData.liabilities?.length,
+                goals: financialData.goals?.length,
+              } : null
+            });
+
           console.log('Received financial data:', JSON.stringify(clientFinancialData, null, 2));
         } catch (error) {
           console.error('Error parsing event.body:', error);
@@ -206,13 +220,13 @@ const fetchFinancialData = async (userId: string) => {
           const financialSummary = createFinancialSummary(clientFinancialData);
           console.log('Generated financial summary:', financialSummary);
       
-          const systemPrompt = createSystemPrompt(financialSummary);
+          // const systemPrompt = createSystemPrompt(financialSummary);
       
           // Interact with OpenAI
           const completion = await openai.chat.completions.create({
             model: 'gpt-3.5-turbo-16k',
             messages: [
-              { role: 'system', content: systemPrompt },
+              { role: 'system', content: createSystemPrompt(financialSummary) },
               ...messageHistory,
               { role: 'user', content: message },
             ],
@@ -231,7 +245,12 @@ const fetchFinancialData = async (userId: string) => {
             body: JSON.stringify({
               success: true,
               response: completion.choices[0].message.content,
-              debug: { hasData: dataValidation },
+              debug: { hasIncomes: clientFinancialData.incomes?.length > 0,
+                incomesCount: clientFinancialData.incomes?.length,
+                expendituresCount: clientFinancialData.expenditures?.length,
+                assetsCount: clientFinancialData.assets?.length,
+                liabilitiesCount: clientFinancialData.liabilities?.length,
+                goalsCount: clientFinancialData.goals?.length },
             }),
           };
         } catch (error) {
