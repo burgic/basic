@@ -14,6 +14,7 @@ const openai = new openai_1.default({
 });
 const supabase = (0, supabase_js_1.createClient)(process.env.REACT_APP_SUPABASE_DATABASE_URL, process.env.REACT_APP_SUPABASE_ANON_KEY);
 const handler = async (event) => {
+  console.log('Received event:', JSON.stringify(event, null, 2));
     if (event.httpMethod !== 'POST') {
         return {
             statusCode: 405,
@@ -22,6 +23,8 @@ const handler = async (event) => {
     }
     try {
         const { userId, message } = JSON.parse(event.body || '{}');
+        console.log('Parsed userId:', userId);
+        console.log('Parsed message:', message);
         if (!userId || !message) {
             return {
                 statusCode: 400,
