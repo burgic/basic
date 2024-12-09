@@ -3,8 +3,9 @@
 import { Handler } from '@netlify/functions';
 import OpenAI from 'openai';
 import { createClient } from '@supabase/supabase-js';
-import { FinancialData } from './types/financial';
+import { FinancialData, Income, Expenditure, Asset, Liability, Goal } from './types/financial';
 import { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
+
 
 
 const openai = new OpenAI({
@@ -15,27 +16,29 @@ const supabase = createClient(
   process.env.REACT_APP_SUPABASE_DATABASE_URL!,
   process.env.REACT_APP_SUPABASE_ANON_KEY!
 );
-
-interface RequestBody {
-  message: string;
-  userId: string;
-  financialData: {
+/*
+interface RequestFinancialData {
+  
     incomes: Array<{
+      client_id: string;
       type: string;
       amount: number;
       frequency: string;
     }>;
     expenditures: Array<{
+      client_id: string;
       category: string;
       amount: number;
       frequency: string;
     }>;
     assets: Array<{
+      client_id: string;
       type: string;
       value: number;
       description: string;
     }>;
     liabilities: Array<{
+      client_id: string;
       type: string;
       amount: number;
       interest_rate: number;
@@ -48,6 +51,11 @@ interface RequestBody {
       time_horizon: number;
     }>;
   };
+*/
+interface RequestBody {
+  message: string;
+  userId: string;
+  financialData: FinancialData;
   messageHistory?: ChatCompletionMessageParam[];
 }
 
@@ -156,8 +164,6 @@ const fetchFinancialData = async (userId: string) => {
       if (event.httpMethod !== 'POST') {
         return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
       }
-
-      
     
       try {
         console.log('Raw event body:', event.body);
@@ -167,19 +173,6 @@ const fetchFinancialData = async (userId: string) => {
         
         console.log('Parsed financial data:', JSON.stringify(clientFinancialData, null, 2));
 
-        console.log('Received request:', {
-          message,
-          userId,
-          financialData: {
-            hasIncomes: clientFinancialData?.incomes?.length > 0,
-            hasExpenditures: clientFinancialData?.expenditures?.length > 0,
-            hasAssets: clientFinancialData?.assets?.length > 0,
-            hasLiabilities: clientFinancialData?.liabilities?.length > 0,
-            hasGoals: clientFinancialData?.goals?.length > 0,
-          }
-        });
-
-
         if (!message || !userId || !clientFinancialData) {
           return {
             statusCode: 400,
@@ -188,9 +181,10 @@ const fetchFinancialData = async (userId: string) => {
         }
     
         // Fetch financial data
-        const financialData = await fetchFinancialData(userId);
-        const financialSummary = createFinancialSummary(financialData);
+
+        const financialSummary = createFinancialSummary(clientFinancialData);
         console.log('Generated financial summary:', financialSummary);
+
         const systemPrompt = createSystemPrompt(financialSummary);
         console.log('System prompt:', systemPrompt);
     

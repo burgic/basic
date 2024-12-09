@@ -96,17 +96,6 @@ export const handler = async (event) => {
         console.log('Raw event body:', event.body);
         const { message, userId, financialData: clientFinancialData, messageHistory = [] } = JSON.parse(event.body || '{}');
         console.log('Parsed financial data:', JSON.stringify(clientFinancialData, null, 2));
-        console.log('Received request:', {
-            message,
-            userId,
-            financialData: {
-                hasIncomes: clientFinancialData?.incomes?.length > 0,
-                hasExpenditures: clientFinancialData?.expenditures?.length > 0,
-                hasAssets: clientFinancialData?.assets?.length > 0,
-                hasLiabilities: clientFinancialData?.liabilities?.length > 0,
-                hasGoals: clientFinancialData?.goals?.length > 0,
-            }
-        });
         if (!message || !userId || !clientFinancialData) {
             return {
                 statusCode: 400,
@@ -114,8 +103,7 @@ export const handler = async (event) => {
             };
         }
         // Fetch financial data
-        const financialData = await fetchFinancialData(userId);
-        const financialSummary = createFinancialSummary(financialData);
+        const financialSummary = createFinancialSummary(clientFinancialData);
         console.log('Generated financial summary:', financialSummary);
         const systemPrompt = createSystemPrompt(financialSummary);
         console.log('System prompt:', systemPrompt);

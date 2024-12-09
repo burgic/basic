@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import { useFinancialData } from '../../hooks/useFinancialData';
+import { Income, Expenditure, Asset, Liability, Goal } from '../../../netlify/functions/types/financial';
 import { supabase } from '../../services/supabaseClient';
 
 interface ChatMessage {
@@ -33,7 +34,7 @@ export default function Chat() {
         amount: financialData.income,
         frequency: 'Annual' 
       }],
-      expenditures: financialData.expenditure.map(exp => ({
+      expenditures: financialData.expenditure.map((exp, index) => ({
         client_id: user.id,
         category: exp.category,
         amount: exp.amount,
@@ -70,22 +71,21 @@ export default function Chat() {
     }));
     
     try {
-      const requestBody = { 
-        message: text,
-        messageHistory,
-        userId: user.id,
-        financialData: formattedFinancialData
-      };
-
-      console.log('Full request body:', JSON.stringify(requestBody, null, 2));
 
       const response = await fetch('/.netlify/functions/chatbot', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify({ 
+          message: text,
+          messageHistory,
+          userId: user.id,
+          financialData: formattedFinancialData
+        })
       });
+
+      console.log('Full request body:', JSON.stringify(message, null, 2));
 
       const data = await response.json();
       console.log('Response from server:', data);

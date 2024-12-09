@@ -65,30 +65,35 @@ export interface FormFields {
   export type FormEntry = GoalEntry | AssetEntry | LiabilityEntry | ExpenditureEntry;
   
   export interface Income {
+    client_id: string;
     type: string; // e.g., 'Salary', 'Rental Income'
     amount: number;
     frequency: string; // e.g., 'Monthly', 'Yearly'
   }
   
   export interface Expenditure {
+    client_id: string;
     category: string; // e.g., 'Rent/Mortgage', 'Utilities'
     amount: number;
     frequency: string; // e.g., 'Monthly', 'Yearly'
   }
   
   export interface Asset {
+    client_id: string;
     type: string; // e.g., 'Property', 'Stocks', 'Savings'
     description: string; // Additional details about the asset
     value: number; // Current value of the asset
   }
   
   export interface Liability {
+    client_id: string;
     type: string; // e.g., 'Mortgage', 'Credit Card', 'Student Loan'
     amount: number; // Outstanding balance
     interest_rate?: number; // Interest rate (if applicable)
   }
   
   export interface Goal {
+    client_id: string;
     id: string;
     goal: string; // e.g., 'Retire', 'Pay off mortgage'
     target_amount: number;
