@@ -78,12 +78,12 @@ const createFinancialSummary = (data: FinancialData): string => {
   return `
 FINANCIAL OVERVIEW
 =================
-Monthly Income: £${totalIncome.toFixed(2)}
-Monthly Expenses: £${totalExpenditure.toFixed(2)}
-Monthly Cash Flow: £${(totalIncome - totalExpenditure).toFixed(2)}
-Total Assets: £${totalAssets.toFixed(2)}
-Total Liabilities: £${totalLiabilities.toFixed(2)}
-Net Worth: £${netWorth.toFixed(2)}
+Monthly Income: £${totalIncome.toLocaleString()}
+Monthly Expenses: £${totalExpenditure.toLocaleString()}
+Monthly Cash Flow: £${(totalIncome - totalExpenditure).toLocaleString()}
+Total Assets: £${totalAssets.toLocaleString()}
+Total Liabilities: £${totalLiabilities.toLocaleString()}
+Net Worth: £${netWorth.toLocaleString()}
 
 DETAILED BREAKDOWN
 =================
@@ -101,7 +101,9 @@ ${data.liabilities.map((liability) => `- ${liability.type}: £${liability.amount
 
 Financial Goals:
 ${data.goals.map((goal) => `- ${goal.goal}: Target £${goal.target_amount} in ${goal.time_horizon} years`).join('\n') || 'No goals set'}
-`;
+
+Note: All monetary values are in GBP.`;
+
 
 };
 
@@ -159,6 +161,7 @@ const fetchFinancialData = async (userId: string) => {
     
       try {
         console.log('Raw event body:', event.body);
+        
 
         const { message, userId, financialData: clientFinancialData, messageHistory = [] } = JSON.parse(event.body || '{}') as RequestBody;
         

@@ -6,12 +6,21 @@ const openai = new OpenAI({
 });
 const supabase = createClient(process.env.REACT_APP_SUPABASE_DATABASE_URL, process.env.REACT_APP_SUPABASE_ANON_KEY);
 const createFinancialSummary = (data) => {
+    console.log('Generating summary for data:', JSON.stringify(data, null, 2));
     const totalIncome = data.incomes.reduce((sum, inc) => sum + inc.amount, 0);
     const totalExpenditure = data.expenditures.reduce((sum, exp) => sum + exp.amount, 0);
     const totalAssets = data.assets.reduce((sum, asset) => sum + asset.value, 0);
     const totalLiabilities = data.liabilities.reduce((sum, liability) => sum + liability.amount, 0);
     const netWorth = totalAssets - totalLiabilities;
     const monthlyIncome = totalIncome / 12;
+    // Log the calculated values
+    console.log('Calculated values:', {
+        totalIncome,
+        totalExpenditure,
+        totalAssets,
+        totalLiabilities,
+        netWorth
+    });
     if (!data.incomes || !data.incomes.length) {
         console.log('No income data available');
         return 'No income data available';
@@ -19,12 +28,12 @@ const createFinancialSummary = (data) => {
     return `
 FINANCIAL OVERVIEW
 =================
-Monthly Income: £${totalIncome.toFixed(2)}
-Monthly Expenses: £${totalExpenditure.toFixed(2)}
-Monthly Cash Flow: £${(totalIncome - totalExpenditure).toFixed(2)}
-Total Assets: £${totalAssets.toFixed(2)}
-Total Liabilities: £${totalLiabilities.toFixed(2)}
-Net Worth: £${netWorth.toFixed(2)}
+Monthly Income: £${totalIncome.toLocaleString()}
+Monthly Expenses: £${totalExpenditure.toLocaleString()}
+Monthly Cash Flow: £${(totalIncome - totalExpenditure).toLocaleString()}
+Total Assets: £${totalAssets.toLocaleString()}
+Total Liabilities: £${totalLiabilities.toLocaleString()}
+Net Worth: £${netWorth.toLocaleString()}
 
 DETAILED BREAKDOWN
 =================
@@ -42,7 +51,8 @@ ${data.liabilities.map((liability) => `- ${liability.type}: £${liability.amount
 
 Financial Goals:
 ${data.goals.map((goal) => `- ${goal.goal}: Target £${goal.target_amount} in ${goal.time_horizon} years`).join('\n') || 'No goals set'}
-`;
+
+Note: All monetary values are in GBP.`;
 };
 const fetchFinancialData = async (userId) => {
     const [{ data: incomes, error: incomesError }, { data: expenditures, error: expendituresError }, { data: assets, error: assetsError }, { data: liabilities, error: liabilitiesError }, { data: goals, error: goalsError }] = await Promise.all([
