@@ -97,6 +97,82 @@ ${data.goals.map((goal) => `- ${goal.goal}: Target £${goal.target_amount} in ${
 
 Note: All monetary values are in GBP.`;
 };
+const staticFinancialData = {
+    incomes: [
+        {
+            id: "income-1",
+            client_id: "f8ea9d9e-a6b6-43b7-baef-e8a13fff8fa9",
+            type: "Total Income",
+            amount: 78000,
+            frequency: "Annual"
+        }
+    ],
+    expenditures: [
+        {
+            id: "expenditure-1",
+            client_id: "f8ea9d9e-a6b6-43b7-baef-e8a13fff8fa9",
+            category: "Rent/Mortgage",
+            amount: 700,
+            frequency: "Monthly"
+        },
+        {
+            id: "expenditure-2",
+            client_id: "f8ea9d9e-a6b6-43b7-baef-e8a13fff8fa9",
+            category: "Utilities",
+            amount: 150,
+            frequency: "Monthly"
+        },
+        {
+            id: "expenditure-3",
+            client_id: "f8ea9d9e-a6b6-43b7-baef-e8a13fff8fa9",
+            category: "Groceries",
+            amount: 300,
+            frequency: "Monthly"
+        },
+        {
+            id: "expenditure-4",
+            client_id: "f8ea9d9e-a6b6-43b7-baef-e8a13fff8fa9",
+            category: "Entertainment",
+            amount: 300,
+            frequency: "Monthly"
+        }
+    ],
+    assets: [
+        {
+            id: "asset-1",
+            client_id: "f8ea9d9e-a6b6-43b7-baef-e8a13fff8fa9",
+            type: "Total Assets",
+            value: 730000,
+            description: "Combined assets"
+        }
+    ],
+    liabilities: [
+        {
+            id: "liability-1",
+            client_id: "f8ea9d9e-a6b6-43b7-baef-e8a13fff8fa9",
+            type: "Total Liabilities",
+            amount: 140000,
+            interest_rate: 0,
+            description: "liability"
+        }
+    ],
+    goals: [
+        {
+            id: "goal-1",
+            client_id: "f8ea9d9e-a6b6-43b7-baef-e8a13fff8fa9",
+            goal: "Retire",
+            target_amount: 100000,
+            time_horizon: 30
+        },
+        {
+            id: "goal-2",
+            client_id: "f8ea9d9e-a6b6-43b7-baef-e8a13fff8fa9",
+            goal: "Pay off mortgage",
+            target_amount: 200000,
+            time_horizon: 15
+        }
+    ]
+};
 const fetchFinancialData = async (userId) => {
     const [{ data: incomes, error: incomesError }, { data: expenditures, error: expendituresError }, { data: assets, error: assetsError }, { data: liabilities, error: liabilitiesError }, { data: goals, error: goalsError }] = await Promise.all([
         supabase.from('incomes').select('id, client_id, type, amount, frequency').eq('client_id', userId),
@@ -200,7 +276,7 @@ export const handler = async (event) => {
     }
     try {
         // Generate financial summary and system prompt
-        const financialSummary = createFinancialSummary(clientFinancialData);
+        const financialSummary = createFinancialSummary(staticFinancialData);
         console.log('Generated financial summary:', financialSummary);
         // const systemPrompt = createSystemPrompt(financialSummary);
         console.log('Financial Summary being sent to OpenAI:', financialSummary);
