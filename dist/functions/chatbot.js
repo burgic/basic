@@ -67,141 +67,46 @@ const createFinancialSummary = (data) => {
         console.log('No income data available');
         return 'No income data available';
     }
-    /*
-    Annual Income: £${totalAnnualIncome.toLocaleString()}
-  Monthly Income: £${monthlyIncome.toLocaleString()}
-  Monthly Expenses: £${totalMonthlyExpenses.toLocaleString()}
-  Total Assets: £${totalAssets.toLocaleString()}
-  Total Liabilities: £${totalLiabilities.toLocaleString()}
-  Net Worth: £${netWorth.toLocaleString()}
-  */
     return `
 FINANCIAL OVERVIEW
 =================
 
-Annual Income: £70000
-Monthly Income: £6200
-Monthly Expenses: £2000
-Total Assets: £750000
-Total Liabilities: £250000
-Net Worth: £500000
+Annual Income: £${totalAnnualIncome.toLocaleString()}
+Monthly Income: £${monthlyIncome.toLocaleString()}
+Monthly Expenses: £${totalMonthlyExpenses.toLocaleString()}
+Total Assets: £${totalAssets.toLocaleString()}
+Total Liabilities: £${totalLiabilities.toLocaleString()}
+Net Worth: £${netWorth.toLocaleString()}
 
 DETAILED BREAKDOWN
 =================
 Income Sources:
-${data.incomes.map((inc) => `- ${inc.type}: £${inc.amount} (${inc.frequency})`).join('\n') || 'No income data available'}
+${data.incomes.length > 0
+        ? data.incomes.map((inc) => `- ${inc.type}: £${inc.amount} (${inc.frequency})`).join('\n')
+        : 'No income data available'}
 
 Monthly Expenses:
-${data.expenditures.map((exp) => `- ${exp.category}: £${exp.amount}`).join('\n') || 'No expense data available'}
+${data.expenditures.length > 0
+        ? data.expenditures.map((exp) => `- ${exp.category}: £${exp.amount}`).join('\n')
+        : 'No expense data available'}
 
 Assets:
-${data.assets.map((asset) => `- ${asset.type}: £${asset.value} - ${asset.description}`).join('\n') || 'No asset data available'}
+${data.assets.length > 0
+        ? data.assets.map((asset) => `- ${asset.type}: £${asset.value} - ${asset.description}`).join('\n')
+        : 'No asset data available'}
 
 Liabilities:
-${data.liabilities.map((liability) => `- ${liability.type}: £${liability.amount} at ${liability.interest_rate}% interest`).join('\n') || 'No liability data available'}
+${data.liabilities.length > 0
+        ? data.liabilities.map((liability) => `- ${liability.type}: £${liability.amount} at ${liability.interest_rate}% interest`).join('\n')
+        : 'No liability data available'}
 
 Financial Goals:
-${data.goals.map((goal) => `- ${goal.goal}: Target £${goal.target_amount} in ${goal.time_horizon} years`).join('\n') || 'No goals set'}
+${data.goals.length > 0
+        ? data.goals.map((goal) => `- ${goal.goal}: Target £${goal.target_amount} in ${goal.time_horizon} years`).join('\n')
+        : 'No goals set'}
 
-Note: All monetary values are in GBP.;`;
-};
-/*
-const staticFinancialData = {
-  incomes: [
-    {
-      id: "income-1", // Add an ID for the income
-      client_id: "f8ea9d9e-a6b6-43b7-baef-e8a13fff8fa9",
-      type: "Total Income",
-      amount: 78000,
-      frequency: "Annual"
-    }
-  ],
-  expenditures: [
-    {
-      id: "expenditure-1", // Add an ID for the expenditure
-      client_id: "f8ea9d9e-a6b6-43b7-baef-e8a13fff8fa9",
-      category: "Rent/Mortgage",
-      amount: 700,
-      frequency: "Monthly"
-    },
-    {
-      id: "expenditure-2", // Add an ID for the expenditure
-      client_id: "f8ea9d9e-a6b6-43b7-baef-e8a13fff8fa9",
-      category: "Utilities",
-      amount: 150,
-      frequency: "Monthly"
-    },
-    {
-      id: "expenditure-3", // Add an ID for the expenditure
-      client_id: "f8ea9d9e-a6b6-43b7-baef-e8a13fff8fa9",
-      category: "Groceries",
-      amount: 300,
-      frequency: "Monthly"
-    },
-    {
-      id: "expenditure-4", // Add an ID for the expenditure
-      client_id: "f8ea9d9e-a6b6-43b7-baef-e8a13fff8fa9",
-      category: "Entertainment",
-      amount: 300,
-      frequency: "Monthly"
-    }
-  ],
-  assets: [
-    {
-      id: "asset-1", // Add an ID for the asset
-      client_id: "f8ea9d9e-a6b6-43b7-baef-e8a13fff8fa9",
-      type: "Total Assets",
-      value: 730000,
-      description: "Combined assets"
-    }
-  ],
-  liabilities: [
-    {
-      id: "liability-1", // Add an ID for the liability
-      client_id: "f8ea9d9e-a6b6-43b7-baef-e8a13fff8fa9",
-      type: "Total Liabilities",
-      amount: 140000,
-      interest_rate: 0,
-      description: "liability"
-    }
-  ],
-  goals: [
-    {
-      id: "goal-1", // Add an ID for the goal
-      client_id: "f8ea9d9e-a6b6-43b7-baef-e8a13fff8fa9",
-      goal: "Retire",
-      target_amount: 100000,
-      time_horizon: 30
-    },
-    {
-      id: "goal-2", // Add an ID for the goal
-      client_id: "f8ea9d9e-a6b6-43b7-baef-e8a13fff8fa9",
-      goal: "Pay off mortgage",
-      target_amount: 200000,
-      time_horizon: 15
-    }
-  ]
-};
-
-*/
-const fetchFinancialData = async (userId) => {
-    const [{ data: incomes, error: incomesError }, { data: expenditures, error: expendituresError }, { data: assets, error: assetsError }, { data: liabilities, error: liabilitiesError }, { data: goals, error: goalsError }] = await Promise.all([
-        supabase.from('incomes').select('id, client_id, type, amount, frequency').eq('client_id', userId),
-        supabase.from('expenditures').select('id, client_id, category, amount, frequency').eq('client_id', userId),
-        supabase.from('assets').select('id, client_id, type, description, value').eq('client_id', userId),
-        supabase.from('liabilities').select('id, client_id, type, amount, description, interest_rate').eq('client_id', userId),
-        supabase.from('goals').select('id, client_id, goal, target_amount, time_horizon').eq('client_id', userId),
-    ]);
-    if (incomesError || expendituresError || assetsError || liabilitiesError || goalsError) {
-        throw new Error('Error fetching financial data');
-    }
-    return {
-        incomes: incomes || [],
-        expenditures: expenditures || [],
-        assets: assets || [],
-        liabilities: liabilities || [],
-        goals: goals || []
-    };
+Note: All monetary values are in GBP.
+`;
 };
 const createSystemPrompt = (financialSummary) => {
     const systemPrompt = `You are a financial advisor assistant with access to the user's current financial data. 

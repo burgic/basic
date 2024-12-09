@@ -119,21 +119,32 @@ Net Worth: £${netWorth.toLocaleString()}
 DETAILED BREAKDOWN
 =================
 Income Sources:
-${data.incomes.map((inc) => `- ${inc.type}: £${inc.amount} (${inc.frequency})`).join('\n') || 'No income data available'}
+${data.incomes.length > 0 
+  ? data.incomes.map((inc) => `- ${inc.type}: £${inc.amount} (${inc.frequency})`).join('\n') 
+  : 'No income data available'}
 
 Monthly Expenses:
-${data.expenditures.map((exp) => `- ${exp.category}: £${exp.amount}`).join('\n') || 'No expense data available'}
+${data.expenditures.length > 0 
+  ? data.expenditures.map((exp) => `- ${exp.category}: £${exp.amount}`).join('\n') 
+  : 'No expense data available'}
 
 Assets:
-${data.assets.map((asset) => `- ${asset.type}: £${asset.value} - ${asset.description}`).join('\n') || 'No asset data available'}
+${data.assets.length > 0 
+  ? data.assets.map((asset) => `- ${asset.type}: £${asset.value} - ${asset.description}`).join('\n') 
+  : 'No asset data available'}
 
 Liabilities:
-${data.liabilities.map((liability) => `- ${liability.type}: £${liability.amount} at ${liability.interest_rate}% interest`).join('\n') || 'No liability data available'}
+${data.liabilities.length > 0 
+  ? data.liabilities.map((liability) => `- ${liability.type}: £${liability.amount} at ${liability.interest_rate}% interest`).join('\n') 
+  : 'No liability data available'}
 
 Financial Goals:
-${data.goals.map((goal) => `- ${goal.goal}: Target £${goal.target_amount} in ${goal.time_horizon} years`).join('\n') || 'No goals set'}
+${data.goals.length > 0 
+  ? data.goals.map((goal) => `- ${goal.goal}: Target £${goal.target_amount} in ${goal.time_horizon} years`).join('\n') 
+  : 'No goals set'}
 
-Note: All monetary values are in GBP.;`
+Note: All monetary values are in GBP.
+`;
 
 
 };
