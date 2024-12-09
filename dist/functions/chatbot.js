@@ -39,25 +39,29 @@ const createFinancialSummary = (data) => {
         liabilitiesCount: processed.liabilities.length,
         goalsCount: processed.goals.length
     });
+    // Safely calculate totals
+    const totalAnnualIncome = data.incomes.reduce((sum, inc) => sum + (Number(inc.amount) || 0), 0);
+    const monthlyIncome = totalAnnualIncome / 12;
+    const totalMonthlyExpenses = data.expenditures.reduce((sum, exp) => sum + (Number(exp.amount) || 0), 0);
+    const totalAssets = data.assets.reduce((sum, asset) => sum + (Number(asset.value) || 0), 0);
+    const totalLiabilities = data.liabilities.reduce((sum, liability) => sum + (Number(liability.amount) || 0), 0);
+    const netWorth = totalAssets - totalLiabilities;
+    /*
     const totalIncome = data.incomes.reduce((sum, inc) => sum + inc.amount, 0);
     const totalExpenditure = data.expenditures.reduce((sum, exp) => sum + exp.amount, 0);
     const totalAssets = data.assets.reduce((sum, asset) => sum + asset.value, 0);
     const totalLiabilities = data.liabilities.reduce((sum, liability) => sum + liability.amount, 0);
     const netWorth = totalAssets - totalLiabilities;
     const monthlyIncome = totalIncome / 12;
+  */
     // Log the calculated values
     console.log('Calculated values:', {
-        totalIncome,
-        totalExpenditure,
+        totalAnnualIncome,
+        monthlyIncome,
+        totalMonthlyExpenses,
         totalAssets,
         totalLiabilities,
-        itemCounts: {
-            incomes: incomes.length,
-            expenditures: expenditures.length,
-            assets: assets.length,
-            liabilities: liabilities.length,
-            goals: goals.length
-        }
+        netWorth
     });
     if (!data.incomes || !data.incomes.length) {
         console.log('No income data available');
@@ -66,9 +70,10 @@ const createFinancialSummary = (data) => {
     return `
 FINANCIAL OVERVIEW
 =================
-Monthly Income: £${totalIncome.toLocaleString()}
-Monthly Expenses: £${totalExpenditure.toLocaleString()}
-Monthly Cash Flow: £${(totalIncome - totalExpenditure).toLocaleString()}
+
+Annual Income: £${totalAnnualIncome.toLocaleString()}
+Monthly Income: £${monthlyIncome.toLocaleString()}
+Monthly Expenses: £${totalMonthlyExpenses.toLocaleString()}
 Total Assets: £${totalAssets.toLocaleString()}
 Total Liabilities: £${totalLiabilities.toLocaleString()}
 Net Worth: £${netWorth.toLocaleString()}
@@ -120,11 +125,11 @@ const createSystemPrompt = (financialSummary) => {
       When responding:
       1. Reference specific numbers from their financial data
       2. Make recommendations based on their actual situation
-      3. Provide practical, actionable advice
-      4. Explain how their current finances align with their goals
-      5. Consider their complete financial picture in your analysis
-      
-      Keep responses clear, practical, and data-driven.`;
+      3. Consider their income, expenses, assets, liabilities, and stated goals
+      4. Provide practical, actionable advice
+      5. Keep responses clear and data-driven
+
+      Please provide specific, actionable advice based on these exact numbers and circumstances.`;
 };
 export const handler = async (event) => {
     // Ensure the method is POST
