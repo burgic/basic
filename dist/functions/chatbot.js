@@ -207,16 +207,31 @@ export const handler = async (event) => {
         console.log('Message history:', messageHistory);
         console.log('User message:', message);
         // Interact with OpenAI
-        const completion = await openai.chat.completions.create({
-            model: 'gpt-3.5-turbo-16k',
-            messages: [
-                { role: 'system', content: createSystemPrompt(financialSummary) },
-                ...messageHistory,
-                { role: 'user', content: message },
-            ],
-            temperature: 0.7,
-            max_tokens: 1000,
-        });
+        let completion;
+        try {
+            completion = await openai.chat.completions.create({
+                model: 'gpt-3.5-turbo-16k',
+                messages: [
+                    { role: 'system', content: createSystemPrompt(financialSummary) },
+                    ...messageHistory,
+                    { role: 'user', content: message },
+                ],
+                temperature: 0.7,
+                max_tokens: 1000,
+            });
+            console.log('OpenAI API response:', completion);
+        }
+        catch (error) {
+            console.error('Error calling OpenAI API:', error);
+            // Handle the error appropriately, e.g., set a default response or return an error message
+            return {
+                statusCode: 500,
+                body: JSON.stringify({
+                    error: 'Failed to get a response from OpenAI',
+                    details: error instanceof Error ? error.message : 'Unknown error',
+                }),
+            };
+        }
         return {
             statusCode: 200,
             headers: {
