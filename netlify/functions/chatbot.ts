@@ -52,12 +52,23 @@ interface RequestBody {
 }
 
 const createFinancialSummary = (data: FinancialData): string => {
+  console.log('Generating summary for data:', JSON.stringify(data, null, 2));
+
   const totalIncome = data.incomes.reduce((sum, inc) => sum + inc.amount, 0);
   const totalExpenditure = data.expenditures.reduce((sum, exp) => sum + exp.amount, 0);
   const totalAssets = data.assets.reduce((sum, asset) => sum + asset.value, 0);
   const totalLiabilities = data.liabilities.reduce((sum, liability) => sum + liability.amount, 0);
   const netWorth = totalAssets - totalLiabilities;
   const monthlyIncome = totalIncome / 12;
+
+    // Log the calculated values
+    console.log('Calculated values:', {
+      totalIncome,
+      totalExpenditure,
+      totalAssets,
+      totalLiabilities,
+      netWorth
+    });
 
   if (!data.incomes || !data.incomes.length) {
     console.log('No income data available');
