@@ -266,7 +266,9 @@ const fetchFinancialData = async (userId: string) => {
       console.log('Generated financial summary:', financialSummary);
   
       // const systemPrompt = createSystemPrompt(financialSummary);
-  
+      console.log('Financial Summary being sent to OpenAI:', financialSummary);
+      console.log('Message history:', messageHistory);
+      console.log('User message:', message);
       // Interact with OpenAI
       const completion = await openai.chat.completions.create({
         model: 'gpt-3.5-turbo-16k',
