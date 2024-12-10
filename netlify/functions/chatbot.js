@@ -45,8 +45,10 @@ const createFinancialSummary = (data) => {
     Financial Goals:
     ${data.goals.map((goal) => `- ${goal.goal}: Target £${goal.target_amount} in ${goal.time_horizon} years`).join('\n') || 'No goals set'}
     `;
+
   };
   
+  console.log(createFinancialSummary)
 
 const handler = async (event) => {
     console.log('Function triggered', {
