@@ -38,7 +38,8 @@ const createFinancialSummary = (data) => {
     return `
     FINANCIAL OVERVIEW
     =================
-    Monthly Income: £${totalIncome.toFixed(2)}
+    Monthly Income: £${monthlyIncome.toFixed(2)}
+    Annual Income: £${annualIncome.toFixed(2)}
     Monthly Expenses: £${totalExpenditure.toFixed(2)}
     Monthly Cash Flow: £${(totalIncome - totalExpenditure).toFixed(2)}
     Total Assets: £${totalAssets.toFixed(2)}

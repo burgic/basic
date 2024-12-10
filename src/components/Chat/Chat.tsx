@@ -127,7 +127,7 @@ export default function Chat() {
     }))
   };
 
-    console.log('Sending payload:', JSON.stringify(payload, null, 2));
+    // console.log('Sending payload:', JSON.stringify(payload, null, 2));
     console.log('Raw financial data:', financialData);
     console.log('Formatted data being sent:', formattedFinancialData);
   
