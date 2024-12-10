@@ -1,32 +1,26 @@
-import { Handler } from '@netlify/functions'
-import OpenAI from 'openai'
+import { HandlerEvent } from "@netlify/functions";
 
-interface FinancialData {
-  incomes: Array<{ type: string; amount: number; frequency: string }>;
-  expenditures: Array<{ category: string; amount: number; frequency: string }>;
-  assets: Array<{ type: string; value: number }>;
-  liabilities: Array<{ type: string; amount: number }>;
-  goals: Array<{ goal: string; target_amount: number; time_horizon: number }>;
-}
+const { Handler } = require('@netlify/functions');
+const OpenAI = require('openai');
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
-})
+});
 
-export const handler: Handler = async (event) => {
+const handler = async (event: HandlerEvent) => {
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) }
+    return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
 
   try {
-    const { message, financialData } = JSON.parse(event.body || '{}') as { message: string; financialData: FinancialData }
+    const { message, financialData } = JSON.parse(event.body || '{}');
     
     const summary = `
       Annual Income: £${financialData.incomes[0].amount}
-      Monthly Expenses: £${financialData.expenditures.reduce((sum: number, e: { amount: number }) => sum + e.amount, 0)}
+      Monthly Expenses: £${financialData.expenditures.reduce((sum, e) => sum + e.amount, 0)}
       Total Assets: £${financialData.assets[0].value}
       Total Liabilities: £${financialData.liabilities[0].amount}
-    `
+    `;
 
     const completion = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
@@ -34,7 +28,7 @@ export const handler: Handler = async (event) => {
         { role: "system", content: `You are a financial advisor. Client data:\n${summary}` },
         { role: "user", content: message }
       ]
-    })
+    });
 
     return {
       statusCode: 200,
@@ -43,14 +37,16 @@ export const handler: Handler = async (event) => {
         'Access-Control-Allow-Origin': '*'
       },
       body: JSON.stringify({ response: completion.choices[0].message.content })
-    }
+    };
   } catch (error) {
     return {
-      statusCode: 500, 
+      statusCode: 500,
       body: JSON.stringify({ error: String(error) })
-    }
+    };
   }
-}
+};
+
+module.exports = { handler };
 
 /*
 // netlify/functions/chatbot.ts
