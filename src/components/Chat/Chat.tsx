@@ -36,6 +36,8 @@ export default function Chat() {
       financialData.liabilities !== undefined &&
       Array.isArray(financialData.goals)
     );
+
+    console.log(financialData)
   
     setDataReady(isValid);
   }, [financialData]);
