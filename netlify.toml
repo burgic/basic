@@ -1,5 +1,5 @@
 [build]
-  command = "npm install && npm run build"
+  command = "CI=false npm install && npm run build"
   publish = "build" # For CRA
   functions = ".netlify/functions-build"
 

@@ -1,8 +1,9 @@
-import OpenAI from 'openai';
+const { Handler } = require('@netlify/functions');
+const OpenAI = require('openai');
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY
 });
-export const handler = async (event) => {
+const handler = async (event) => {
     if (event.httpMethod !== 'POST') {
         return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
     }
@@ -37,6 +38,8 @@ export const handler = async (event) => {
         };
     }
 };
+module.exports = { handler };
+export {};
 /*
 // netlify/functions/chatbot.ts
 
