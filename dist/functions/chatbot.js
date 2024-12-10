@@ -4,6 +4,11 @@ const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY
 });
 const handler = async (event) => {
+    console.log('Function triggered', {
+        method: event.httpMethod,
+        body: event.body,
+        headers: event.headers,
+    });
     if (event.httpMethod !== 'POST') {
         return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
     }
