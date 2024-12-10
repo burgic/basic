@@ -85,9 +85,9 @@ const systemMessage = (financialData) => {
     const annualIncome = calculateAnnualIncome(financialData.incomes);
     const monthlyExpenditure = calculateMonthlyExpenditure(financialData.incomes);
     const annualExpenditure = calculateAnnualExpenditure(financialData.incomes);
-    const totalExpenditure = data.expenditures.reduce((sum, exp) => sum + exp.amount, 0);
-    const totalAssets = data.assets.reduce((sum, asset) => sum + asset.value, 0);
-    const totalLiabilities = data.liabilities.reduce((sum, liability) => sum + liability.amount, 0);
+    const totalExpenditure = financialData.expenditures.reduce((sum, exp) => sum + exp.amount, 0);
+    const totalAssets = financialData.assets.reduce((sum, asset) => sum + asset.value, 0);
+    const totalLiabilities = financialData.liabilities.reduce((sum, liability) => sum + liability.amount, 0);
     const netWorth = totalAssets - totalLiabilities;
     `You are a financial advisor assistant in the UK with access to the user's current financial data. 
         Base your advice on their actual financial situation as shown below:
@@ -135,7 +135,7 @@ const handler = async (event) => {
         const { message, messageHistory = [], financialData } = JSON.parse(event.body || '{}');
         const systemPrompt = systemMessage(financialData);
         const completion = await openai.chat.completions.create({
-            model: "gpt-4o-mini",
+            model: "gpt-3.5-turbo",
             messages: [
                 { role: "system", content: systemPrompt },
                 ...messageHistory,
