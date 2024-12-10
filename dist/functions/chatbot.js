@@ -1,4 +1,3 @@
-// netlify/functions/chatbot.ts
 import OpenAI from 'openai';
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY
@@ -8,34 +7,30 @@ export const handler = async (event) => {
         return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
     }
     try {
-        console.log('Received body:', event.body);
         const { message, financialData } = JSON.parse(event.body || '{}');
-        console.log('Parsed data:', { message, financialData });
+        const summary = `
+      Annual Income: £${financialData.incomes[0].amount}
+      Monthly Expenses: £${financialData.expenditures.reduce((sum, e) => sum + e.amount, 0)}
+      Total Assets: £${financialData.assets[0].value}
+      Total Liabilities: £${financialData.liabilities[0].amount}
+    `;
         const completion = await openai.chat.completions.create({
             model: "gpt-3.5-turbo",
             messages: [
-                {
-                    role: "system",
-                    content: "You are a financial advisor assistant."
-                },
-                {
-                    role: "user",
-                    content: message
-                }
+                { role: "system", content: `You are a financial advisor. Client data:\n${summary}` },
+                { role: "user", content: message }
             ]
         });
         return {
             statusCode: 200,
             headers: {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type'
+                'Access-Control-Allow-Origin': '*'
             },
             body: JSON.stringify({ response: completion.choices[0].message.content })
         };
     }
     catch (error) {
-        console.error('Error:', error);
         return {
             statusCode: 500,
             body: JSON.stringify({ error: String(error) })
