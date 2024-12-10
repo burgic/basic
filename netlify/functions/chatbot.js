@@ -22,9 +22,25 @@ const calculateMonthlyIncome = (incomes) => {
     }, 0);
   };
 
+  const calculateMonthlyExpenditure = (expenditures) => {
+    return expenditures.reduce((sum, exp) => {
+        const amount = parseFloat(exp.amount) || 0;
+        return sum + (exp.frequency.toLowerCase() === 'annual'? amount / 12 : amount);
+    })
+  }
+
+  const calculateAnnualExpenditure = (expenditures) => {
+    return expenditures.reduce((sum, exp) => {
+        const amount = parseFloat(exp.amount) || 0;
+        return sum + (exp.frequency.toLowerCase() === 'annual'? amount / 12 : amount);
+    })
+  }
+
 const createFinancialSummary = (data) => {
     const monthlyIncome = calculateMonthlyIncome(data.incomes);
     const annualIncome = calculateAnnualIncome(data.incomes);
+    const monthlyExpenditure = calculateMonthlyExpenditure(data.incomes);
+    const annualExpenditure = calculateAnnualExpenditure(data.incomes);
     const totalExpenditure = data.expenditures.reduce((sum, exp) => sum + exp.amount, 0);
     const totalAssets = data.assets.reduce((sum, asset) => sum + asset.value, 0);
     const totalLiabilities = data.liabilities.reduce((sum, liability) => sum + liability.amount, 0);
@@ -40,8 +56,9 @@ const createFinancialSummary = (data) => {
     =================
     Monthly Income: £${monthlyIncome.toFixed(2)}
     Annual Income: £${annualIncome.toFixed(2)}
-    Monthly Expenses: £${totalExpenditure.toFixed(2)}
-    Monthly Cash Flow: £${(totalIncome - totalExpenditure).toFixed(2)}
+    Monthly Expenses: £${monthlyExpenditure.toFixed(2)}
+    Annual Expenses: £${annualExpenditure.toFixed(2)}
+    Monthly Cash Flow: £${(annualIncome - totalExpenditure).toFixed(2)}
     Total Assets: £${totalAssets.toFixed(2)}
     Total Liabilities: £${totalLiabilities.toFixed(2)}
     Net Worth: £${netWorth.toFixed(2)}
@@ -51,7 +68,7 @@ const createFinancialSummary = (data) => {
     Income Sources:
     ${data.incomes.map((inc) => `- ${inc.type}: £${inc.amount} (${inc.frequency})`).join('\n') || 'No income data available'}
   
-    Monthly Expenses:
+    Expense Sources:
     ${data.expenditures.map((exp) => `- ${exp.category}: £${exp.amount}`).join('\n') || 'No expense data available'}
   
     Assets:
@@ -72,9 +89,9 @@ const createFinancialSummary = (data) => {
   const systemMessage = `You are a financial advisor assistant in the UK with access to the user's current financial data. 
         Base your advice on their actual financial situation as shown below:
 
-        Monthly Income: £${totalIncome ? totalIncome.toFixed(2) : 'Not provided'}
+        Monthly Income: £${monthlyIncome ? monthlyIncome.toFixed(2) : 'Not provided'}
         Monthly Expenses: £${totalExpenditure.toFixed(2)}
-        Monthly Cash Flow: £${(totalIncome - totalExpenditure).toFixed(2)}
+        Monthly Cash Flow: £${(monthlyIncome - monthlyExpenditure).toFixed(2)}
         Total Assets: £${totalAssets.toFixed(2)}
         Total Liabilities: £${totalLiabilities.toFixed(2)}
         Net Worth: £${netWorth.toFixed(2)}
