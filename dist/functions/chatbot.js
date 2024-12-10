@@ -22,13 +22,13 @@ const calculateMonthlyExpenditure = (expenditures) => {
     return expenditures.reduce((sum, exp) => {
         const amount = parseFloat(exp.amount) || 0;
         return sum + (exp.frequency.toLowerCase() === 'annual' ? amount / 12 : amount);
-    });
+    }, 0);
 };
 const calculateAnnualExpenditure = (expenditures) => {
     return expenditures.reduce((sum, exp) => {
         const amount = parseFloat(exp.amount) || 0;
         return sum + (exp.frequency.toLowerCase() === 'annual' ? amount / 12 : amount);
-    });
+    }, 0);
 };
 /*
 
@@ -89,7 +89,7 @@ const systemMessage = (financialData) => {
     const totalAssets = financialData.assets.reduce((sum, asset) => sum + asset.value, 0);
     const totalLiabilities = financialData.liabilities.reduce((sum, liability) => sum + liability.amount, 0);
     const netWorth = totalAssets - totalLiabilities;
-    `You are a financial advisor assistant in the UK with access to the user's current financial data. 
+    return `You are a financial advisor assistant in the UK with access to the user's current financial data. 
         Base your advice on their actual financial situation as shown below:
 
         FINANCIAL OVERVIEW
