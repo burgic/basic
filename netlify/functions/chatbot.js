@@ -87,7 +87,7 @@ const createFinancialSummary = (data) => {
 
   */
 
-  console.log(createFinancialSummary)
+ 
 
 
   const systemMessage = (financialData) => { 

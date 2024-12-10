@@ -80,7 +80,6 @@ const createFinancialSummary = (data) => {
 };
 
 */
-console.log(createFinancialSummary);
 const systemMessage = (financialData) => {
     const monthlyIncome = calculateMonthlyIncome(financialData.incomes);
     const annualIncome = calculateAnnualIncome(financialData.incomes);
