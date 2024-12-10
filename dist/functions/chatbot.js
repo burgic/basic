@@ -1,4 +1,4 @@
-// netlify/fucntions/chatbot.ts
+// netlify/functions/chatbot.ts
 import OpenAI from 'openai';
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY
@@ -8,18 +8,20 @@ export const handler = async (event) => {
         return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
     }
     try {
+        console.log('Received body:', event.body);
         const { message, financialData } = JSON.parse(event.body || '{}');
-        const summary = `
-      Annual Income: £${financialData.incomes}
-      Assets: £${financialData.assets}
-      Liabilities: £${financialData.liabilities}
-      Monthly Expenses: ${financialData.expenditures.map((e) => `${e.category}: £${e.amount}`).join(', ')}
-      Goals: ${financialData.goals.map((g) => `${g.goal}: £${g.target_amount} in ${g.time_horizon} years`).join(', ')}`;
+        console.log('Parsed data:', { message, financialData });
         const completion = await openai.chat.completions.create({
             model: "gpt-3.5-turbo",
             messages: [
-                { role: "system", content: `You are a financial advisor. Here's the client's data:\n${summary}` },
-                { role: "user", content: message }
+                {
+                    role: "system",
+                    content: "You are a financial advisor assistant."
+                },
+                {
+                    role: "user",
+                    content: message
+                }
             ]
         });
         return {
@@ -36,11 +38,72 @@ export const handler = async (event) => {
         console.error('Error:', error);
         return {
             statusCode: 500,
-            body: JSON.stringify({ error: 'Server error' })
+            body: JSON.stringify({ error: String(error) })
         };
     }
 };
 /*
+// netlify/functions/chatbot.ts
+
+import { Handler, HandlerEvent } from '@netlify/functions';
+import OpenAI from 'openai';
+import { createClient } from '@supabase/supabase-js';
+import { Goal, Expenditure, FinancialData, Income, Asset, Liability, RequestBody } from './types/financial';
+
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
+
+
+export const handler: Handler = async (event) => {
+  if (event.httpMethod !== 'POST') {
+    return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
+  }
+
+  try {
+    const { message, financialData } = JSON.parse(event.body || '{}') as RequestBody;
+
+    const monthlyIncome = data.incomes.reduce((sum, income) => sum + income.amount, 0) / 12;
+      const totalMonthlyExpenses = data.expenditures.reduce((sum: number, exp: Expenditure) => sum + exp.amount, 0);
+      const totalAssets = data.assets.reduce((sum, asset) => sum + (Number(asset.value) || 0), 0);
+      const totalLiabilities = data.liabilities.reduce((sum, liability) => sum + (Number(liability.amount) || 0), 0);
+      const netWorth = totalAssets - totalLiabilities;
+
+    const summary = `
+      Annual Income: £${financialData.incomes}
+      Assets: £${financialData.assets}
+      Liabilities: £${financialData.liabilities}
+      Monthly Expenses: ${financialData.expenditures.map((e: Expenditure) => `${e.category}: £${e.amount}`).join(', ')}
+      Goals: ${financialData.goals.map((g: Goal) => `${g.goal}: £${g.target_amount} in ${g.time_horizon} years`).join(', ')}`;
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        { role: "system", content: `You are a financial advisor. Here's the client's data:\n${summary}` },
+        { role: "user", content: message }
+      ]
+    });
+
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type'
+      },
+      body: JSON.stringify({ response: completion.choices[0].message.content })
+    };
+
+  } catch (error) {
+    console.error('Error:', error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Server error' })
+    };
+  }
+};
+
 
 const supabase = createClient(
   process.env.REACT_APP_SUPABASE_DATABASE_URL!,
