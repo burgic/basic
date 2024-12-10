@@ -3,7 +3,7 @@ const OpenAI = require('openai');
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY
 });
-exports.handler = async (event) => {
+const handler = async (event) => {
     if (event.httpMethod !== 'POST') {
         return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
     }
@@ -38,3 +38,6 @@ exports.handler = async (event) => {
         };
     }
 };
+// Export both ways to ensure compatibility
+exports.handler = handler;
+module.exports = { handler };
