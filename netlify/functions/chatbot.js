@@ -36,6 +36,8 @@ const calculateMonthlyIncome = (incomes) => {
     })
   }
 
+  /*
+  
 const createFinancialSummary = (data) => {
     const monthlyIncome = calculateMonthlyIncome(data.incomes);
     const annualIncome = calculateAnnualIncome(data.incomes);
@@ -83,15 +85,32 @@ const createFinancialSummary = (data) => {
 
   };
 
+  */
+
   console.log(createFinancialSummary)
 
 
-  const systemMessage = `You are a financial advisor assistant in the UK with access to the user's current financial data. 
+  const systemMessage = (financialData) => { 
+
+        const monthlyIncome = calculateMonthlyIncome(financialData.incomes);
+        const annualIncome = calculateAnnualIncome(financialData.incomes);
+        const monthlyExpenditure = calculateMonthlyExpenditure(financialData.incomes);
+        const annualExpenditure = calculateAnnualExpenditure(financialData.incomes);
+        const totalExpenditure = data.expenditures.reduce((sum, exp) => sum + exp.amount, 0);
+        const totalAssets = data.assets.reduce((sum, asset) => sum + asset.value, 0);
+        const totalLiabilities = data.liabilities.reduce((sum, liability) => sum + liability.amount, 0);
+        const netWorth = totalAssets - totalLiabilities;
+    
+        `You are a financial advisor assistant in the UK with access to the user's current financial data. 
         Base your advice on their actual financial situation as shown below:
 
-        Monthly Income: £${monthlyIncome ? monthlyIncome.toFixed(2) : 'Not provided'}
-        Monthly Expenses: £${totalExpenditure.toFixed(2)}
-        Monthly Cash Flow: £${(monthlyIncome - monthlyExpenditure).toFixed(2)}
+        FINANCIAL OVERVIEW
+        =================
+        Monthly Income: £${monthlyIncome.toFixed(2)}
+        Annual Income: £${annualIncome.toFixed(2)}
+        Monthly Expenses: £${monthlyExpenditure.toFixed(2)}
+        Annual Expenses: £${annualExpenditure.toFixed(2)}
+        Monthly Cash Flow: £${(annualIncome - totalExpenditure).toFixed(2)}
         Total Assets: £${totalAssets.toFixed(2)}
         Total Liabilities: £${totalLiabilities.toFixed(2)}
         Net Worth: £${netWorth.toFixed(2)}
@@ -101,7 +120,7 @@ const createFinancialSummary = (data) => {
         Income Sources:
         ${financialData.incomes.map((inc) => `- ${inc.type}: £${inc.amount} (${inc.frequency})`).join('\n') || 'No income data available'}
 
-        Monthly Expenses:
+        Expense Sources:
         ${financialData.expenditures.map((exp) => `- ${exp.category}: £${exp.amount}`).join('\n') || 'No expense data available'}
 
         Assets:
@@ -112,25 +131,10 @@ const createFinancialSummary = (data) => {
 
         Financial Goals:
         ${financialData.goals.map((goal) => `- ${goal.goal}: Target £${goal.target_amount} in ${goal.time_horizon} years`).join('\n') || 'No goals set'}
+       
+        Provide specific, actionable advice based on their actual numbers and circumstances.`;
 
-        Please use this data to answer the user's question in detail, considering their:
-        1. Income
-        2. Expenses
-        3. Assets
-        4. Liabilities
-        5. Financial Goals
-
-        When responding:
-        1. Always reference specific numbers from their data
-        2. Make recommendations based on their actual income, expenses, and goals
-        3. Provide specific, actionable advice
-        4. Explain how their current finances align with their goals
-        5. Consider their income, expenses, assets, and liabilities in your analysis
-
-        Provide actionable and personalized advice based on the provided data.
-
-        `;
-
+  }
 
 const handler = async (event) => {
     console.log('Function triggered', {
@@ -143,17 +147,7 @@ const handler = async (event) => {
   }
 
   try {
-    const { message, financialData } = JSON.parse(event.body || '{}');
-    
-    const summary = createFinancialSummary(financialData)
-    /*
-    `
-      Annual Income: £${financialData.incomes[0].amount}
-      Monthly Expenses: £${financialData.expenditures.reduce((sum, e) => sum + e.amount, 0)}
-      Total Assets: £${financialData.assets[0].value}
-      Total Liabilities: £${financialData.liabilities[0].amount}
-    `;
-*/
+    const { message, messageHistory = [], financialData } = JSON.parse(event.body || '{}');
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
@@ -163,7 +157,7 @@ const handler = async (event) => {
             { role: "user", content: message }
           ],
           temperature: 0.7,
-          max_tokens: 1500
+          max_tokens: 1000
     });
 
     return {
