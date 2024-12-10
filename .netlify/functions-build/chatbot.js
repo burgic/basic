@@ -1,4 +1,4 @@
-
+/*
 "use strict";
 // netlify/functions/chatbot.ts
 var __importDefault = (this && this.__importDefault) || function (mod) {
@@ -113,8 +113,8 @@ const handler = async (event) => {
     }
 };
 exports.handler = handler;
-
-
+///
+*/
 /*
 
 "use strict";
