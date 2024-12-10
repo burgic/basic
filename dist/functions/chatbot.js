@@ -133,10 +133,11 @@ const handler = async (event) => {
     }
     try {
         const { message, messageHistory = [], financialData } = JSON.parse(event.body || '{}');
+        const systemPrompt = systemMessage(financialData);
         const completion = await openai.chat.completions.create({
             model: "gpt-4o-mini",
             messages: [
-                { role: "system", content: systemMessage },
+                { role: "system", content: systemPrompt },
                 ...messageHistory,
                 { role: "user", content: message }
             ],
