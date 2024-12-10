@@ -33,10 +33,10 @@
     "start": "react-scripts start",
     "build": "npm run build:app && npm run build:functions",
     "build:app": "react-scripts build",
-    "build:functions": "tsc -p netlify/functions/tsconfig.functions.json",
-
+    "build:functions": "tsc -p netlify/functions/tsconfig.functions.json && echo 'Functions built to .netlify/functions-build' && ls .netlify/functions-build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
+    "clean": "rm -rf build .netlify/functions-build && echo 'Cleaned build folders'",
     "netlify:build": "netlify build"
   },
   "eslintConfig": {
@@ -63,6 +63,7 @@
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "autoprefixer": "^10.4.20",
+    "esbuild": "^0.24.0",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.15",
     "typescript": "^4.9.5"

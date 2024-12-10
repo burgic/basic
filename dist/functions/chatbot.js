@@ -1,4 +1,5 @@
 "use strict";
+// netlify/functions/chatbot.js
 const OpenAI = require('openai');
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY
@@ -20,6 +21,10 @@ const handler = async (event) => {
       Total Assets: £${financialData.assets[0].value}
       Total Liabilities: £${financialData.liabilities[0].amount}
     `;
+        const openai = new OpenAI({
+            apiKey: process.env.OPENAI_API_KEY,
+        });
+        console.log('OpenAI API Key:', process.env.OPENAI_API_KEY); // Debugging only; remove in production.
         const completion = await openai.chat.completions.create({
             model: "gpt-3.5-turbo",
             messages: [
@@ -44,5 +49,9 @@ const handler = async (event) => {
     }
 };
 // Export both ways to ensure compatibility
+console.log('Handler is being invoked');
+exports.handler = async (event) => {
+    console.log('Event:', event);
+};
 exports.handler = handler;
 module.exports = { handler };
