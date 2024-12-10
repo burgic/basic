@@ -21,10 +21,6 @@ const handler = async (event) => {
       Total Assets: £${financialData.assets[0].value}
       Total Liabilities: £${financialData.liabilities[0].amount}
     `;
-        const openai = new OpenAI({
-            apiKey: process.env.OPENAI_API_KEY,
-        });
-        console.log('OpenAI API Key:', process.env.OPENAI_API_KEY); // Debugging only; remove in production.
         const completion = await openai.chat.completions.create({
             model: "gpt-3.5-turbo",
             messages: [
