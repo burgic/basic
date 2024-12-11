@@ -41,8 +41,8 @@ const calculateMonthlyIncome = (incomes) => {
 
         const monthlyIncome = calculateMonthlyIncome(financialData.incomes);
         const annualIncome = calculateAnnualIncome(financialData.incomes);
-        const monthlyExpenditure = calculateMonthlyExpenditure(financialData.incomes);
-        const annualExpenditure = calculateAnnualExpenditure(financialData.incomes);
+        const monthlyExpenditure = calculateMonthlyExpenditure(financialData.expenditures);
+        const annualExpenditure = calculateAnnualExpenditure(financialData.expenditures);
         const totalExpenditure = financialData.expenditures.reduce((sum, exp) => sum + exp.amount, 0);
         const totalAssets = financialData.assets.reduce((sum, asset) => sum + asset.value, 0);
         const totalLiabilities = financialData.liabilities.reduce((sum, liability) => sum + liability.amount, 0);
