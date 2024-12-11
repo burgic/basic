@@ -122,8 +122,8 @@ export default function Chat() {
     userId: user.id,
     financialData: formattedFinancialData,
     messageHistory: messages.map(msg => ({
-      role: msg.role,
-      content: msg.content
+      role: msg.role === 'user' ? 'user' : 'assistant',
+      content: msg.content || ''
     }))
   };
 

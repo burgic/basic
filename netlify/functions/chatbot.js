@@ -111,6 +111,14 @@ const handler = async (event) => {
   try {
     const { message, messageHistory = [], financialData } = JSON.parse(event.body || '{}');
 
+    // Validate message content
+    if (!message || typeof message !== 'string') {
+        return {
+          statusCode: 400,
+          body: JSON.stringify({ error: 'Invalid message format' })
+        };
+      }
+
     console.log('Received Financial Data:', {
         incomes: financialData.incomes,
         expenditureCount: financialData.expenditures.length,
@@ -120,6 +128,15 @@ const handler = async (event) => {
     });
 
     const systemPrompt = systemMessage(financialData);
+
+    const messages = [
+        { role: "system", content: systemPrompt },
+        ...messageHistory.map(msg => ({
+          role: msg.role,
+          content: msg.content || '' // Ensure content is never null
+        })),
+        { role: "user", content: message }
+      ];
 
     console.log('OpenAI Messages:', [
         { role: "system", content: systemPrompt },
