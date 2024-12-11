@@ -50,19 +50,6 @@ const ClientDashboard: React.FC = () => {
         return;
       }
 
-      /*
-      // Verify auth status before fetching
-      const { data: { session: currentSession }, error: sessionError } = 
-        await supabase.auth.getSession();
-
-      if (sessionError || !currentSession) {
-        console.error('Session verification failed:', sessionError);
-        setError('Session expired');
-        setLoading(false);
-        return;
-      }
-        */
-
       console.log('Starting financial data fetch for user:', user.id);
       
       try {
