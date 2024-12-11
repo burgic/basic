@@ -23,7 +23,24 @@ const SignIn: React.FC = () => {
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        // Handle specific error cases
+        if (error.message.includes('Email not confirmed')) {
+          // Try to resend confirmation email
+          const { error: resendError } = await supabase.auth.resend({
+            type: 'signup',
+            email,
+          });
+
+          if (resendError) throw resendError;
+
+          throw new Error(
+            'Your email is not confirmed. A new confirmation email has been sent. ' +
+            'Please check your inbox and spam folder.'
+          );
+        }
+        throw error;
+      }
 
       // Redirect based on user role
       if (data.user?.user_metadata.role === 'adviser') {

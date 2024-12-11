@@ -35,6 +35,8 @@ const CreateClient: React.FC = () => {
           data: { 
             role: 'client',
           },
+           // Disable email confirmation requirement
+          emailRedirectTo: `${window.location.origin}/client/client-dashboard`
         }
       });
 
@@ -61,8 +63,25 @@ const CreateClient: React.FC = () => {
   
         if (profileError) {
           console.error('Profile creation error:', profileError);
+          
+          // Clean up auth user if profile creation fails
+          const { error: deleteError } = await supabase.auth.admin.deleteUser(
+            authData.user.id
+          );
+          
+          if (deleteError) {
+            console.error('Error cleaning up auth user:', deleteError);
+          }
+          
           throw profileError;
         }
+
+        alert(
+          `Client account created successfully! \n\n` +
+          `Email: ${clientData.email}\n` +
+          `Temporary Password: ${clientData.password}\n\n` +
+          `Please provide these credentials to your client.`
+        );
   
         console.log('Client profile created successfully');
         alert(`Client account created successfully. Login credentials have been sent to ${clientData.email}`);
