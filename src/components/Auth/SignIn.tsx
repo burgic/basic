@@ -19,14 +19,14 @@ const SignIn: React.FC = () => {
 
     try {
       // First, check if the user exists and is confirmed
-      const { data: userCheck, error: userCheckError } = await supabase
+      const { data: profileCheck, error: profileError } = await supabase
         .from('auth.users')
         .select('confirmed_at, email')
         .eq('email', email)
         .single();
 
-      if (userCheckError) {
-        console.error('User check error:', userCheckError);
+        if (profileError && !profileError.message.includes('no rows')) {
+          console.error('Profile check error:', profileError);
       }
 
       // Attempt sign in
@@ -38,6 +38,10 @@ const SignIn: React.FC = () => {
       if (error) {
         console.error('Sign in error:', error);
 
+        if (error.message.includes('Invalid login credentials')) {
+          throw new Error('Invalid email or password');
+        }
+
         // Handle specific error cases
         if (error.message.includes('Email not confirmed')) {
           // Attempt to resend confirmation email
@@ -46,22 +50,11 @@ const SignIn: React.FC = () => {
             email,
           });
 
-          if (resendError) {
-            console.error('Error resending confirmation:', resendError);
-            throw new Error('Failed to resend confirmation email. Please contact support.');
-          }
+          if (resendError) throw resendError;
 
           throw new Error(
             'Your email is not confirmed. A new confirmation email has been sent. ' +
             'Please check your inbox and spam folder.'
-          );
-        }
-
-        // Database error usually means permissions issue
-        if (error.message.includes('Database error')) {
-          throw new Error(
-            'There was a problem accessing your account. ' +
-            'Please try again or contact support if the problem persists.'
           );
         }
 
@@ -75,11 +68,9 @@ const SignIn: React.FC = () => {
       // Get user's role from metadata
       const role = data.user.user_metadata?.role;
       
-      console.log('Sign in successful:', {
-        userId: data.user.id,
-        role: role,
-        email: data.user.email
-      });
+      if (!role) {
+        throw new Error('User role not found');
+      }
 
       // Redirect based on user role
       if (role === 'adviser') {
