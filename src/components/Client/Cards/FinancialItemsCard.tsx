@@ -3,6 +3,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
 interface FinancialItemCardProps {
+  id: string;
   title: string;
   amount: number;
   subtitle?: string;

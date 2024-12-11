@@ -266,24 +266,57 @@ if (!financialData) {
       </div>
 
       <main className="grid grid-cols-1 md:grid-cols-2 gap-8">
-      <section className="bg-white p-6 rounded-lg shadow">
+      <section onClick={() => navigate('/client/income')} className="bg-white p-6 rounded-lg shadow">
+      <div className="grid grid-cols-2 gap-4">
         <h2 className="text-xl font-semibold mb-4">Income Overview</h2>
         <div className="space-y-2">
           <p>Annual Income: {financialCalculations.formatCurrency(financialSummary?.annualIncome || 0)}</p>
           <p>Monthly Average: {financialCalculations.formatCurrency(financialSummary?.monthlyIncome || 0)}</p>
         </div>
+        <div>
+          <Bar
+            data={{
+              labels: ['Monthly Income', 'Monthly Expenses'],
+              datasets: [{
+                label: 'Monthly Comparison',
+                data: [
+                  financialSummary?.monthlyIncome || 0,
+                  financialSummary?.monthlyExpenditure || 0
+                ],
+                backgroundColor: ['#4BC0C0', '#FF6384']
+              }]
+            }}
+            options={{
+              responsive: true,
+              maintainAspectRatio: false
+            }}
+          />
+        </div>
+      </div>
       </section>
 
-      <section className="card">
-        <h2>Expenditure Breakdown</h2>
-        {financialData?.expenditures.length > 0 ? (
-          <Pie data={expenditureChartData} />
-        ) : (
-          <NoDataPrompt type="expenditure" url="/client/expenditure" />
-        )}
+      <section onClick={() => navigate('/client/expenditure')} className="card">
+          <h2>Expenditure Breakdown</h2>
+            {financialData?.expenditures.length > 0 ? (
+              <Pie data={expenditureChartData} />
+            ) : (
+              <NoDataPrompt type="expenditure" url="/client/expenditure" />
+            )}
+            <div className="space-y-2">
+          <p>Total Monthly Expenses: {financialCalculations.formatCurrency(financialSummary?.monthlyExpenditure || 0)}</p>
+          <div className="max-h-40 overflow-y-auto">
+            {financialData?.expenditures.map((exp, index) => (
+              <div key={index} className="flex justify-between text-sm py-1">
+                <span>{exp.category}</span>
+                <span>{financialCalculations.formatCurrency(exp.amount)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
 
-        <section className="card">
+        <section className="card"
+        onClick={() => navigate('/client/assets')}>
         <h2>Assets and Liabilities</h2>
           {(financialSummary?.totalAssets || 0) > 0 || (financialSummary?.totalLiabilities || 0) > 0 ? (
             <>
@@ -314,7 +347,7 @@ if (!financialData) {
                     
                     <div>
                       <p className="text-sm text-gray-500">Target Amount</p>
-                      <p className="text-lg font-medium">£{financialCalculations.formatCurrency(goal.target_amount)}</p>
+                      <p className="text-lg font-medium">{financialCalculations.formatCurrency(goal.target_amount)}</p>
                     </div>
 
                     <div>
