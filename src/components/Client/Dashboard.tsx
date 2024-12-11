@@ -238,6 +238,19 @@ if (!financialData) {
     ],
   };
 
+  const incomeChartData = {
+    labels: financialData?.incomes.map((item) => item.type) || [],
+    datasets: [{
+      label: 'Income Sources',
+      data: financialData?.incomes.map((item) => 
+        item.frequency === 'Monthly' ? item.amount * 12 : item.amount
+      ) || [],
+      backgroundColor: [
+        '#4BC0C0', '#36A2EB', '#FFCE56', '#FF6384', '#9966FF', '#FF9F40'
+      ],
+    }]
+  };
+
   const assetsLiabilitiesChartData = {
     labels: ['Assets', 'Liabilities'],
     datasets: [
@@ -266,34 +279,38 @@ if (!financialData) {
       </div>
 
       <main className="grid grid-cols-1 md:grid-cols-2 gap-8">
-      <section onClick={() => navigate('/client/income')} className="bg-white p-6 rounded-lg shadow">
-      <div className="grid grid-cols-2 gap-4">
-        <h2 className="text-xl font-semibold mb-4">Income Overview</h2>
-        <div className="space-y-2">
-          <p>Annual Income: {financialCalculations.formatCurrency(financialSummary?.annualIncome || 0)}</p>
-          <p>Monthly Average: {financialCalculations.formatCurrency(financialSummary?.monthlyIncome || 0)}</p>
-        </div>
-        <div>
-          <Bar
-            data={{
-              labels: ['Monthly Income', 'Monthly Expenses'],
-              datasets: [{
-                label: 'Monthly Comparison',
-                data: [
-                  financialSummary?.monthlyIncome || 0,
-                  financialSummary?.monthlyExpenditure || 0
-                ],
-                backgroundColor: ['#4BC0C0', '#FF6384']
-              }]
-            }}
-            options={{
-              responsive: true,
-              maintainAspectRatio: false
-            }}
-          />
-        </div>
-      </div>
-      </section>
+      <section 
+          onClick={() => navigate('/client/income')} 
+          className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer"
+        >
+          <h2 className="text-xl font-semibold mb-4">Income Overview</h2>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              {financialData?.incomes.length > 0 ? (
+                <Pie data={incomeChartData} />
+              ) : (
+                <NoDataPrompt type="income" url="/client/income" />
+              )}
+            </div>
+            <div className="space-y-2">
+              <p className="font-medium">Total Annual Income: {financialCalculations.formatCurrency(financialSummary?.annualIncome || 0)}</p>
+              <p className="font-medium">Monthly Average: {financialCalculations.formatCurrency(financialSummary?.monthlyIncome || 0)}</p>
+              <div className="max-h-40 overflow-y-auto mt-4">
+                {financialData?.incomes.map((inc, index) => (
+                  <div key={index} className="flex justify-between text-sm py-1">
+                    <span>{inc.type}</span>
+                    <span>
+                      {financialCalculations.formatCurrency(inc.amount)}
+                      <span className="text-gray-500 text-xs ml-1">
+                        ({inc.frequency})
+                      </span>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
 
       <section onClick={() => navigate('/client/expenditure')} className="card">
           <h2>Expenditure Breakdown</h2>
