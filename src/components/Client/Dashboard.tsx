@@ -284,14 +284,12 @@ if (!financialData) {
           className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer"
         >
           <h2 className="text-xl font-semibold mb-4">Income Overview</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
               {financialData?.incomes.length > 0 ? (
                 <Pie data={incomeChartData} />
               ) : (
                 <NoDataPrompt type="income" url="/client/income" />
               )}
-            </div>
+            
             <div className="space-y-2">
               <p className="font-medium">Total Annual Income: {financialCalculations.formatCurrency(financialSummary?.annualIncome || 0)}</p>
               <p className="font-medium">Monthly Average: {financialCalculations.formatCurrency(financialSummary?.monthlyIncome || 0)}</p>
@@ -309,7 +307,7 @@ if (!financialData) {
                 ))}
               </div>
             </div>
-          </div>
+          
         </section>
 
       <section onClick={() => navigate('/client/expenditure')} className="card">
