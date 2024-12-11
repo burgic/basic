@@ -19,6 +19,7 @@ const ExpenditureForm: React.FC = () => {
             { value: 'Groceries', label: 'Groceries' },
             { value: 'Transportation', label: 'Transportation' },
             { value: 'Entertainment', label: 'Entertainment' },
+            { value: 'Shopping', label: 'Shopping'},
             { value: 'Other', label: 'Other' }
           ]
         },
@@ -39,7 +40,7 @@ const ExpenditureForm: React.FC = () => {
       ]}
       defaultEntry={{
         category: '',
-        amount: 0,
+        amount: '',
         frequency: 'Monthly'
       }}
     />

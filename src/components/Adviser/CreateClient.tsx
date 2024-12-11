@@ -25,6 +25,8 @@ const CreateClient: React.FC = () => {
         throw new Error('Adviser not authenticated');
       }
 
+      console.log('Creating client with adviser_id:', user.id);
+
       // Create auth user for client
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: clientData.email,
@@ -39,29 +41,40 @@ const CreateClient: React.FC = () => {
       if (signUpError) throw signUpError;
       if (!authData.user) throw new Error('No user data returned');
 
+      console.log('Created auth user:', authData.user.id);
       // Create profile for client
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
+      const profileData = {
           id: authData.user.id,
           email: clientData.email,
           name: clientData.name,
           role: 'client',
           adviser_id: user.id, // Current adviser's ID
-        });
+          created_at: new Date().toISOString(),
+          last_login: null,
+          last_review: null
+        };
+        console.log('Creating profile with data:', profileData);
 
-      if (profileError) throw profileError;
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert([profileData]);
+  
+        if (profileError) {
+          console.error('Profile creation error:', profileError);
+          throw profileError;
+        }
+  
+        console.log('Client profile created successfully');
+        alert(`Client account created successfully. Login credentials have been sent to ${clientData.email}`);
+        navigate('/adviser/adviser-dashboard');
 
-      alert(`Client account created successfully. Login credentials have been sent to ${clientData.email}`);
-      navigate('/adviser/adviser-dashboard');
-
-    } catch (err: any) {
-      console.error('Error creating client:', err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+      } catch (err: any) {
+        console.error('Error creating client:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
 
   return (
     <div className="min-h-screen bg-white p-4 sm:p-6 md:p-8">

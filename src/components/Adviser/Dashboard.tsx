@@ -21,10 +21,30 @@ const AdviserDashboard = () => {
 
   useEffect(() => {
     const fetchClients = async () => {
+      setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
       
-      if (!user) return;
+      if (!user) {
+        console.log('No authenticated user found');
+        setLoading(false);
+        return;
+      }
 
+      console.log('Fetching clients for adviser:', user.id);
+
+      const { data: adviserProfile, error: adviserError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+
+    if (adviserError) {
+      console.error('Error fetching adviser profile:', adviserError);
+      return;
+    }
+
+    console.log('Adviser profile:', adviserProfile);
+      
       const { data, error } = await supabase
         .from('profiles')
         .select(`
@@ -38,10 +58,13 @@ const AdviserDashboard = () => {
         .eq('adviser_id', user.id)
         .eq('role', 'client');
 
-      if (error) {
-        console.error('Error fetching clients:', error);
-        return;
-      }
+        console.log('Client query result:', { data, error });
+
+        if (error) {
+          console.error('Error fetching clients:', error);
+          setLoading(false);
+          return;
+        }
 
       // Calculate workflow progress for each client
       const clientsWithProgress = await Promise.all(data.map(async (client) => {
@@ -63,6 +86,7 @@ const AdviserDashboard = () => {
         };
       }));
 
+      console.log('Processed clients:', clientsWithProgress);
       setClients(clientsWithProgress);
       setLoading(false);
     };
