@@ -157,10 +157,10 @@ const ClientDashboard: React.FC = () => {
         // Update financial data state
         console.log('Setting financial data');
         setFinancialData({
-          incomes: totalIncome || [],
+          incomes: incomesData || [],
           expenditures: expenditures || [],
-          assets: totalAssets || [], // Add assets fetch when implementing that feature
-          liabilities: totalLiabilities || [], // Add liabilities fetch when implementing that feature
+          assets: assetsData || [], // Add assets fetch when implementing that feature
+          liabilities: liabilitiesData || [], // Add liabilities fetch when implementing that feature
           goals: goalsData || [] // Add the goals data here
         });
 
