@@ -129,30 +129,16 @@ const handler = async (event) => {
 
     const systemPrompt = systemMessage(financialData);
 
-    const messages = [
-        { role: "system", content: systemPrompt },
-        ...messageHistory.map(msg => ({
-          role: msg.role,
-          content: msg.content || '' // Ensure content is never null
-        })),
-        { role: "user", content: message }
-      ];
-
-    console.log('OpenAI Messages:', [
-        { role: "system", content: systemPrompt },
-        ...messageHistory,
-        { role: "user", content: message }
-    ]);
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini-2024-07-18",
       messages: [
             { role: "system", content: systemPrompt },
-            ...messageHistory,
+            ...messageHistory.slice(-5),
             { role: "user", content: message }
           ],
           temperature: 0.7,
-          max_tokens: 1000
+          max_tokens: 500
     });
 
     return {
