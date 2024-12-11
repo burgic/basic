@@ -18,37 +18,77 @@ const SignIn: React.FC = () => {
     setError(null);
 
     try {
+      // First, check if the user exists and is confirmed
+      const { data: userCheck, error: userCheckError } = await supabase
+        .from('auth.users')
+        .select('confirmed_at, email')
+        .eq('email', email)
+        .single();
+
+      if (userCheckError) {
+        console.error('User check error:', userCheckError);
+      }
+
+      // Attempt sign in
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
+        console.error('Sign in error:', error);
+
         // Handle specific error cases
         if (error.message.includes('Email not confirmed')) {
-          // Try to resend confirmation email
+          // Attempt to resend confirmation email
           const { error: resendError } = await supabase.auth.resend({
             type: 'signup',
             email,
           });
 
-          if (resendError) throw resendError;
+          if (resendError) {
+            console.error('Error resending confirmation:', resendError);
+            throw new Error('Failed to resend confirmation email. Please contact support.');
+          }
 
           throw new Error(
             'Your email is not confirmed. A new confirmation email has been sent. ' +
             'Please check your inbox and spam folder.'
           );
         }
+
+        // Database error usually means permissions issue
+        if (error.message.includes('Database error')) {
+          throw new Error(
+            'There was a problem accessing your account. ' +
+            'Please try again or contact support if the problem persists.'
+          );
+        }
+
         throw error;
       }
 
+      if (!data.user) {
+        throw new Error('No user data returned');
+      }
+
+      // Get user's role from metadata
+      const role = data.user.user_metadata?.role;
+      
+      console.log('Sign in successful:', {
+        userId: data.user.id,
+        role: role,
+        email: data.user.email
+      });
+
       // Redirect based on user role
-      if (data.user?.user_metadata.role === 'adviser') {
+      if (role === 'adviser') {
         navigate('/adviser/adviser-dashboard');
       } else {
         navigate('/client/client-dashboard');
       }
     } catch (error: any) {
+      console.error('Sign in process error:', error);
       setError(error.message);
     } finally {
       setLoading(false);
