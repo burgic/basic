@@ -44,7 +44,7 @@ const Navbar: React.FC = () => {
           {user && user.user_metadata.role === 'client' && (
           <li className="navbar-item">
             <Link to="/chat/chat" className="navbar-link">
-              Profile
+              Chat
             </Link>
           </li>
           )}
