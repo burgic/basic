@@ -1,6 +1,8 @@
 // src/components/Client/Dashboard.tsx
 
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState, useContext, useMemo } from 'react';
+import { financialCalculations } from 'utils/financialcalculations';
+import type { FinancialData, Income } from '../../@types/financial';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../../services/supabaseClient';
 import { Pie, Bar } from 'react-chartjs-2';
@@ -8,26 +10,7 @@ import { AuthContext } from '../../context/AuthContext';
 import 'chart.js/auto';
 import NetWorthCard from './Cards/NetWorthCard';
 
-interface Income {
-  id: string;
-  client_id: string;
-  type: string;
-  amount: number;
-  frequency: string;
-}
 
-interface FinancialData {
-  income: number;
-  expenditure: { category: string; amount: number }[];
-  assets: number;
-  liabilities: number;
-  goals?: {
-    id: string;
-    goal: string;
-    target_amount: number;
-    time_horizon: number;
-  }[];
-}
 
 
 const ClientDashboard: React.FC = () => {
@@ -37,7 +20,22 @@ const ClientDashboard: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+
+  const financialSummary = useMemo(() => {
+    if (!financialData) return null;
+    
+    return financialCalculations.calculateFinancialSummary({
+      incomes: financialData.incomes || [],
+      expenditures: financialData.expenditures || [],
+      assets: financialData.assets || [],
+      liabilities: financialData.liabilities || [],
+      goals: financialData.goals || []
+    });
+  }, [financialData]);
+
+
   useEffect(() => {
+    
     console.log('Dashboard mounted, user:', { 
       userId: user?.id,
       isAuthenticated: !!user 
@@ -124,7 +122,9 @@ const ClientDashboard: React.FC = () => {
         // Transform expenditure data
         const expenditures = (expendituresData || []).map(exp => ({
           category: exp.category,
-          amount: Number(exp.amount) || 0
+          amount: Number(exp.amount) || 0,
+          client_id: exp.client_id,
+          frequency: exp.frequency
         }));
 
               // Fetch assets
@@ -157,10 +157,10 @@ const ClientDashboard: React.FC = () => {
         // Update financial data state
         console.log('Setting financial data');
         setFinancialData({
-          income: totalIncome,
-          expenditure: expenditures,
-          assets: totalAssets, // Add assets fetch when implementing that feature
-          liabilities: totalLiabilities, // Add liabilities fetch when implementing that feature
+          incomes: totalIncome || [],
+          expenditures: expenditures || [],
+          assets: totalAssets || [], // Add assets fetch when implementing that feature
+          liabilities: totalLiabilities || [], // Add liabilities fetch when implementing that feature
           goals: goalsData || [] // Add the goals data here
         });
 
@@ -223,26 +223,16 @@ if (!financialData) {
       <p>No {type} data available. <Link to={url}>Click here to add your {type}</Link></p>
     </div>
   );
-  const totalExpenditure = financialData.expenditure.reduce(
-    (sum, item) => sum + item.amount,
-    0
-  );
-  const remainingIncome = financialData.income - totalExpenditure;
-  const netWorth = financialData.assets - financialData.liabilities;
+
 
   const expenditureChartData = {
-    labels: financialData.expenditure.map((item) => item.category),
+    labels: financialData.expenditures.map((item) => item.category),
     datasets: [
       {
         label: 'Expenditure by Category',
-        data: financialData.expenditure.map((item) => item.amount),
+        data: financialData.expenditures.map((item) => item.amount),
         backgroundColor: [
-          '#FF6384',
-          '#36A2EB',
-          '#FFCE56',
-          '#4BC0C0',
-          '#9966FF',
-          '#FF9F40',
+          '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40',
         ],
       },
     ],
@@ -253,7 +243,10 @@ if (!financialData) {
     datasets: [
       {
         label: 'Assets vs. Liabilities',
-        data: [financialData.assets, financialData.liabilities],
+        data: [
+          financialSummary?.totalAssets || 0,
+          financialSummary?.totalLiabilities || 0
+        ],
         backgroundColor: ['#4BC0C0', '#FF6384'],
       },
     ],
@@ -266,37 +259,37 @@ if (!financialData) {
       </header>
 
       <div className="space-y-6">
-    <NetWorthCard 
-      assets={financialData.assets}
-      liabilities={financialData.liabilities}
-    />
+      <NetWorthCard 
+        assets={financialSummary?.totalAssets || 0}
+        liabilities={financialSummary?.totalLiabilities || 0}
+      />
       </div>
 
       <main className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <section className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-xl font-semibold mb-4">Income Overview</h2>
-          <div className="space-y-2">
-            <p>Annual Income: £{financialData.income.toLocaleString()}</p>
-            <p>Monthly Average: £{(financialData.income / 12).toLocaleString()}</p>
-          </div>
-        </section>
+      <section className="bg-white p-6 rounded-lg shadow">
+        <h2 className="text-xl font-semibold mb-4">Income Overview</h2>
+        <div className="space-y-2">
+          <p>Annual Income: {financialCalculations.formatCurrency(financialSummary?.annualIncome || 0)}</p>
+          <p>Monthly Average: {financialCalculations.formatCurrency(financialSummary?.monthlyIncome || 0)}</p>
+        </div>
+      </section>
+
+      <section className="card">
+        <h2>Expenditure Breakdown</h2>
+        {financialData?.expenditures.length > 0 ? (
+          <Pie data={expenditureChartData} />
+        ) : (
+          <NoDataPrompt type="expenditure" url="/client/expenditure" />
+        )}
+      </section>
 
         <section className="card">
-          <h2>Expenditure Breakdown</h2>
-          {financialData?.expenditure.length > 0 ? (
-            <Pie data={expenditureChartData} />
-          ) : (
-            <NoDataPrompt type="expenditure" url="/client/expenditure" />
-          )}
-        </section>
-
-        <section className="card">
-          <h2>Assets and Liabilities</h2>
-          {financialData.assets > 0 || financialData?.liabilities > 0 ? (
+        <h2>Assets and Liabilities</h2>
+          {(financialSummary?.totalAssets || 0) > 0 || (financialSummary?.totalLiabilities || 0) > 0 ? (
             <>
-              <p><strong>Total Assets:</strong> £{financialData.assets.toFixed(2)}</p>
-              <p><strong>Total Liabilities:</strong> £{financialData.liabilities.toFixed(2)}</p>
-              <p><strong>Net Worth:</strong> £{netWorth.toFixed(2)}</p>
+              <p><strong>Total Assets:</strong> {financialCalculations.formatCurrency(financialSummary?.totalAssets || 0)}</p>
+              <p><strong>Total Liabilities:</strong> {financialCalculations.formatCurrency(financialSummary?.totalLiabilities || 0)}</p>
+              <p><strong>Net Worth:</strong> {financialCalculations.formatCurrency(financialSummary?.netWorth || 0)}</p>
               <Bar data={assetsLiabilitiesChartData} />
             </>
           ) : (
@@ -321,7 +314,7 @@ if (!financialData) {
                     
                     <div>
                       <p className="text-sm text-gray-500">Target Amount</p>
-                      <p className="text-lg font-medium">£{goal.target_amount.toLocaleString()}</p>
+                      <p className="text-lg font-medium">£{financialCalculations.formatCurrency(goal.target_amount)}</p>
                     </div>
 
                     <div>
