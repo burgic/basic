@@ -35,11 +35,18 @@ const CreateClient: React.FC = () => {
           data: { 
             role: 'client',
           },
+          emailRedirectTo: `${window.location.origin}/auth/callback`
         }
       });
 
-      if (signUpError) throw signUpError;
-      if (!authData.user) throw new Error('No user data returned');
+      if (signUpError) {
+        console.error('Signup error:', signUpError);
+        throw signUpError;
+      }
+
+      if (!authData.user) {
+        throw new Error('No user data returned from signup');
+      }
 
       console.log('Created auth user:', authData.user.id);
       // Create profile for client
@@ -51,6 +58,7 @@ const CreateClient: React.FC = () => {
           name: clientData.name,
           role: 'client',
           adviser_id: user.id,
+          created_at: new Date().toISOString()
         }]);
 
       if (profileError) {
@@ -60,6 +68,8 @@ const CreateClient: React.FC = () => {
         throw profileError;
       }
 
+      console.log('Profile created successfully');
+
       alert(
         `Client account created successfully!\n\n` +
         `Email: ${clientData.email}\n` +
@@ -68,7 +78,9 @@ const CreateClient: React.FC = () => {
       );
   
         console.log('Client profile created successfully');
+        
         alert(`Client account created successfully. Login credentials have been sent to ${clientData.email}`);
+        
         navigate('/adviser/adviser-dashboard');
 
       } catch (err: any) {
