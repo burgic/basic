@@ -25,19 +25,6 @@ const CreateClient: React.FC = () => {
         throw new Error('Adviser not authenticated');
       }
 
-      console.log('Creating client with adviser_id:', user.id);
-
-      // First, check if email already exists in profiles
-      const { data: existingProfile } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('email', clientData.email)
-      .single();
-
-    if (existingProfile) {
-      throw new Error('A user with this email already exists');
-    }
-
       // Create auth user for client
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: clientData.email,
@@ -45,63 +32,36 @@ const CreateClient: React.FC = () => {
         options: {
           data: { 
             role: 'client',
-            adviser_id: user.id
           },
-          emailRedirectTo: `${window.location.origin}/auth/callback`
         }
       });
 
-      if (signUpError) {
-        console.error('Signup error:', signUpError);
-        throw signUpError;
-      }
+      if (signUpError) throw signUpError;
+      if (!authData.user) throw new Error('No user data returned');
 
-      if (!authData.user) {
-        throw new Error('No user data returned from signup');
-      }
-
-      console.log('Created auth user:', authData.user.id);
       // Create profile for client
       const { error: profileError } = await supabase
         .from('profiles')
-        .insert([{
+        .insert({
           id: authData.user.id,
           email: clientData.email,
           name: clientData.name,
           role: 'client',
-          adviser_id: user.id,
-          created_at: new Date().toISOString()
-        }]);
+          adviser_id: user.id, // Current adviser's ID
+        });
 
-      if (profileError) {
-        console.error('Profile creation error:', profileError);
-        // Clean up auth user if profile creation fails
-        await supabase.auth.admin.deleteUser(authData.user.id);
-        throw profileError;
-      }
+      if (profileError) throw profileError;
 
-      console.log('Profile created successfully');
+      alert(`Client account created successfully. Login credentials have been sent to ${clientData.email}`);
+      navigate('/adviser/adviser-dashboard');
 
-      alert(
-        `Client account created successfully!\n\n` +
-        `Email: ${clientData.email}\n` +
-        `Password: ${clientData.password}\n\n` +
-        `Please provide these credentials to your client.`
-      );
-  
-        console.log('Client profile created successfully');
-        
-        alert(`Client account created successfully. Login credentials have been sent to ${clientData.email}`);
-        
-        navigate('/adviser/adviser-dashboard');
-
-      } catch (err: any) {
-        console.error('Error creating client:', err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
+    } catch (err: any) {
+      console.error('Error creating client:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-white p-4 sm:p-6 md:p-8">
