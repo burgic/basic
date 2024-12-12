@@ -24,7 +24,8 @@ const SignIn: React.FC = () => {
         .from('profiles')
         .select('role')
         .eq('email', email)
-        .single();
+        .single()
+        .throwOnError();
 
       if (profileError && !profileError.message.includes('no rows')) {
         console.error('Profile check error:', profileError);
