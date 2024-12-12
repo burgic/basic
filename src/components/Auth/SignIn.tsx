@@ -17,18 +17,41 @@ const SignIn: React.FC = () => {
     setError(null);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      // First try to get the user's profile
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('email', email)
+        .single();
+
+      if (profileError && !profileError.message.includes('no rows')) {
+        console.error('Profile check error:', profileError);
+      }
+
+      // Attempt sign in
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) throw error;
+      if (signInError) {
+        if (signInError.message.includes('Invalid login credentials')) {
+          throw new Error('Invalid email or password');
+        }
+        if (signInError.message.includes('Database error')) {
+          throw new Error('Service temporarily unavailable. Please try again in a few moments.');
+        }
+        throw signInError;
+      }
 
-      // Get role from user metadata
-      const role = data.user?.user_metadata?.role;
+      if (!data.user) {
+        throw new Error('Sign in successful but no user data returned');
+      }
 
-      // Navigate based on role
-      if (role === 'adviser') {
+      // Get role from either profile or user metadata
+      const userRole = profile?.role || data.user.user_metadata?.role;
+
+      if (userRole === 'adviser') {
         navigate('/adviser/adviser-dashboard');
       } else {
         navigate('/client/client-dashboard');
@@ -36,7 +59,7 @@ const SignIn: React.FC = () => {
 
     } catch (error: any) {
       console.error('Sign in error:', error);
-      setError('Invalid email or password');
+      setError(error.message);
     } finally {
       setLoading(false);
     }
