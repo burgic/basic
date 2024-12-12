@@ -27,6 +27,17 @@ const CreateClient: React.FC = () => {
 
       console.log('Creating client with adviser_id:', user.id);
 
+      // First, check if email already exists in profiles
+      const { data: existingProfile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('email', clientData.email)
+      .single();
+
+    if (existingProfile) {
+      throw new Error('A user with this email already exists');
+    }
+
       // Create auth user for client
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: clientData.email,
@@ -34,6 +45,7 @@ const CreateClient: React.FC = () => {
         options: {
           data: { 
             role: 'client',
+            adviser_id: user.id
           },
           emailRedirectTo: `${window.location.origin}/auth/callback`
         }
