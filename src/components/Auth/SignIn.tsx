@@ -10,11 +10,13 @@ const SignIn: React.FC = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showResendButton, setShowResendButton] = useState(false);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setShowResendButton(false);
 
     try {
       // First try to get the user's profile
@@ -35,6 +37,14 @@ const SignIn: React.FC = () => {
       });
 
       if (signInError) {
+
+        console.error('Sign in error:', signInError);
+
+        if (signInError.message.includes('Email not confirmed')) {
+          setShowResendButton(true);
+          throw new Error('Please confirm your email address. Check your inbox for a confirmation link.');
+        }
+
         if (signInError.message.includes('Invalid login credentials')) {
           throw new Error('Invalid email or password');
         }
@@ -65,7 +75,26 @@ const SignIn: React.FC = () => {
     }
   };
 
-  // Rest of the component remains the same
+  const handleResendConfirmation = async () => {
+    setLoading(true);
+    try {
+      const { error: resendError } = await supabase.auth.resend({
+        type: 'signup',
+        email,
+      });
+
+      if (resendError) throw resendError;
+
+      setError('Confirmation email resent. Please check your inbox.');
+      setShowResendButton(false);
+    } catch (error: any) {
+      console.error('Resend error:', error);
+      setError('Failed to resend confirmation email. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
 
 return (
