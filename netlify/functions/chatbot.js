@@ -145,8 +145,7 @@ const handler = async (event) => {
             { role: "user", content: message }
           ],
           temperature: 0.7,
-          max_tokens: 300,
-          timeout: 8000
+          max_tokens: 300
     });
 
     return {
