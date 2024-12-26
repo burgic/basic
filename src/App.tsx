@@ -75,6 +75,14 @@ import Chatbot from './components/Chat/Chat';
               }
             />
             <Route
+              path="/client/liabilities:id"
+              element={
+                <ProtectedRoute requiredRole="client">
+                  <LiabilitiesForm />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/client/goals"
               element={
                 <ProtectedRoute requiredRole="client">

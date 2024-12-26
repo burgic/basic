@@ -27,64 +27,14 @@ const calculateMonthlyExpenditure = (expenditures) => {
 const calculateAnnualExpenditure = (expenditures) => {
     return expenditures.reduce((sum, exp) => {
         const amount = parseFloat(exp.amount) || 0;
-        return sum + (exp.frequency.toLowerCase() === 'annual' ? amount / 12 : amount);
+        return sum + (exp.frequency.toLowerCase() === 'monthly' ? amount * 12 : amount);
     }, 0);
 };
-/*
-
-const createFinancialSummary = (data) => {
-  const monthlyIncome = calculateMonthlyIncome(data.incomes);
-  const annualIncome = calculateAnnualIncome(data.incomes);
-  const monthlyExpenditure = calculateMonthlyExpenditure(data.incomes);
-  const annualExpenditure = calculateAnnualExpenditure(data.incomes);
-  const totalExpenditure = data.expenditures.reduce((sum, exp) => sum + exp.amount, 0);
-  const totalAssets = data.assets.reduce((sum, asset) => sum + asset.value, 0);
-  const totalLiabilities = data.liabilities.reduce((sum, liability) => sum + liability.amount, 0);
-  const netWorth = totalAssets - totalLiabilities;
-
-  if (!data.incomes || !data.incomes.length) {
-    console.log('No income data available');
-    return 'No income data available';
-  }
-
-  return `
-  FINANCIAL OVERVIEW
-  =================
-  Monthly Income: £${monthlyIncome.toFixed(2)}
-  Annual Income: £${annualIncome.toFixed(2)}
-  Monthly Expenses: £${monthlyExpenditure.toFixed(2)}
-  Annual Expenses: £${annualExpenditure.toFixed(2)}
-  Monthly Cash Flow: £${(annualIncome - totalExpenditure).toFixed(2)}
-  Total Assets: £${totalAssets.toFixed(2)}
-  Total Liabilities: £${totalLiabilities.toFixed(2)}
-  Net Worth: £${netWorth.toFixed(2)}
-
-  DETAILED BREAKDOWN
-  =================
-  Income Sources:
-  ${data.incomes.map((inc) => `- ${inc.type}: £${inc.amount} (${inc.frequency})`).join('\n') || 'No income data available'}
-
-  Expense Sources:
-  ${data.expenditures.map((exp) => `- ${exp.category}: £${exp.amount}`).join('\n') || 'No expense data available'}
-
-  Assets:
-  ${data.assets.map((asset) => `- ${asset.type}: £${asset.value} - ${asset.description}`).join('\n') || 'No asset data available'}
-
-  Liabilities:
-  ${data.liabilities.map((liability) => `- ${liability.type}: £${liability.amount} at ${liability.interest_rate}% interest`).join('\n') || 'No liability data available'}
-
-  Financial Goals:
-  ${data.goals.map((goal) => `- ${goal.goal}: Target £${goal.target_amount} in ${goal.time_horizon} years`).join('\n') || 'No goals set'}
-  `;
-
-};
-
-*/
 const systemMessage = (financialData) => {
     const monthlyIncome = calculateMonthlyIncome(financialData.incomes);
     const annualIncome = calculateAnnualIncome(financialData.incomes);
-    const monthlyExpenditure = calculateMonthlyExpenditure(financialData.incomes);
-    const annualExpenditure = calculateAnnualExpenditure(financialData.incomes);
+    const monthlyExpenditure = calculateMonthlyExpenditure(financialData.expenditures);
+    const annualExpenditure = calculateAnnualExpenditure(financialData.expenditures);
     const totalExpenditure = financialData.expenditures.reduce((sum, exp) => sum + exp.amount, 0);
     const totalAssets = financialData.assets.reduce((sum, asset) => sum + asset.value, 0);
     const totalLiabilities = financialData.liabilities.reduce((sum, liability) => sum + liability.amount, 0);
@@ -120,7 +70,22 @@ const systemMessage = (financialData) => {
         Financial Goals:
         ${financialData.goals.map((goal) => `- ${goal.goal}: Target £${goal.target_amount} in ${goal.time_horizon} years`).join('\n') || 'No goals set'}
        
-        Provide specific, actionable advice based on their actual numbers and circumstances.`;
+        
+        Please use this data to answer the user's question in detail, considering their:
+        1. Income
+        2. Expenses
+        3. Assets
+        4. Liabilities
+        5. Financial Goals
+
+        When responding:
+        1. Always reference specific numbers from their data
+        2. Make recommendations based on their actual income, expenses, and goals
+        3. Provide specific, actionable advice
+        4. Explain how their current finances align with their goals
+        5. Consider their income, expenses, assets, and liabilities in your analysis
+
+        Provide actionable and personalized advice based on the provided data.`;
 };
 const handler = async (event) => {
     console.log('Function triggered', {
@@ -133,16 +98,30 @@ const handler = async (event) => {
     }
     try {
         const { message, messageHistory = [], financialData } = JSON.parse(event.body || '{}');
+        // Validate message content
+        if (!message || typeof message !== 'string') {
+            return {
+                statusCode: 400,
+                body: JSON.stringify({ error: 'Invalid message format' })
+            };
+        }
+        console.log('Received Financial Data:', {
+            incomes: financialData.incomes,
+            expenditureCount: financialData.expenditures.length,
+            assetCount: financialData.assets.length,
+            liabilityCount: financialData.liabilities.length,
+            goalCount: financialData.goals.length
+        });
         const systemPrompt = systemMessage(financialData);
         const completion = await openai.chat.completions.create({
-            model: "gpt-3.5-turbo",
+            model: "gpt-4o-mini-2024-07-18",
             messages: [
                 { role: "system", content: systemPrompt },
-                ...messageHistory,
+                ...messageHistory.slice(-5),
                 { role: "user", content: message }
             ],
             temperature: 0.7,
-            max_tokens: 1000
+            max_tokens: 500
         });
         return {
             statusCode: 200,

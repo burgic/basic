@@ -32,7 +32,7 @@ const calculateMonthlyIncome = (incomes) => {
   const calculateAnnualExpenditure = (expenditures) => {
     return expenditures.reduce((sum, exp) => {
         const amount = parseFloat(exp.amount) || 0;
-        return sum + (exp.frequency.toLowerCase() === 'annual'? amount / 12 : amount);
+        return sum + (exp.frequency.toLowerCase() === 'monthly'? amount * 12 : amount);
     }, 0)
   }
 

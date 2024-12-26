@@ -18,35 +18,50 @@ const SignUp: React.FC = () => {
     setError(null);
 
     try {
-      const { data, error } = await supabase.auth.signUp({
+      // First check if user exists
+      const { data: existingUser } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', email)
+        .single();
+
+      if (existingUser) {
+        throw new Error('An account with this email already exists.');
+      }
+
+      // Create new user
+      const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data:  
-            {role} ,
-        },
+          data: { role },
+          emailRedirectTo: `${window.location.origin}/auth/callback`
+        }
       });
 
-      if (error) throw error;
-      if (!data.user) throw new Error('No user data returned');
-
-      if (data.user) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: data.user.id,
-            email: data.user.email,
-            role: role,
-            created_at: new Date().toISOString(),
-          });
-
-          if (profileError) throw profileError;
-          
-
-        alert('Sign-up successful! Please check your email to confirm your account.');
-        navigate('/');
+      if (signUpError) {
+        if (signUpError.message.includes('already registered')) {
+          throw new Error('This email is already registered. Please sign in instead.');
+        }
+        throw signUpError;
       }
+
+      if (!data.user) {
+        throw new Error('Sign up successful but no user data returned');
+      }
+
+      alert(
+        `Sign-up successful! \n\n` +
+        `Please note your credentials:\n` +
+        `Email: ${email}\n` +
+        `Password: ${password}\n\n` +
+        `You can now sign in with these credentials.`
+      );
+
+      navigate('/');
+
     } catch (error: any) {
+      console.error('Sign up error:', error);
       setError(error.message);
     } finally {
       setLoading(false);
