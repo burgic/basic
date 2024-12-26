@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../../services/supabaseClient';
-import { sign } from 'crypto';
+// import { sign } from 'crypto';
 
 const SignUp: React.FC = () => {
   const navigate = useNavigate();
