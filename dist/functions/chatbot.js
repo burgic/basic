@@ -87,16 +87,7 @@ const systemMessage = (financialData) => {
 
         Provide actionable and personalized advice based on the provided data.`;
 };
-/*
 const handler = async (event) => {
-  console.log('Function triggered', {
-      method: event.httpMethod,
-      body: event.body,
-      headers: event.headers,
-    });
-
-    */
-exports.handler = async (event) => {
     if (event.httpMethod === 'OPTIONS') {
         return {
             statusCode: 204,
