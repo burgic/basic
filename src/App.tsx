@@ -1,7 +1,7 @@
 // src/App.tsx
 import React from 'react';
 import ProtectedRoute from './components/ProtectedRoute';
-import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import SignIn from './components/Auth/SignIn';
 import SignUp from './components/Auth/SignUp';
 import Navbar from './components/Navbar';

@@ -74,7 +74,7 @@ const calculateMonthlyIncome = (incomes) => {
         ${financialData.assets.map((asset) => `- ${asset.type}: £${asset.value} - ${asset.description}`).join('\n') || 'No asset data available'}
 
         Liabilities:
-        ${financialData.liabilities.map((liability) => `- ${liability.type}: £${liability.amount} at ${liability.interest_rate}% interest`).join('\n') || 'No liability data available'}
+        ${financialData.liabilities.map((liability) => `- ${liability.type}: £${liability.amount} at ${liability.interest_rate || 0}% interest`).join('\n') || 'No liability data available'}
 
         Financial Goals:
         ${financialData.goals.map((goal) => `- ${goal.goal}: Target £${goal.target_amount} in ${goal.time_horizon} years`).join('\n') || 'No goals set'}
@@ -98,12 +98,19 @@ const calculateMonthlyIncome = (incomes) => {
 
   }
 
+
 const handler = async (event) => {
-    console.log('Function triggered', {
-        method: event.httpMethod,
-        body: event.body,
-        headers: event.headers,
-      });
+    if (event.httpMethod === 'OPTIONS') {
+      return {
+        statusCode: 204,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS'
+        }
+      };
+    }
+    
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
@@ -134,11 +141,11 @@ const handler = async (event) => {
       model: "gpt-4o-mini-2024-07-18",
       messages: [
             { role: "system", content: systemPrompt },
-            ...messageHistory.slice(-5),
+            ...messageHistory.slice(-3),
             { role: "user", content: message }
           ],
           temperature: 0.7,
-          max_tokens: 500
+          max_tokens: 300
     });
 
     return {
