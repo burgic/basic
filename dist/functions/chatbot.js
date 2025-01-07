@@ -39,8 +39,35 @@ const systemMessage = (financialData) => {
     const totalAssets = financialData.assets.reduce((sum, asset) => sum + asset.value, 0);
     const totalLiabilities = financialData.liabilities.reduce((sum, liability) => sum + liability.amount, 0);
     const netWorth = totalAssets - totalLiabilities;
+    let age = null;
+    let yearsUntilRetirement = null;
+    let retirementAge = null;
+    // Get KYC data if available
+    if (financialData.kyc_data && financialData.kyc_data.date_of_birth) {
+        const today = new Date();
+        const birth = new Date(financialData.kyc_data.date_of_birth);
+        // Calculate age
+        let currentAge = today.getFullYear() - birth.getFullYear();
+        const monthDiff = today.getMonth() - birth.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+            currentAge--;
+        }
+        age = currentAge;
+        // Get retirement goals if available
+        const retirementGoal = financialData.goals.find(goal => goal.goal.toLowerCase().includes('retirement'));
+        if (retirementGoal) {
+            retirementAge = age + retirementGoal.time_horizon;
+            yearsUntilRetirement = retirementGoal.time_horizon;
+        }
+    }
     return `You are a financial advisor assistant in the UK with access to the user's current financial data. 
         Base your advice on their actual financial situation as shown below:
+
+        PERSONAL INFORMATION
+        ===================
+        ${age ? `Current Age: ${age} years old` : 'Age: Not provided'}
+        ${retirementAge ? `Target Retirement Age: ${retirementAge}` : ''}
+        ${yearsUntilRetirement ? `Years until retirement: ${yearsUntilRetirement}` : ''}
 
         FINANCIAL OVERVIEW
         =================

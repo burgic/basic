@@ -5,7 +5,7 @@ import { useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import { useFinancialData } from '../../hooks/useFinancialData';
 // import { Income, Expenditure, Asset, Liability, Goal } from '../../../netlify/functions/types/financial';
-// import { supabase } from '../../services/supabaseClient';
+import { supabase } from '../../services/supabaseClient';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -66,6 +66,18 @@ export default function Chat() {
     setIsLoading(true);
     setError(null);
   
+    try {
+      // Fetch KYC data
+      const { data: kycData, error: kycError } = await supabase
+        .from('kyc_data')
+        .select('*')
+        .eq('profile_id', user.id)
+        .single();
+  
+      if (kycError && !kycError.message.includes('no rows')) {
+        console.error('Error fetching KYC data:', kycError);
+      }
+
     // Validate specific data points before formatting
     if (
       typeof financialData.income !== 'number' ||
@@ -73,16 +85,12 @@ export default function Chat() {
       typeof financialData.assets !== 'number' ||
       typeof financialData.liabilities !== 'number'
     ) {
-      setError('Some required financial information is missing. Please complete your profile.');
-      setIsLoading(false);
-      return;
+      throw new Error('Some required financial information is missing. Please complete your profile.');
     }
     
-    setIsLoading(true);
-    setError(null);
-  
     // Transform financialContext into the expected financialData structure
     const formattedFinancialData = {
+      kyc_data: kycData || null,
       incomes: [{ 
         client_id: user.id,
         type: 'Total Income', 
@@ -129,31 +137,16 @@ export default function Chat() {
 
     // console.log('Sending payload:', JSON.stringify(payload, null, 2));
     console.log('Raw financial data:', financialData);
+    console.log('KYC data:', kycData);
     console.log('Formatted data being sent:', formattedFinancialData);
   
-    // Create message history in the format OpenAI expects
-    const messageHistory = messages.map(msg => ({
-      role: msg.role,
-      content: msg.content
-    }));
-    
-    try {
-
-      console.log('Financial data validation passed:', {
-        hasIncome: Boolean(financialData.income),
-        expenditureCount: financialData.expenditure.length,
-        hasAssets: Boolean(financialData.assets),
-        hasLiabilities: Boolean(financialData.liabilities),
-        goalsCount: financialData.goals?.length || 0
-      });
-
-      const response = await fetch('/.netlify/functions/chatbot', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-      });
+    const response = await fetch('/.netlify/functions/chatbot', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
 
       // const rawResponse = await response.clone().text();
       
