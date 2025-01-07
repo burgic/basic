@@ -3,42 +3,58 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../services/supabaseClient';
 import { AuthContext } from '../../context/AuthContext';
 
+interface KYCData {
+  date_of_birth: string;
+  address_line1: string;
+  address_line2: string;
+  city: string;
+  postal_code: string;
+  country: string;
+  phone_number: string;
+  national_insurance_number: string;
+}
+
 const ProfileForm: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
-  const [profileData, setProfileData] = useState({
+  const [kycData, setKycData] = useState<KYCData>({
     date_of_birth: '',
-    address: '',
-    email_address: ''
+    address_line1: '',
+    address_line2: '',
+    city: '',
+    postal_code: '',
+    country: 'United Kingdom',
+    phone_number: '',
+    national_insurance_number: ''
   });
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchProfile = async () => {
+    const fetchKYCData = async () => {
       if (!user) return;
 
       try {
         const { data, error } = await supabase
-          .from('profiles')
-          .select('date_of_birth, address, email_address')
-          .eq('id', user.id)
+          .from('kyc_data')
+          .select('*')
+          .eq('profile_id', user.id)
           .single();
 
-        if (error) throw error;
-        if (data) setProfileData(data);
+        if (error && error.code !== 'PGRST116') throw error;
+        if (data) setKycData(data);
       } catch (err) {
-        console.error('Error fetching profile:', err);
+        console.error('Error fetching KYC data:', err);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchProfile();
+    fetchKYCData();
   }, [user]);
 
-  const handleChange = (field: string, value: string) => {
-    setProfileData((prev) => ({ ...prev, [field]: value }));
+  const handleChange = (field: keyof KYCData, value: string) => {
+    setKycData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleSubmit = async () => {
@@ -47,9 +63,11 @@ const ProfileForm: React.FC = () => {
     setIsSaving(true);
     try {
       const { error } = await supabase
-        .from('profiles')
-        .update(profileData)
-        .eq('id', user.id);
+        .from('kyc_data')
+        .upsert({
+          profile_id: user.id,
+          ...kycData
+        });
 
       if (error) throw error;
 
@@ -75,30 +93,69 @@ const ProfileForm: React.FC = () => {
           <label className="block text-sm font-medium text-gray-300">Date of Birth</label>
           <input
             type="date"
-            value={profileData.date_of_birth || ''}
+            value={kycData.date_of_birth}
             onChange={(e) => handleChange('date_of_birth', e.target.value)}
             className="w-full px-4 py-2 bg-gray-600 text-gray-100 border border-gray-500 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-300">Address</label>
-          <textarea
-            value={profileData.address || ''}
-            onChange={(e) => handleChange('address', e.target.value)}
+          <label className="block text-sm font-medium text-gray-300">Address Line 1</label>
+          <input
+            type="text"
+            value={kycData.address_line1}
+            onChange={(e) => handleChange('address_line1', e.target.value)}
             className="w-full px-4 py-2 bg-gray-600 text-gray-100 border border-gray-500 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            placeholder="Enter your address"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-300">Email Address</label>
+          <label className="block text-sm font-medium text-gray-300">Address Line 2</label>
           <input
-            type="email"
-            value={profileData.email_address || ''}
-            onChange={(e) => handleChange('email_address', e.target.value)}
+            type="text"
+            value={kycData.address_line2}
+            onChange={(e) => handleChange('address_line2', e.target.value)}
             className="w-full px-4 py-2 bg-gray-600 text-gray-100 border border-gray-500 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            placeholder="Enter your email address"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-300">City</label>
+          <input
+            type="text"
+            value={kycData.city}
+            onChange={(e) => handleChange('city', e.target.value)}
+            className="w-full px-4 py-2 bg-gray-600 text-gray-100 border border-gray-500 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-300">Postal Code</label>
+          <input
+            type="text"
+            value={kycData.postal_code}
+            onChange={(e) => handleChange('postal_code', e.target.value)}
+            className="w-full px-4 py-2 bg-gray-600 text-gray-100 border border-gray-500 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-300">Phone Number</label>
+          <input
+            type="tel"
+            value={kycData.phone_number}
+            onChange={(e) => handleChange('phone_number', e.target.value)}
+            className="w-full px-4 py-2 bg-gray-600 text-gray-100 border border-gray-500 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-300">National Insurance Number</label>
+          <input
+            type="text"
+            value={kycData.national_insurance_number}
+            onChange={(e) => handleChange('national_insurance_number', e.target.value)}
+            className="w-full px-4 py-2 bg-gray-600 text-gray-100 border border-gray-500 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
           />
         </div>
 
