@@ -1,4 +1,5 @@
 // src/utils/financialCalculations.ts
+import { calculateAge } from 'components/Chat/Calculate';
 import { 
     Income, 
     Expenditure, 
@@ -74,5 +75,33 @@ import {
     calculatePercentage: (amount: number, total: number): number => {
       if (total === 0) return 0;
       return Number(((amount / total) * 100).toFixed(1));
+    },
+
+    calculateAge: (birthDate: string): number => {
+      if (!birthDate) return 0;
+
+      const today = new Date();
+      const birth = new Date(birthDate);
+
+      let age = today.getFullYear() - birth.getFullYear();
+      const monthDiff = today.getMonth() - birth.getMonth();
+
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() <birth.getDate())) {
+        age--;
+      }
+
+      return age;
+    },
+
+      // You might also want to add related calculations like:
+    calculateRetirementAge: (birthDate: string, targetRetirementYear: number): number => {
+      const currentAge = financialCalculations.calculateAge(birthDate);
+      return targetRetirementYear - new Date().getFullYear() + currentAge;
+    },
+
+    calculateYearsUntilRetirement: (birthDate: string, targetRetirementAge: number): number => {
+      const currentAge = financialCalculations.calculateAge(birthDate);
+      return targetRetirementAge - currentAge;
     }
+
   };
