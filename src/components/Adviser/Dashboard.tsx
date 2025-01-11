@@ -51,9 +51,7 @@ const AdviserDashboard = () => {
           id,
           name,
           email,
-          last_login,
-          created_at,
-          last_review
+          created_at
         `)
         .eq('adviser_id', user.id)
         .eq('role', 'client');
