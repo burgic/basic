@@ -8,10 +8,8 @@ interface Client {
   id: string;
   name: string;
   email: string;
-  last_login: string;
   created_at: string;
   workflow_progress: number;
-  last_review: string;
 }
 
 const AdviserDashboard = () => {
@@ -138,35 +136,9 @@ const AdviserDashboard = () => {
                   </div>
                 </div>
               </div>
-              
-              <div className="bg-white p-6 rounded-lg shadow">
-                <div className="flex items-center">
-                  <Clock className="h-8 w-8 text-green-500" />
-                  <div className="ml-4">
-                    <p className="text-sm text-gray-500">Active Today</p>
-                    <p className="text-2xl font-semibold">
-                      {clients.filter(c => formatLastActivity(c.last_login) === 'Today').length}
-                    </p>
-                  </div>
-                </div>
-              </div>
 
-              <div className="bg-white p-6 rounded-lg shadow">
-                <div className="flex items-center">
-                  <ArrowUpRight className="h-8 w-8 text-purple-500" />
-                  <div className="ml-4">
-                    <p className="text-sm text-gray-500">Reviews Due</p>
-                    <p className="text-2xl font-semibold">
-                      {clients.filter(c => {
-                        const lastReview = new Date(c.last_review);
-                        const yearAgo = new Date();
-                        yearAgo.setFullYear(yearAgo.getFullYear() - 1);
-                        return lastReview < yearAgo;
-                      }).length}
-                    </p>
-                  </div>
-                </div>
-              </div>
+              
+
             </div>
 
             {/* Client List */}
@@ -222,16 +194,7 @@ const AdviserDashboard = () => {
                               {Math.round(client.workflow_progress)}% Complete
                             </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="text-sm text-gray-500">
-                              {formatLastActivity(client.last_login)}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="text-sm text-gray-500">
-                              {client.last_review ? formatLastActivity(client.last_review) : 'Never'}
-                            </span>
-                          </td>
+                          
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <button
                               onClick={(e) => {
