@@ -108,7 +108,7 @@ const AdviserChat = ({ clientId }: { clientId: string }) => {
         clientId
       };
 
-      const response = await fetch('/.netlify/functions/adviser-chat', {
+      const response = await fetch('/.netlify/functions/adviserChat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
