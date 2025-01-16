@@ -33,6 +33,7 @@ const AdviserChat = ({ clientId }: { clientId: string }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [clientData, setClientData] = useState<ClientData | null>(null);
   const [isSuitabilityReport, setIsSuitabilityReport] = useState(false);
+  const [error, setError] = useState<string | null>(null)
   const { user } = useContext(AuthContext);
 
   useEffect(() => {
@@ -111,14 +112,19 @@ const AdviserChat = ({ clientId }: { clientId: string }) => {
         clientId
       };
 
-        console.log('Sending to:', '/.netlify/functions/adviserChat');
+        console.log('Sending to:', '/.netlify/functions/adviser-chat');
         console.log('Payload:', payload);
 
+    try {
       const response = await fetch('/.netlify/functions/adviser-chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify(payload)
       });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
       console.log('Response status:', response.status);
 
@@ -134,7 +140,9 @@ const AdviserChat = ({ clientId }: { clientId: string }) => {
         throw new Error(`Invalid JSON response: ${text.slice(0, 100)}...`);
         }
 
-      if (data.error) throw new Error(data.error);
+      if (data.error) {
+        throw new Error(data.error);
+      }
 
       setMessages(prev => [...prev, {
         role: 'assistant',
@@ -157,6 +165,12 @@ const AdviserChat = ({ clientId }: { clientId: string }) => {
       setIsLoading(false);
       setIsSuitabilityReport(false);
     }
+
+    } catch (error) {
+        console.error('Error sending message:', error);
+        setError((error as Error).message);
+    }
+
   };
 
   if (isLoading && !clientData) {

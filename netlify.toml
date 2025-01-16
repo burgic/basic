@@ -1,7 +1,7 @@
 [build]
   command = "CI=false npm install && npm run build"
   publish = "build" # For CRA
-  functions = ".netlify/functions-build"
+  functions = ".netlify/functions"
 
 [build.environment]
   NODE_VERSION = "18"
