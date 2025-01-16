@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../services/supabaseClient';
 import { useParams } from 'react-router-dom';
+import AdviserChat from '../Chat/AdviserChat';
 
 interface Income {
   id: string;           // Added 'id' property
@@ -46,9 +47,18 @@ const ClientDetails: React.FC = () => {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [liabilities, setLiabilities] = useState<Liability[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
 
   useEffect(() => {
     const fetchData = async () => {
+      if (!clientId) {
+        setError('No client ID provided');
+        setIsLoading(false);
+        return;
+      }
+    try {
       const [
         { data: incomesData, error: incomesError },
         { data: expendituresData, error: expendituresError },
@@ -77,10 +87,27 @@ const ClientDetails: React.FC = () => {
 
       if (goalsError) console.error(goalsError);
       else setGoals(goalsData || []);
-    };
+    } catch (error: any) {
+      setError(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
     fetchData();
   }, [clientId]);
+
+  if (!clientId) {
+    return <div className="p-4 text-red-600">No client ID provided</div>;
+  }
+
+  if (isLoading) {
+    return <div className="p-4">Loading client data...</div>;
+  }
+
+  if (error) {
+    return <div className="p-4 text-red-600">Error: {error}</div>;
+  }
 
   return (
     <div>
@@ -130,7 +157,16 @@ const ClientDetails: React.FC = () => {
           </li>
         ))}
       </ul>
+
+      <div className="mt-8 bg-white rounded-lg shadow-lg p-6">
+    <h3 className="text-xl font-semibold mb-4">Client Communication & Reports</h3>
+    <AdviserChat clientId={clientId} />
+      </div>
+
     </div>
+
+    
+
   );
 };
 
