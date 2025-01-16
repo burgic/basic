@@ -79,7 +79,6 @@ exports.handler = async (event) => {
     }
   };
 
-  /*
 
 const generateSystemPrompt = (clientData, isSuitabilityReport) => {
   // Calculate key financial metrics
@@ -167,20 +166,42 @@ As a UK financial adviser, generate a detailed suitability report following thes
 Format the report professionally with clear sections and maintain a formal tone.`;
   }
 
-  return `${basePrompt}
+  return isSuitabilityReport ?
+  
+  `${basePrompt}
 
-Provide detailed advice considering:
-1. The client's specific financial situation
-2. Their stated goals and objectives
-3. Risk management
-4. Tax efficiency
-5. Long-term sustainability
-6. Regulatory compliance
+      Provide detailed advice considering:
+      1. The client's specific financial situation
+      2. Their stated goals and objectives
+      3. Risk management
+      4. Tax efficiency
+      5. Long-term sustainability
+      6. Regulatory compliance
 
-Use the data to give specific, actionable recommendations.`;
+      Use the data to give specific, actionable recommendations.`:
+
+  `${basePrompt}\n\nProvide detailed advice considering...`;
+
 };
 
 exports.handler = async (event) => {
+
+    // Add CORS headers
+    const headers = {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Content-Type': 'application/json'
+    };
+
+    // Handle preflight requests
+    if (event.httpMethod === 'OPTIONS') {
+      return {
+        statusCode: 204,
+        headers
+      };
+    }
+
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
@@ -195,10 +216,12 @@ exports.handler = async (event) => {
       clientId
     } = JSON.parse(event.body);
 
+    
+
     const systemPrompt = generateSystemPrompt(clientData, isSuitabilityReport);
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4",
+      model: "gpt-4o-mini",
       messages: [
         { role: "system", content: systemPrompt },
         ...messageHistory.map(msg => ({
@@ -230,4 +253,3 @@ exports.handler = async (event) => {
   }
 };
 
-*/
