@@ -8,6 +8,29 @@ const openai = new OpenAI({
 
 exports.handler = async (event) => {
 
+    // Add CORS headers
+    const headers = {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS'
+    };
+
+    // Handle preflight
+    if (event.httpMethod === 'OPTIONS') {
+      return {
+        statusCode: 204,
+        headers
+      };
+    }
+
+    if (event.httpMethod !== 'POST') {
+      return {
+        statusCode: 405,
+        headers,
+        body: JSON.stringify({ error: 'Method not allowed' })
+      };
+    }
+
     try {
     // Add some debug logging
     console.log('Function called');
@@ -33,8 +56,8 @@ exports.handler = async (event) => {
       return {
         statusCode: 200,
         headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
+          ...headers,
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           response: `Test response: Received message "${message}" for client ${clientId}`
