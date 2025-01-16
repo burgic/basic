@@ -8,6 +8,11 @@ interface ChatMessage {
   timestamp: string;
 }
 
+interface ChatResponse {
+    response: string;
+    error?: string;
+  }
+
 interface ClientData {
   id: string;
   name: string;
@@ -106,13 +111,28 @@ const AdviserChat = ({ clientId }: { clientId: string }) => {
         clientId
       };
 
+        console.log('Sending to:', '/.netlify/functions/adviserChat');
+        console.log('Payload:', payload);
+
       const response = await fetch('/.netlify/functions/adviser-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
 
-      const data = await response.json();
+      console.log('Response status:', response.status);
+
+        // Get raw text first to see what we're receiving
+        const text = await response.text();
+        console.log('Raw response:', text);
+
+        // Try to parse if it looks like JSON
+        let data: ChatResponse;
+        try {
+        data = JSON.parse(text);
+        } catch (e) {
+        throw new Error(`Invalid JSON response: ${text.slice(0, 100)}...`);
+        }
 
       if (data.error) throw new Error(data.error);
 

@@ -1,4 +1,4 @@
-// netlify/functions/adviser-chat.js
+// netlify/functions/adviserChat.js
 
 const OpenAI = require('openai');
 
@@ -7,6 +7,8 @@ const openai = new OpenAI({
 });
 
 exports.handler = async (event) => {
+
+    try {
     // Add some debug logging
     console.log('Function called');
     console.log('Event:', event);
@@ -44,6 +46,13 @@ exports.handler = async (event) => {
         statusCode: 500,
         body: JSON.stringify({ error: error.message })
       };
+    }
+    } catch(error) {
+        console.error('Error', error);
+        return {
+            statusCode: 500,
+            body: JSON.stringify({ error: 'Internal server error'})
+        }
     }
   };
 

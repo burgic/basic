@@ -1,36 +1,45 @@
 "use strict";
-// netlify/functions/adviser-chat.js
+// netlify/functions/adviserChat.js
 const OpenAI = require('openai');
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY
 });
 exports.handler = async (event) => {
-    // Add some debug logging
-    console.log('Function called');
-    console.log('Event:', event);
-    if (event.httpMethod !== 'POST') {
-        return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
-    }
     try {
-        const { message, clientData, messageHistory = [], isSuitabilityReport, userId, clientId } = JSON.parse(event.body);
-        console.log('Received data:', { message, clientData, isSuitabilityReport });
-        // For initial testing, just echo back the message
-        return {
-            statusCode: 200,
-            headers: {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
-            },
-            body: JSON.stringify({
-                response: `Test response: Received message "${message}" for client ${clientId}`
-            })
-        };
+        // Add some debug logging
+        console.log('Function called');
+        console.log('Event:', event);
+        if (event.httpMethod !== 'POST') {
+            return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
+        }
+        try {
+            const { message, clientData, messageHistory = [], isSuitabilityReport, userId, clientId } = JSON.parse(event.body);
+            console.log('Received data:', { message, clientData, isSuitabilityReport });
+            // For initial testing, just echo back the message
+            return {
+                statusCode: 200,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                body: JSON.stringify({
+                    response: `Test response: Received message "${message}" for client ${clientId}`
+                })
+            };
+        }
+        catch (error) {
+            console.error('Error:', error);
+            return {
+                statusCode: 500,
+                body: JSON.stringify({ error: error.message })
+            };
+        }
     }
     catch (error) {
-        console.error('Error:', error);
+        console.error('Error', error);
         return {
             statusCode: 500,
-            body: JSON.stringify({ error: error.message })
+            body: JSON.stringify({ error: 'Internal server error' })
         };
     }
 };
