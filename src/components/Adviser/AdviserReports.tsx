@@ -151,6 +151,14 @@ const AdviserChat = ({ clientId }: { clientId: string }) => {
         <h2 className="text-xl font-semibold">
           Chat - {clientData?.name}
         </h2>
+        <div className="flex gap-2 mt-2">
+          <button
+            onClick={() => setIsSuitabilityReport(true)}
+            className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Generate Suitability Report
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto mb-4 space-y-4 min-h-[400px] p-4 border rounded-lg">

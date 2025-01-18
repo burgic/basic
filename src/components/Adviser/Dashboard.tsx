@@ -151,19 +151,19 @@ const AdviserDashboard = () => {
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Client Name
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Workflow Progress
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Last Activity
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Last Review
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Actions
                         </th>
                       </tr>
@@ -175,7 +175,7 @@ const AdviserDashboard = () => {
                           className="hover:bg-gray-50 cursor-pointer"
                           onClick={() => navigate(`/adviser/client/${client.id}`)}
                         >
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="px-4 py-4 whitespace-nowrap">
                             <div className="flex items-center">
                               <div>
                                 <div className="text-sm font-medium text-gray-900">{client.name}</div>
@@ -183,7 +183,7 @@ const AdviserDashboard = () => {
                               </div>
                             </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="px-4 py-4 whitespace-nowrap">
                             <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
                               <div 
                                 className="bg-blue-600 h-2.5 rounded-full" 
@@ -195,7 +195,7 @@ const AdviserDashboard = () => {
                             </span>
                           </td>
                           
-                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <td className="px-4 py-4 whitespace-nowrap text-left text-sm font-medium">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -204,6 +204,39 @@ const AdviserDashboard = () => {
                               className="text-blue-600 hover:text-blue-900"
                             >
                               View Details
+                            </button>
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-left text-sm font-medium">
+                            <button
+                              // onClick={(e) => {
+                              //   e.stopPropagation();
+                              //   navigate(`/adviser/client/${client.id}/insights`);
+                              // }}
+                              className="text-blue-600 hover:text-blue-900"
+                            >
+                              Holding Text
+                            </button>
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-left text-sm font-medium">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/adviser/client/${client.id}/insights`);
+                              }}
+                              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                            >
+                              Insights
+                            </button>
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-left text-sm font-medium">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/adviser/client/${client.id}/reports`);
+                              }}
+                              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                            >
+                              Reports
                             </button>
                           </td>
                         </tr>

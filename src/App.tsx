@@ -6,6 +6,8 @@ import SignIn from './components/Auth/SignIn';
 import SignUp from './components/Auth/SignUp';
 import Navbar from './components/Navbar';
 import AdviserDashboard from './components/Adviser/Dashboard';
+import Insights from './components/Adviser/Insights';
+import Reports from './components/Adviser/Reports';
 import CreateClient from './components/Adviser/CreateClient';
 import ClientDashboard from './components/Client/Dashboard';
 import { AuthProvider } from './context/AuthContext';
@@ -33,6 +35,30 @@ import Chatbot from './components/Chat/Chat';
             <Route path="/signup" element={<SignUp />} />
             <Route path="/adviser/adviser-dashboard" element={<ProtectedRoute requiredRole = "adviser"> <AdviserDashboard /> </ProtectedRoute>} />
             <Route path="/adviser/create-client" element={<ProtectedRoute requiredRole = "adviser"> <CreateClient /></ProtectedRoute>} />
+            <Route
+              path="/adviser/client/:clientId"
+              element={
+                <ProtectedRoute requiredRole="adviser">
+                  <ClientDetails />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/adviser/client/:clientId/insights"
+              element={
+                <ProtectedRoute requiredRole="adviser">
+                  <Insights />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/adviser/client/:clientId/reports"
+              element={
+                <ProtectedRoute requiredRole="adviser">
+                  <Reports />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/client/client-dashboard" element={<ProtectedRoute requiredRole = "client"><ClientDashboard /></ProtectedRoute>} />
             <Route
               path="/client/income"
@@ -98,15 +124,6 @@ import Chatbot from './components/Chat/Chat';
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/adviser/client/:clientId"
-              element={
-                <ProtectedRoute requiredRole="adviser">
-                  <ClientDetails />
-                </ProtectedRoute>
-              }
-            />
-
           </Routes>
         </BrowserRouter>
       </AuthProvider>
