@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../services/supabaseClient';
 import { useParams } from 'react-router-dom';
-import AdviserChat from '../Chat/AdviserChat';
 
 interface Income {
   id: string;           // Added 'id' property
@@ -157,16 +156,7 @@ const ClientDetails: React.FC = () => {
           </li>
         ))}
       </ul>
-
-      <div className="mt-8 bg-white rounded-lg shadow-lg p-6">
-    <h3 className="text-xl font-semibold mb-4">Client Communication & Reports</h3>
-    <AdviserChat clientId={clientId} />
-      </div>
-
     </div>
-
-    
-
   );
 };
 
