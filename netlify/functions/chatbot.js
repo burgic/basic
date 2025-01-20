@@ -3,7 +3,6 @@
 const OpenAI = require('openai');
 
 const openai = new OpenAI({
-  console.log(process.env.OPENAI_API_KEY, "API KEY !!!");
   apiKey: process.env.OPENAI_API_KEY
 });
 

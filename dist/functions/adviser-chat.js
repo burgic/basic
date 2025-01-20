@@ -164,6 +164,13 @@ exports.handler = async (event) => {
     }
     try {
         const { message, clientData, messageHistory = [], isSuitabilityReport, userId, clientId } = JSON.parse(event.body);
+        // Add dropdown's to enable selection of model, temperatures, max_tokens
+        // pull from chat gpt
+        // Add Claude as an option later
+        // Temperature dictates randomness and specificity
+        // 0 > 1 
+        // Max tokens dictates the processing power allocated to the query
+        // 100 - 100000
         const systemPrompt = generateSystemPrompt(clientData, isSuitabilityReport);
         const completion = await openai.chat.completions.create({
             model: "gpt-4o-mini",
