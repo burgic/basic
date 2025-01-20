@@ -1,3 +1,5 @@
+
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../services/supabaseClient';
@@ -125,7 +127,8 @@ const AdviserDashboard = () => {
           </div>
         ) : (
           <div className="space-y-6">
-            {/* Summary Cards */}
+           
+          
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-white p-6 rounded-lg shadow">
                 <div className="flex items-center">
@@ -141,7 +144,8 @@ const AdviserDashboard = () => {
 
             </div>
 
-            {/* Client List */}
+          
+            
             <div className="bg-white shadow rounded-lg overflow-hidden">
               <div className="px-4 py-5 sm:px-6">
                 <h3 className="text-lg font-medium text-gray-900">Your Clients</h3>
@@ -254,3 +258,5 @@ const AdviserDashboard = () => {
 };
 
 export default AdviserDashboard;
+
+
