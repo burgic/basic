@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../services/supabaseClient';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Pie, Bar } from 'react-chartjs-2';
 import { financialCalculations } from '../../utils/financialcalculations';
 import type { Income, Expenditure, Asset, Liability, Goal, Profile, ClientData } from '../../@types/financial';
 
 
 const EnhancedClientDetails = () => {
-  const { clientId } = useParams();
+  const { clientId } = useParams<{ clientId: string }>();
+  const navigate = useNavigate();
   const [data, setData] = useState<ClientData>({
     profile: null,
     incomes: [] as Income[],
@@ -126,7 +127,23 @@ const EnhancedClientDetails = () => {
     <div className="container mx-auto px-4 py-8">
       {/* Client Profile Section */}
       <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
-        <h2 className="text-2xl font-bold mb-4">{data.profile?.name}</h2>
+      <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-bold mb-4">{data.profile?.name}</h2>
+          <div className="flex gap-4">
+            <button
+              onClick={() => navigate(`/adviser/client/${clientId}/insights`)}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Generate Insights
+            </button>
+            <button
+              onClick={() => navigate(`/adviser/client/${clientId}/reports`)}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              View Reports
+            </button>
+          </div>
+        </div>
         <div className="grid md:grid-cols-2 gap-4">
           <div>
             <p><span className="font-medium">Email:</span> {data.profile?.email}</p>
