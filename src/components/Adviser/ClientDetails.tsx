@@ -224,7 +224,6 @@ const EnhancedClientDetails = () => {
           </div>
         </div>
 
-        {/* Expenditure Breakdown */}
         <div className="bg-white rounded-lg shadow-lg p-6">
           <h3 className="text-lg font-semibold mb-4">Expenditure Categories</h3>
           <div className="h-64 flex justify-center items-center">
