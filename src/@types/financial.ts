@@ -117,4 +117,29 @@ export interface FormFields {
     defaultEntry: Record<string, any>;
   }
 
+  export interface KYCData {
+    date_of_birth: string;
+    address_line1: string;
+    address_line2: string;
+    city: string;
+    postal_code: string;
+    phone_number: string;
+  }
+
+  export interface Profile {
+    id: string;
+    name: string;
+    email: string;
+    kyc?: KYCData;
+  }
+
+  export interface ClientData {
+    profile: Profile | null;
+    incomes: Income[];
+    expenditures: Expenditure[];
+    assets: Asset[];
+    liabilities: Liability[];
+    goals: Goal[];
+  }
+  
   export * from '../../netlify/functions/types/financial';

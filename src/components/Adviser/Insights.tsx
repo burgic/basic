@@ -1,11 +1,9 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
-import AdviserChat from '../Adviser/AdviserChat';
+import AdviserChat from '../Chat/AdviserChat';
 
 const Insights = () => {
   const { clientId } = useParams<{ clientId: string }>();
-
-  console.log(clientId, "CLINET ID FOR ALEX")
 
   if (!clientId) {
     return <div className="p-4 text-red-600">No client ID provided</div>;
