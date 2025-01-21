@@ -206,7 +206,7 @@ const EnhancedClientDetails = () => {
         {/* Income Breakdown */}
         <div className="bg-white rounded-lg shadow-lg p-6">
           <h3 className="text-lg font-semibold mb-4">Income Sources</h3>
-          <div className="h-64">
+          <div className="h-64 flex justify-center items-center">
             <Pie data={incomeChartData} />
           </div>
           <div className="mt-4 max-h-48 overflow-y-auto">
@@ -227,7 +227,7 @@ const EnhancedClientDetails = () => {
         {/* Expenditure Breakdown */}
         <div className="bg-white rounded-lg shadow-lg p-6">
           <h3 className="text-lg font-semibold mb-4">Expenditure Categories</h3>
-          <div className="h-64">
+          <div className="h-64 flex justify-center items-center">
             <Pie data={expenditureChartData} />
           </div>
           <div className="mt-4 max-h-48 overflow-y-auto">
