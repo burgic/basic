@@ -1,6 +1,6 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
-import AdviserReports from '../Adviser/AdviserReports';
+import AdviserReports from '../Chat/AdviserReports';
 
 const Reports = () => {
   const { clientId } = useParams<{ clientId: string }>();
