@@ -1,47 +1,220 @@
-# Getting Started with Create React App
+# AoV Report Analyzer
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+An AI-powered web application that analyzes Assessment of Value (AoV) reports for financial compliance, accessibility, and effectiveness.
 
-## Available Scripts
+## Features
 
-In the project directory, you can run:
+- **Authentication**: Secure login and registration
+- **PDF Parsing**: Upload and extract text from PDF reports
+- **AI Analysis**: AI-powered evaluation using OpenAI API
+- **Detailed Metrics**: Readability scores, document structure analysis
+- **Export Options**: Download analysis as PDF
+- **History**: Track previous analyses in a dashboard
 
-### `npm start`
+## Setup Instructions
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+### Prerequisites
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+- Node.js (v18+)
+- npm or yarn
+- Supabase account
+- OpenAI API key
 
-### `npm test`
+### Installation
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+1. Clone this repository
+```
+git clone https://github.com/yourusername/aov-analyzer.git
+cd aov-analyzer
+```
 
-### `npm run build`
+2. Install dependencies
+```
+npm install
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+3. Create a `.env` file with the following variables:
+```
+REACT_APP_SUPABASE_DATABASE_URL=your_supabase_url
+REACT_APP_SUPABASE_ANON_KEY=your_supabase_anon_key
+OPENAI_API_KEY=your_openai_api_key
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+4. Set up Supabase tables by running the SQL scripts in `supabase/schema.sql`
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+5. Start the development server
+```
+npm start
+```
 
-### `npm run eject`
+## Netlify Deployment
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+### Deploy via Netlify UI
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+1. Build your application
+```
+npm run build
+```
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+2. Drag and drop the `build` folder to Netlify
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+### Deploy via Netlify CLI
 
-## Learn More
+1. Install Netlify CLI
+```
+npm install -g netlify-cli
+```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+2. Connect to your Netlify site
+```
+netlify link
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
-# workflow
+3. Deploy
+```
+netlify deploy --prod
+```
+
+### Environment Variables
+
+Set these in your Netlify site settings:
+
+- `REACT_APP_SUPABASE_DATABASE_URL`
+- `REACT_APP_SUPABASE_ANON_KEY`
+- `OPENAI_API_KEY`
+
+## Supabase Setup
+
+### Create Tables
+
+Create the following tables in your Supabase dashboard:
+
+1. `profiles` table:
+```sql
+CREATE TABLE profiles (
+  id UUID PRIMARY KEY REFERENCES auth.users(id),
+  email TEXT NOT NULL,
+  name TEXT,
+  role TEXT DEFAULT 'client',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+2. `analyses` table:
+```sql
+CREATE TABLE analyses (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES auth.users(id) NOT NULL,
+  filename TEXT NOT NULL,
+  report_hash TEXT NOT NULL,
+  analysis TEXT NOT NULL,
+  qa_feedback TEXT,
+  metrics JSONB,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### Set up Row Level Security
+
+```sql
+-- Profiles table policy
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view and edit their own profile"
+  ON profiles
+  USING (id = auth.uid())
+  WITH CHECK (id = auth.uid());
+
+-- Analyses table policy
+ALTER TABLE analyses ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view their own analyses"
+  ON analyses
+  USING (user_id = auth.uid());
+
+CREATE POLICY "Users can insert their own analyses"
+  ON analyses
+  FOR INSERT
+  WITH CHECK (user_id = auth.uid());
+```
+
+## Project Structure
+
+```
+/
+├── netlify/
+│   └── functions/
+│       └── aovAnalysis.js        # Serverless function for AI analysis
+│
+├── public/
+│   ├── index.html
+│   └── ...
+│
+├── src/
+│   ├── components/               # React components
+│   │   ├── AnalysisResult.tsx    # Displays analysis results
+│   │   ├── FileUpload.tsx        # PDF upload component
+│   │   ├── Header.tsx            # App header
+│   │   ├── Navbar.tsx            # Navigation bar
+│   │   ├── ProtectedRoute.tsx    # Route protection component
+│   │   └── ReportAnalyzer.tsx    # Main analyzer component
+│   │
+│   ├── context/                  # React context
+│   │   └── AuthContext.tsx       # Authentication context
+│   │
+│   ├── hooks/                    # Custom React hooks
+│   │   └── useAuthRedirect.ts    # Auth redirection hook
+│   │
+│   ├── pages/                    # Full page components
+│   │   ├── Dashboard.tsx         # User dashboard
+│   │   ├── Login.tsx             # Login page
+│   │   └── Register.tsx          # Registration page
+│   │
+│   ├── services/                 # API services
+│   │   └── supabaseClient.ts     # Supabase client setup
+│   │
+│   ├── styles/                   # CSS styles
+│   │   ├── auth.css              # Auth component styles
+│   │   ├── dashboard.css         # Dashboard styles
+│   │   └── styles.css            # Main styles
+│   │
+│   ├── types/                    # TypeScript type definitions
+│   │   └── index.ts              # Shared types
+│   │
+│   ├── utils/                    # Utility functions
+│   │   ├── analysisUtils.ts      # Analysis processing
+│   │   ├── metricsUtils.ts       # Metrics extraction
+│   │   └── pdfUtils.ts           # PDF processing
+│   │
+│   ├── App.tsx                   # Main app component
+│   └── index.tsx                 # Entry point
+│
+├── netlify.toml                  # Netlify configuration
+├── package.json                  # Dependencies
+└── tsconfig.json                 # TypeScript configuration
+```
+
+## Using the App
+
+1. Register/login to the application
+2. Upload an AoV report PDF
+3. Wait for the analysis to complete
+4. View the detailed report with metrics and recommendations
+5. Export the analysis to PDF if needed
+6. View history of past analyses in the Dashboard
+
+## Dependencies
+
+- React
+- TypeScript
+- PDF.js for PDF processing
+- jsPDF for PDF generation
+- Supabase for authentication and data storage
+- OpenAI for AI analysis
+- React Router for navigation
+- html2canvas for PDF export
+- React Markdown for rendering markdown content
+
+## License
+
+MIT

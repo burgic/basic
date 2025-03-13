@@ -1,4 +1,9 @@
-/* src/styles.css */
+/* src/styles/styles.css */
+
+/* Import component-specific styles */
+@import './auth.css';
+@import './dashboard.css';
+
 :root {
   --primary-color: #4f46e5;
   --secondary-color: #818cf8;
@@ -84,13 +89,14 @@ body {
 /* Main content styles */
 .main-content {
   flex: 1;
-  max-width: 1200px;
-  margin: 2rem auto;
-  padding: 0 2rem;
+  width: 100%;
+  margin: 0 auto;
 }
 
 /* Analyzer container styles */
 .analyzer-container {
+  max-width: 1200px;
+  margin: 2rem auto;
   background-color: var(--background);
   border-radius: 0.5rem;
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
@@ -99,6 +105,107 @@ body {
 
 .analyzer-instructions {
   margin-bottom: 2rem;
+}
+
+.export-button {
+  padding: 0.75rem 1.25rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.pdf-button {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.pdf-button:hover:not(:disabled) {
+  background-color: #4338ca;
+}
+
+.markdown-button {
+  background-color: var(--light-background);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+}
+
+.markdown-button:hover {
+  background-color: var(--border-color);
+}
+
+.export-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.export-preview {
+  background-color: var(--light-background);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+}
+
+.export-preview h4 {
+  margin-bottom: 0.75rem;
+  color: var(--text-color);
+}
+
+.export-preview ul {
+  padding-left: 1.5rem;
+}
+
+.export-preview li {
+  margin-bottom: 0.5rem;
+  color: var(--light-text);
+}
+
+/* Footer styles */
+.app-footer {
+  background-color: var(--background);
+  padding: 1.5rem 2rem;
+  text-align: center;
+  margin-top: auto;
+  color: var(--light-text);
+  border-top: 1px solid var(--border-color);
+}
+
+/* Error message */
+.error-message {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .header-content {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .nav-links {
+    margin-top: 0.5rem;
+  }
+  
+  .selected-file {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .analysis-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  
+  .export-options {
+    flex-direction: column;
+  }
+}
   text-align: center;
 }
 
@@ -227,6 +334,11 @@ body {
   animation: spin 1s linear infinite;
 }
 
+.loading-detail {
+  font-size: 0.875rem;
+  color: var(--light-text);
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -264,6 +376,34 @@ body {
 .reset-button:hover {
   background-color: var(--primary-color);
   color: white;
+}
+
+.analysis-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.metric-card {
+  background-color: var(--light-background);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.metric-label {
+  font-size: 0.875rem;
+  color: var(--light-text);
+  margin-bottom: 0.5rem;
+}
+
+.metric-value {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--primary-color);
 }
 
 .analysis-content {
@@ -338,8 +478,6 @@ body {
 
 .qa-feedback {
   padding: 1.5rem;
-  border-top: 1px solid var(--border-color);
-  background-color: var(--light-background);
 }
 
 .qa-feedback h3 {
@@ -347,35 +485,21 @@ body {
   color: var(--text-color);
 }
 
-/* Footer styles */
-.app-footer {
-  background-color: var(--background);
-  padding: 1.5rem 2rem;
-  text-align: center;
-  margin-top: auto;
-  color: var(--light-text);
-  border-top: 1px solid var(--border-color);
+.export-tab {
+  padding: 1.5rem;
 }
 
-/* Responsive styles */
-@media (max-width: 768px) {
-  .header-content {
-    flex-direction: column;
-    gap: 1rem;
-  }
-  
-  .nav-links {
-    margin-top: 0.5rem;
-  }
-  
-  .selected-file {
-    flex-direction: column;
-    gap: 1rem;
-  }
-  
-  .analysis-header {
-    flex-direction: column;
-    gap: 1rem;
-    align-items: flex-start;
-  }
+.export-tab h3 {
+  margin-bottom: 1rem;
+  color: var(--text-color);
 }
+
+.export-tab p {
+  margin-bottom: 1.5rem;
+  color: var(--light-text);
+}
+
+.export-options {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
