@@ -45,8 +45,8 @@ const Login: React.FC = () => {
   return (
     <div className="auth-container">
       <div className="auth-card">
-        <h2>Login to AoV Analyzer</h2>
-        <p>Sign in to analyze your Assessment of Value reports</p>
+        <h2>Login to basic</h2>
+        <p>Sign in to analyze your basic webapp</p>
 
         {error && <div className="error-message">{error}</div>}
 
@@ -93,15 +93,12 @@ const Login: React.FC = () => {
       <div className="auth-info">
         <h3>AoV Report Analyzer</h3>
         <p>
-          Our AI-powered tool helps financial compliance professionals analyze 
-          Assessment of Value reports for effectiveness, accessibility, and 
-          regulatory compliance.
+          Our AI-powered webapp is a blank canvas
         </p>
         <ul className="feature-list">
-          <li>Upload PDF AoV reports for automatic analysis</li>
-          <li>Get detailed readability metrics and accessibility scores</li>
-          <li>Receive recommendations aligned with FCA guidelines</li>
-          <li>Download analysis results for reporting</li>
+          <li>Work out what to build</li>
+          <li>Build it</li>
+         
         </ul>
       </div>
     </div>
