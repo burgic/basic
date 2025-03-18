@@ -53,21 +53,6 @@ const Register: React.FC = () => {
         throw new Error('Sign up successful but no user data returned');
       }
 
-      // Create profile in the profiles table
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          id: data.user.id,
-          email: data.user.email,
-          name,
-          role,
-          created_at: new Date().toISOString()
-        });
-
-      if (profileError) {
-        throw profileError;
-      }
-
       alert(
         `Sign-up successful! \n\n` +
         `Please note your credentials:\n` +
