@@ -217,4 +217,4 @@ CREATE POLICY "Users can insert their own analyses"
 
 ## License
 
-MIT
+MIT# basic
