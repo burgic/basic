@@ -23,7 +23,7 @@
 
 [functions]
   node_bundler = "esbuild"
-  external_node_modules = ["@supabase/supabase-js", "openai"]
+  external_node_modules = ["@supabase/supabase-js", "openai", "busboy", "uuid"]
   directory = "netlify/functions"
   
   [functions.chatbot]

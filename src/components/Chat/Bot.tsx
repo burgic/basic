@@ -39,7 +39,7 @@ async function generateBotResponse(userId: string, query: string, agentType: str
 
   // Use OpenAI's API
   const response = await openai.chat.completions.create({
-    model: 'gpt-4',
+    model: 'gpt-4o-mini',
     messages: [
       { role: 'system', content: 'You are a helpful assistant guiding people on their financial journeys. You seek to provide tailored advice and insights to help users achieve their financial goals. Your responses should be concise, actionable, and specific to the user\'s financial data. Always ensure your advice is helpful and relevant to the user\'s needs.' },
       { role: 'user', content: 'Hello!' },
