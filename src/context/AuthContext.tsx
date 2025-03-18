@@ -32,6 +32,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        // Test Supabase connection
+        async function testSupabaseConnection() {
+          try {
+            console.log("Testing Supabase connection...");
+            const { data, error } = await supabase.from('profiles').select('count');
+            
+            if (error) {
+              console.error("Connection test failed:", error);
+              return false;
+            }
+            
+            console.log("Connection successful:", data);
+            return true;
+          } catch (e) {
+            console.error("Connection test exception:", e);
+            return false;
+          }
+        }
+        
+        testSupabaseConnection();
+      }, []);
+
+    useEffect(() => {
         // Try to recover session from storage
         const initializeAuth = async () => {
             try {

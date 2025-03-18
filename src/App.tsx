@@ -1,5 +1,5 @@
 // src/App.tsx
-import React from 'react';
+import React, { useEffect} from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -8,9 +8,34 @@ import Header from './components/Header';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import { supabase } from './services/supabaseClient';
 import './styles.css';
 
 const App: React.FC = () => {
+
+  useEffect(() => {
+    // Test Supabase connection on app initialization
+    async function testSupabaseConnection() {
+      try {
+        console.log("Testing Supabase connection...");
+        const { data, error } = await supabase.from('profiles').select('count');
+        
+        if (error) {
+          console.error("Connection test failed:", error);
+          return false;
+        }
+        
+        console.log("Connection successful:", data);
+        return true;
+      } catch (e) {
+        console.error("Connection test exception:", e);
+        return false;
+      }
+    }
+    
+    testSupabaseConnection();
+  }, []);
+
   return (
     <AuthProvider>
       <Router>

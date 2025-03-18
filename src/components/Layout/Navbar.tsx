@@ -24,7 +24,7 @@ const Navbar: React.FC = () => {
     <nav className="navbar">
       <div className="navbar-container">
         <Link to="/" className="navbar-logo">
-          Workflow
+          basic
         </Link>
         <ul className="navbar-menu">
         {user && user.user_metadata.role === 'client' && (

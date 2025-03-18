@@ -91,7 +91,7 @@ const Login: React.FC = () => {
       </div>
 
       <div className="auth-info">
-        <h3>AoV Report Analyzer</h3>
+        <h3>basic webapp</h3>
         <p>
           Our AI-powered webapp is a blank canvas
         </p>
