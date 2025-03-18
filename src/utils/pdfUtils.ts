@@ -2,8 +2,9 @@
 import * as pdfjs from 'pdfjs-dist';
 
 // Configure PDF.js worker
-const pdfjsWorker = await import('pdfjs-dist/build/pdf.worker.entry');
-pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+if (typeof window !== 'undefined') {
+  pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+}
 
 /**
  * Extract text content from a PDF file
@@ -59,21 +60,21 @@ export const extractImagesFromPDF = async (file: File): Promise<string[]> => {
     }
 
     return imagePaths;
-    } catch (error) {
-        console.error('Error extracting images from PDF:', error);
-        return []; // Return empty array instead of throwing
-    }
+  } catch (error) {
+    console.error('Error extracting images from PDF:', error);
+    return []; // Return empty array instead of throwing
+  }
 };
 
 /**
  * Process a PDF file and extract both text and images
  */
 export const processPDFFile = async (file: File) => {
-    const text = await extractTextFromPDF(file);
-    const imagePaths = await extractImagesFromPDF(file);
-    
-    return {
-        text,
-        images: imagePaths
-    };
+  const text = await extractTextFromPDF(file);
+  const imagePaths = await extractImagesFromPDF(file);
+  
+  return {
+    text,
+    images: imagePaths
+  };
 };

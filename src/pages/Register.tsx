@@ -1,185 +1,170 @@
-// src/components/AnalysisResult.tsx
-import React, { useState, useRef } from 'react';
-import { AnalysisResult as AnalysisResultType } from '../types';
-import ReactMarkdown from 'react-markdown';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+// src/pages/Register.tsx
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { supabase } from '../services/supabaseClient';
 
-interface AnalysisResultProps {
-  result: AnalysisResultType;
-  filename: string;
-  onReset: () => void;
-}
+const Register: React.FC = () => {
+  const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [role, setRole] = useState<'adviser' | 'client'>('client');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-const AnalysisResult: React.FC<AnalysisResultProps> = ({ 
-  result, 
-  filename,
-  onReset 
-}) => {
-  const [activeTab, setActiveTab] = useState<'analysis' | 'qa' | 'export'>('analysis');
-  const analysisRef = useRef<HTMLDivElement>(null);
-  const [exportLoading, setExportLoading] = useState(false);
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
 
-  // Extract metrics from analysis for summary display
-  const extractMetrics = (analysis: string) => {
-    const readingAge = analysis.match(/reading age:?\s*(?:of\s*)?(\d+(?:\.\d+)?)/i)?.[1] || 'N/A';
-    const fleschScore = analysis.match(/flesch reading ease:?\s*(\d+(?:\.\d+)?)/i)?.[1] || 'N/A';
-    
-    return {
-      readingAge,
-      fleschScore
-    };
-  };
-  
-  const metrics = extractMetrics(result.analysis);
-
-  // Generate PDF from analysis content
-  const generatePDF = async () => {
-    if (!analysisRef.current) return;
-    
-    setExportLoading(true);
-    
     try {
-      const contentElement = analysisRef.current;
-      const canvas = await html2canvas(contentElement, {
-        scale: 2,
-        logging: false,
-        useCORS: true
+      // First check if user exists
+      const { data: existingUser } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', email)
+        .single();
+
+      if (existingUser) {
+        throw new Error('An account with this email already exists.');
+      }
+
+      // Create new user
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { 
+            role,
+            name
+          },
+          emailRedirectTo: `${window.location.origin}/auth/callback`
+        }
       });
-      
-      const imgData = canvas.toDataURL('image/png');
-      
-      // Create PDF with appropriate dimensions
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
-      
-      const imgWidth = 210; // A4 width in mm
-      const imgHeight = canvas.height * imgWidth / canvas.width;
-      
-      let position = 0;
-      
-      // Add title
-      pdf.setFontSize(18);
-      pdf.text(`Analysis Report - ${filename}`, 10, 10);
-      position += 20;
-      
-      // Add generation date
-      pdf.setFontSize(10);
-      pdf.text(`Generated on ${new Date().toLocaleDateString()}`, 10, position);
-      position += 10;
-      
-      // Add the rendered content
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      
-      // Save the PDF
-      pdf.save(`AoV_Analysis_${filename.replace(/\s+/g, '_')}.pdf`);
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-      alert('Failed to generate PDF export');
+
+      if (signUpError) {
+        if (signUpError.message.includes('already registered')) {
+          throw new Error('This email is already registered. Please sign in instead.');
+        }
+        throw signUpError;
+      }
+
+      if (!data.user) {
+        throw new Error('Sign up successful but no user data returned');
+      }
+
+      // Create profile in the profiles table
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: data.user.id,
+          email: data.user.email,
+          name,
+          role,
+          created_at: new Date().toISOString()
+        });
+
+      if (profileError) {
+        throw profileError;
+      }
+
+      alert(
+        `Sign-up successful! \n\n` +
+        `Please note your credentials:\n` +
+        `Email: ${email}\n` +
+        `Password: ${password}\n\n` +
+        `You can now sign in with these credentials.`
+      );
+
+      navigate('/');
+
+    } catch (error: any) {
+      console.error('Sign up error:', error);
+      setError(error.message);
     } finally {
-      setExportLoading(false);
+      setLoading(false);
     }
   };
 
   return (
-    <div className="analysis-container">
-      <div className="analysis-header">
-        <h2>Analysis for: {filename}</h2>
-        <button 
-          onClick={onReset}
-          className="reset-button"
-        >
-          Analyze Another Report
-        </button>
-      </div>
+    <div className="auth-container">
+      <div className="auth-card">
+        <h2>Create Account</h2>
+        <p>Sign up to access the AoV Analyzer</p>
 
-      <div className="analysis-metrics">
-        <div className="metric-card">
-          <span className="metric-label">Reading Age</span>
-          <span className="metric-value">{metrics.readingAge}</span>
-        </div>
-        <div className="metric-card">
-          <span className="metric-label">Flesch Score</span>
-          <span className="metric-value">{metrics.fleschScore}</span>
-        </div>
-      </div>
-
-      <div className="analysis-content">
-        <div className="tabs">
-          <button 
-            className={`tab ${activeTab === 'analysis' ? 'active' : ''}`}
-            onClick={() => setActiveTab('analysis')}
-          >
-            Analysis
-          </button>
-          <button 
-            className={`tab ${activeTab === 'qa' ? 'active' : ''}`}
-            onClick={() => setActiveTab('qa')}
-          >
-            QA Feedback
-          </button>
-          <button 
-            className={`tab ${activeTab === 'export' ? 'active' : ''}`}
-            onClick={() => setActiveTab('export')}
-          >
-            Export
-          </button>
-        </div>
-
-        {activeTab === 'analysis' && (
-          <div className="tab-content">
-            <div className="markdown-content" ref={analysisRef}>
-              <ReactMarkdown>{result.analysis}</ReactMarkdown>
-            </div>
+        {error && (
+          <div className="error-message">
+            {error}
           </div>
         )}
 
-        {activeTab === 'qa' && (
-          <div className="tab-content">
-            <div className="qa-feedback">
-              <h3>QA Feedback</h3>
-              <ReactMarkdown>{result.qaFeedback}</ReactMarkdown>
-            </div>
+        <form onSubmit={handleSignUp} className="auth-form">
+          <div className="form-group">
+            <label htmlFor="name">Full Name</label>
+            <input
+              id="name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              placeholder="Enter your full name"
+            />
           </div>
-        )}
 
-        {activeTab === 'export' && (
-          <div className="tab-content export-tab">
-            <h3>Export Options</h3>
-            <p>Download your analysis report in your preferred format:</p>
-            
-            <div className="export-options">
-              <button 
-                className="export-button pdf-button"
-                onClick={generatePDF}
-                disabled={exportLoading}
-              >
-                {exportLoading ? 'Generating PDF...' : 'Download as PDF'}
-              </button>
-              
-              <button className="export-button markdown-button">
-                Download as Markdown
-              </button>
-            </div>
-            
-            <div className="export-preview">
-              <h4>Preview</h4>
-              <p>The export will include:</p>
-              <ul>
-                <li>Complete analysis report</li>
-                <li>Key metrics and scores</li>
-                <li>QA feedback and recommendations</li>
-                <li>Original report filename and date</li>
-              </ul>
-            </div>
+          <div className="form-group">
+            <label htmlFor="email">Email</label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              placeholder="Enter your email address"
+            />
           </div>
-        )}
+
+          <div className="form-group">
+            <label htmlFor="password">Password</label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              placeholder="Create a password"
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="role">Role</label>
+            <select
+              id="role"
+              value={role}
+              onChange={(e) => setRole(e.target.value as 'adviser' | 'client')}
+              required
+            >
+              <option value="client">Client</option>
+              <option value="adviser">Adviser</option>
+            </select>
+          </div>
+
+          <button 
+            type="submit" 
+            className="auth-button" 
+            disabled={loading}
+          >
+            {loading ? 'Creating account...' : 'Sign Up'}
+          </button>
+        </form>
+
+        <div className="auth-links">
+          <p>
+            Already have an account? <Link to="/">Sign in</Link>
+          </p>
+        </div>
       </div>
     </div>
   );
 };
 
-export default AnalysisResult;
+export default Register;

@@ -1,16 +1,25 @@
 // src/api/chatbot.ts
-import { NextApiRequest, NextApiResponse } from 'next';
-import generateBotResponse from '../components/Chat/Bot';
 import { supabase } from '../services/supabaseClient';
+import generateBotResponse from '../components/Chat/Bot';
+
+// Generic request and response interfaces
+interface ApiRequest {
+  body: {
+    userId: string;
+    query: string;
+  };
+  headers: Record<string, string | undefined>;
+  method?: string;
+}
+
+interface ApiResponse {
+  status: (code: number) => ApiResponse;
+  json: (data: any) => void;
+}
 
 const rateLimitMap = new Map();
 
-interface ChatbotRequestBody {
-    userId: string;
-    query: string;
-  }
-
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(req: ApiRequest, res: ApiResponse) {
   const { userId, query } = req.body;
 
   if (!userId || !query) {

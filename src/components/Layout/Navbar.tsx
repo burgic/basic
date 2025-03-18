@@ -2,8 +2,8 @@
 
 import React, { useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { AuthContext } from '../context/AuthContext';
-import { supabase } from '../services/supabaseClient';
+import { AuthContext } from '../../context/AuthContext';
+import { supabase } from '../../services/supabaseClient';
 import './Navbar.css'; // We'll create this file for specific navbar styles
 
 const Navbar: React.FC = () => {
