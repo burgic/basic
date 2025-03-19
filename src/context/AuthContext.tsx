@@ -3,21 +3,16 @@ import React, { createContext, useEffect, useState } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { AuthSession, User } from '@supabase/supabase-js';
 
-// Simple cache outside the component
-const roleCache = new Map();
-
 interface AuthContextProps {
     user: User | null;
     session: AuthSession | null;
     loading: boolean;
-    userRole: string | null;
 }
 
 const initialState: AuthContextProps = {
     user: null,
     session: null,
-    loading: true, 
-    userRole: null
+    loading: true
 };
 
 export const AuthContext = createContext<AuthContextProps>(initialState);
@@ -30,86 +25,39 @@ export const useAuth = () => {
     return context;
 };
 
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
     const [session, setSession] = useState<AuthSession | null>(null);
     const [loading, setLoading] = useState(true);
-    const [userRole, setUserRole] = useState<string | null>(null);
-    const [initialAuthCheckComplete, setInitialAuthCheckComplete] = useState(false);
-
-    // Fetch role function to reuse
-    const fetchRoleForUser = async (userId: string) => {
-        // Check cache first
-        if (roleCache.has(userId)) {
-            setUserRole(roleCache.get(userId));
-            return;
-        }
-
-        try {
-            const { data } = await supabase
-                .from('profiles')
-                .select('role')
-                .eq('id', userId)
-                .single();
-            
-            if (data?.role) {
-                // Store in cache
-                roleCache.set(userId, data.role);
-                setUserRole(data.role);
-            }
-        } catch (error) {
-            console.error('Error fetching role:', error);
-        }
-    };
 
     useEffect(() => {
+        // Try to recover session from storage
         const initializeAuth = async () => {
             try {
-                const { data } = await supabase.auth.getSession();
+                // Get current session
+                const { data: { session: currentSession }, error } = await supabase.auth.getSession();
                 
-                if (data.session) {
-                    setSession(data.session);
-                    setUser(data.session.user);
-                    
-                    // Set role from metadata if available (fast path)
-                    if (data.session.user.user_metadata?.role) {
-                        const role = data.session.user.user_metadata.role;
-                        roleCache.set(data.session.user.id, role);
-                        setUserRole(role);
-                    } else if (data.session.user.id) {
-                        await fetchRoleForUser(data.session.user.id);
-                    }
+                
+
+                if (currentSession) {
+                    setSession(currentSession);
+                    setUser(currentSession.user);
                 }
             } catch (error) {
-                console.error('Session error:', error);
+                console.error('Session retrieval error:', error);
             } finally {
-                setInitialAuthCheckComplete(true);
                 setLoading(false);
             }
         };
-        
+
         initializeAuth();
 
         // Listen for auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
-            console.log('Auth state change:', { event, hasSession: !!newSession });
-            
+                        
             setSession(newSession);
             setUser(newSession?.user ?? null);
-            
-            if (newSession?.user) {
-                // Try to get role from user metadata first
-                const metadataRole = newSession.user?.user_metadata?.role;
-                if (metadataRole) {
-                    roleCache.set(newSession.user.id, metadataRole);
-                    setUserRole(metadataRole);
-                } else if (newSession.user.id) {
-                    await fetchRoleForUser(newSession.user.id);
-                }
-            } else {
-                setUserRole(null);
-            }
-            
             setLoading(false);
         });
 
@@ -118,13 +66,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
     }, []);
 
-    // Create the context value
     const contextValue = {
         user,
         session,
-        loading,
-        userRole
+        loading
     };
+
+    if (loading) {
+        return <div>Loading auth state...</div>;
+    }
 
     return (
         <AuthContext.Provider value={contextValue}>
@@ -132,6 +82,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         </AuthContext.Provider>
     );
 };
+
 
 /*
     useEffect(() => {
