@@ -16,6 +16,30 @@ const SignIn: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+
+    // Attempt sign in
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (signInError) {
+
+      console.error('Sign in error:', signInError);
+
+      if (signInError.message.includes('Invalid login credentials')) {
+        throw new Error('Invalid email or password');
+      }
+      if (signInError.message.includes('Database error')) {
+        throw new Error('Service temporarily unavailable. Please try again in a few moments.');
+      }
+      throw signInError;
+    }
+
+    if (!data.user) {
+      throw new Error('Sign in successful but no user data returned');
+    }
+
     // setShowResendButton(false);
 
     try {
@@ -31,33 +55,7 @@ const SignIn: React.FC = () => {
         console.error('Profile check error:', profileError);
       }
 
-      // Attempt sign in
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (signInError) {
-
-        console.error('Sign in error:', signInError);
-/*
-        if (signInError.message.includes('Email not confirmed')) {
-          setShowResendButton(true);
-          throw new Error('Please confirm your email address. Check your inbox for a confirmation link.');
-        }
-*/
-        if (signInError.message.includes('Invalid login credentials')) {
-          throw new Error('Invalid email or password');
-        }
-        if (signInError.message.includes('Database error')) {
-          throw new Error('Service temporarily unavailable. Please try again in a few moments.');
-        }
-        throw signInError;
-      }
-
-      if (!data.user) {
-        throw new Error('Sign in successful but no user data returned');
-      }
+      
 
       // Get role from either profile or user metadata
       const userRole = profile?.role || data.user.user_metadata?.role;

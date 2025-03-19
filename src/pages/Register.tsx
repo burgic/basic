@@ -75,7 +75,7 @@ const Register: React.FC = () => {
     <div className="auth-container">
       <div className="auth-card">
         <h2>Create Account</h2>
-        <p>Sign up to access the AoV Analyzer</p>
+        <p>Sign up to access the basic webapp</p>
 
         {error && (
           <div className="error-message">

@@ -57,13 +57,31 @@ const App: React.FC = () => {
                   </ProtectedRoute>
                 } 
               />
+
+              <Route 
+                path="/client/client-dashboard" 
+                element={
+                  <ProtectedRoute requiredRole="client">
+                    <Dashboard />
+                  </ProtectedRoute>
+                } 
+              />
+
+              <Route 
+                path="/adviser/adviser-dashboard" 
+                element={
+                  <ProtectedRoute requiredRole="adviser">
+                    <Dashboard />
+                  </ProtectedRoute>
+                } 
+              />
               
               {/* Redirect unknown routes to home */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
           <footer className="app-footer">
-            <p>© {new Date().getFullYear()} AoV Report Analyzer. All rights reserved.</p>
+            <p>© {new Date().getFullYear()} baisc webapp. All rights reserved.</p>
           </footer>
         </div>
       </Router>

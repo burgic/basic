@@ -1,205 +1,196 @@
--- This file provides SQL statements for creating tables in your Supabase database.
--- You can run these statements in the Supabase SQL Editor.
-
--- Profiles Table: Stores user profile information
-CREATE TABLE profiles (
-  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  email TEXT UNIQUE NOT NULL,
-  name TEXT,
-  role TEXT NOT NULL CHECK (role IN ('admin', 'client')),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+CREATE TABLE public.profiles (
+  id uuid NOT NULL,
+  email text NOT NULL,
+  name text NULL,
+  role text NULL,
+  adviser_id uuid NULL,
+  agent_type text NULL DEFAULT 'default'::text,
+  created_at timestamp with time zone NULL DEFAULT now(),
+  updated_at timestamp with time zone NULL DEFAULT now(),
+  CONSTRAINT profiles_pkey PRIMARY KEY (id),
+  CONSTRAINT profiles_email_key UNIQUE (email),
+  CONSTRAINT profiles_adviser_id_fkey FOREIGN KEY (adviser_id) REFERENCES profiles(id) ON DELETE SET NULL,
+  CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE,
+  CONSTRAINT profiles_role_check CHECK ((role = ANY (ARRAY['adviser'::text, 'client'::text])))
 );
 
--- Enable Row Level Security
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
-
--- Create policies for profile access
-CREATE POLICY "Users can view their own profile" ON profiles
-  FOR SELECT USING (auth.uid() = id);
-
-CREATE POLICY "Users can update their own profile" ON profiles
-  FOR UPDATE USING (auth.uid() = id);
-
-CREATE POLICY "Admins can view all profiles" ON profiles
-  FOR SELECT USING (
-    auth.jwt() -> 'user_metadata' ->> 'role' = 'admin'
-  );
-
--- KYC Data Table: Stores Know Your Customer information
-CREATE TABLE kyc_data (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  profile_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  date_of_birth DATE,
-  address_line1 TEXT,
-  address_line2 TEXT,
-  city TEXT,
-  postal_code TEXT,
-  country TEXT,
-  phone_number TEXT,
-  occupation TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+CREATE TABLE public.clients (
+  id uuid NOT NULL DEFAULT extensions.uuid_generate_v4(),
+  name text NOT NULL,
+  email text NOT NULL,
+  adviser_id uuid NULL,
+  created_at timestamp with time zone NULL DEFAULT now(),
+  updated_at timestamp with time zone NULL DEFAULT now(),
+  CONSTRAINT clients_pkey PRIMARY KEY (id),
+  CONSTRAINT clients_email_key UNIQUE (email),
+  CONSTRAINT clients_adviser_id_fkey FOREIGN KEY (adviser_id) REFERENCES profiles(id) ON DELETE CASCADE
 );
 
--- Enable Row Level Security
-ALTER TABLE kyc_data ENABLE ROW LEVEL SECURITY;
-
--- Create policies for KYC data access
-CREATE POLICY "Users can view their own KYC data" ON kyc_data
-  FOR SELECT USING (auth.uid() = profile_id);
-
-CREATE POLICY "Users can update their own KYC data" ON kyc_data
-  FOR UPDATE USING (auth.uid() = profile_id);
-
-CREATE POLICY "Admins can view all KYC data" ON kyc_data
-  FOR SELECT USING (
-    auth.jwt() -> 'user_metadata' ->> 'role' = 'admin'
-  );
-
--- Documents Table: Stores uploaded document information
-CREATE TABLE documents (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  client_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  file_name TEXT NOT NULL,
-  file_type TEXT NOT NULL,
-  file_path TEXT NOT NULL,
-  document_type TEXT NOT NULL,
-  metadata JSONB,
-  uploaded_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+CREATE TABLE public.documents (
+  id uuid NOT NULL DEFAULT extensions.uuid_generate_v4(),
+  client_id uuid NULL,
+  file_name text NOT NULL,
+  file_type text NULL,
+  file_path text NULL,
+  document_type text NULL,
+  uploaded_at timestamp with time zone NULL DEFAULT now(),
+  CONSTRAINT documents_pkey PRIMARY KEY (id),
+  CONSTRAINT documents_client_id_fkey FOREIGN KEY (client_id) REFERENCES profiles(id) ON DELETE CASCADE
 );
 
--- Enable Row Level Security
-ALTER TABLE documents ENABLE ROW LEVEL SECURITY;
-
--- Create policies for document access
-CREATE POLICY "Users can view their own documents" ON documents
-  FOR SELECT USING (auth.uid() = client_id);
-
-CREATE POLICY "Users can insert their own documents" ON documents
-  FOR INSERT WITH CHECK (auth.uid() = client_id);
-
-CREATE POLICY "Admins can view all documents" ON documents
-  FOR SELECT USING (
-    auth.jwt() -> 'user_metadata' ->> 'role' = 'admin'
-  );
-
--- Workflows Table: Stores workflow templates
-CREATE TABLE workflows (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  name TEXT NOT NULL,
-  description TEXT,
-  steps JSONB NOT NULL,
-  is_active BOOLEAN DEFAULT true,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+CREATE TABLE public.analyses (
+  id uuid NOT NULL DEFAULT extensions.uuid_generate_v4(),
+  user_id uuid NULL,
+  created_at timestamp with time zone NULL DEFAULT now(),
+  filename text NULL,
+  report_hash text NULL,
+  metrics jsonb NULL,
+  CONSTRAINT analyses_pkey PRIMARY KEY (id),
+  CONSTRAINT analyses_user_id_fkey FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE CASCADE
 );
 
--- Client Workflows Table: Tracks client progress through workflows
-CREATE TABLE client_workflows (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  client_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  workflow_id UUID NOT NULL REFERENCES workflows(id) ON DELETE CASCADE,
-  current_step INTEGER DEFAULT 0,
-  status TEXT NOT NULL DEFAULT 'in_progress' CHECK (status IN ('in_progress', 'completed', 'abandoned')),
-  data JSONB,
-  started_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  completed_at TIMESTAMP WITH TIME ZONE,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+CREATE TABLE public.assets (
+  id uuid NOT NULL DEFAULT extensions.uuid_generate_v4(),
+  client_id uuid NULL,
+  name text NULL,
+  type text NULL,
+  value numeric NULL,
+  created_at timestamp with time zone NULL DEFAULT now(),
+  updated_at timestamp with time zone NULL DEFAULT now(),
+  CONSTRAINT assets_pkey PRIMARY KEY (id),
+  CONSTRAINT assets_client_id_fkey FOREIGN KEY (client_id) REFERENCES profiles(id) ON DELETE CASCADE
 );
 
--- Enable Row Level Security
-ALTER TABLE client_workflows ENABLE ROW LEVEL SECURITY;
-
--- Create policies for client workflow access
-CREATE POLICY "Users can view their own workflows" ON client_workflows
-  FOR SELECT USING (auth.uid() = client_id);
-
-CREATE POLICY "Admins can view all client workflows" ON client_workflows
-  FOR SELECT USING (
-    auth.jwt() -> 'user_metadata' ->> 'role' = 'admin'
-  );
-
--- Form Responses Table: Stores client responses to workflow forms
-CREATE TABLE form_responses (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  client_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  workflow_id UUID NOT NULL REFERENCES workflows(id),
-  step_id TEXT NOT NULL,
-  data JSONB NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  UNIQUE(client_id, workflow_id, step_id)
+CREATE TABLE public.client_data (
+  id uuid NOT NULL DEFAULT extensions.uuid_generate_v4(),
+  client_id uuid NULL,
+  income numeric NULL,
+  expenses numeric NULL,
+  assets numeric NULL,
+  liabilities numeric NULL,
+  goals text NULL,
+  created_at timestamp with time zone NULL DEFAULT now(),
+  updated_at timestamp with time zone NULL DEFAULT now(),
+  CONSTRAINT client_data_pkey PRIMARY KEY (id),
+  CONSTRAINT client_data_client_id_fkey FOREIGN KEY (client_id) REFERENCES profiles(id) ON DELETE CASCADE
 );
 
--- Enable Row Level Security
-ALTER TABLE form_responses ENABLE ROW LEVEL SECURITY;
-
--- Create policies for form response access
-CREATE POLICY "Users can view their own form responses" ON form_responses
-  FOR SELECT USING (auth.uid() = client_id);
-
-CREATE POLICY "Users can insert their own form responses" ON form_responses
-  FOR INSERT WITH CHECK (auth.uid() = client_id);
-
-CREATE POLICY "Users can update their own form responses" ON form_responses
-  FOR UPDATE USING (auth.uid() = client_id);
-
-CREATE POLICY "Admins can view all form responses" ON form_responses
-  FOR SELECT USING (
-    auth.jwt() -> 'user_metadata' ->> 'role' = 'admin'
-  );
-
--- Chat Messages Table: Stores chat messages between clients and system
-CREATE TABLE chat_messages (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  client_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  role TEXT NOT NULL CHECK (role IN ('user', 'assistant')),
-  content TEXT NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+CREATE TABLE public.expenditures (
+  id uuid NOT NULL DEFAULT extensions.uuid_generate_v4(),
+  client_id uuid NULL,
+  category text NULL,
+  amount numeric NULL,
+  frequency text NULL,
+  created_at timestamp with time zone NULL DEFAULT now(),
+  updated_at timestamp with time zone NULL DEFAULT now(),
+  CONSTRAINT expenditures_pkey PRIMARY KEY (id),
+  CONSTRAINT expenditures_client_id_fkey FOREIGN KEY (client_id) REFERENCES profiles(id) ON DELETE CASCADE,
+  CONSTRAINT expenditures_frequency_check CHECK ((frequency = ANY (ARRAY['Monthly'::text, 'Annual'::text])))
 );
 
--- Enable Row Level Security
-ALTER TABLE chat_messages ENABLE ROW LEVEL SECURITY;
+CREATE TABLE public.goals (
+  id uuid NOT NULL DEFAULT extensions.uuid_generate_v4(),
+  client_id uuid NULL,
+  goal text NULL,
+  target_amount numeric NULL,
+  time_horizon integer NULL,
+  created_at timestamp with time zone NULL DEFAULT now(),
+  updated_at timestamp with time zone NULL DEFAULT now(),
+  CONSTRAINT goals_pkey PRIMARY KEY (id),
+  CONSTRAINT goals_client_id_fkey FOREIGN KEY (client_id) REFERENCES profiles(id) ON DELETE CASCADE
+);
 
--- Create policies for chat message access
-CREATE POLICY "Users can view their own chat messages" ON chat_messages
-  FOR SELECT USING (auth.uid() = client_id);
+CREATE TABLE public.incomes (
+  id uuid NOT NULL DEFAULT extensions.uuid_generate_v4(),
+  client_id uuid NULL,
+  source text NULL,
+  amount numeric NULL,
+  frequency text NULL,
+  created_at timestamp with time zone NULL DEFAULT now(),
+  updated_at timestamp with time zone NULL DEFAULT now(),
+  CONSTRAINT incomes_pkey PRIMARY KEY (id),
+  CONSTRAINT incomes_client_id_fkey FOREIGN KEY (client_id) REFERENCES profiles(id) ON DELETE CASCADE,
+  CONSTRAINT incomes_frequency_check CHECK ((frequency = ANY (ARRAY['Monthly'::text, 'Annual'::text])))
+);
 
-CREATE POLICY "Users can insert their own chat messages" ON chat_messages
-  FOR INSERT WITH CHECK (auth.uid() = client_id);
+CREATE TABLE public.liabilities (
+  id uuid NOT NULL DEFAULT extensions.uuid_generate_v4(),
+  client_id uuid NULL,
+  name text NULL,
+  amount numeric NULL,
+  interest_rate numeric NULL,
+  created_at timestamp with time zone NULL DEFAULT now(),
+  updated_at timestamp with time zone NULL DEFAULT now(),
+  CONSTRAINT liabilities_pkey PRIMARY KEY (id),
+  CONSTRAINT liabilities_client_id_fkey FOREIGN KEY (client_id) REFERENCES profiles(id) ON DELETE CASCADE
+);
 
-CREATE POLICY "Admins can view all chat messages" ON chat_messages
-  FOR SELECT USING (
-    auth.jwt() -> 'user_metadata' ->> 'role' = 'admin'
-  );
 
--- Function to update updated_at timestamp
-CREATE OR REPLACE FUNCTION update_modified_column()
-RETURNS TRIGGER AS $
+
+
+
+CREATE POLICY "Advisers can view their clients' profiles" ON public.clients
+FOR SELECT
+TO authenticated
+USING (adviser_id = auth.uid());
+
+CREATE POLICY "Users can view their own profile" ON public.profiles
+FOR SELECT
+TO authenticated
+USING (auth.uid() = id);
+
+CREATE POLICY "Advisers can view their clients' financial data" ON public.client_data
+FOR SELECT
+TO authenticated
+USING (client_id IN (SELECT profiles.id FROM profiles WHERE (profiles.adviser_id = auth.uid())));
+
+CREATE POLICY "Users can view their own financial data" ON public.client_data
+FOR SELECT
+TO authenticated
+USING (auth.uid() = client_id);
+
+CREATE POLICY "Users can upload their own documents" ON public.documents
+FOR INSERT
+TO authenticated
+WITH CHECK (auth.uid() = client_id);
+
+CREATE POLICY "Advisers can view their clients' documents" ON public.documents
+FOR SELECT
+TO authenticated
+USING (auth.uid() IN (SELECT profiles.adviser_id FROM profiles WHERE (documents.client_id = profiles.id)));
+
+CREATE POLICY "Users can view their own documents" ON public.documents
+FOR SELECT
+TO authenticated
+USING (auth.uid() = client_id);
+
+CREATE POLICY "Users can create their own analyses" ON public.analyses
+FOR INSERT
+TO authenticated
+WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can view their own analyses" ON public.analyses
+FOR SELECT
+TO authenticated
+USING (auth.uid() = user_id);
+
+
+
+
+
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger AS $$
+BEGIN
+  INSERT INTO public.profiles (id, email, name, role)
+  VALUES (new.id, new.email, new.raw_user_meta_data->>'name', new.raw_user_meta_data->>'role');
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION public.update_timestamp()
+RETURNS trigger AS $$
 BEGIN
   NEW.updated_at = NOW();
   RETURN NEW;
 END;
-$ LANGUAGE plpgsql;
-
--- Create triggers for updated_at timestamps
-CREATE TRIGGER update_profiles_updated_at
-BEFORE UPDATE ON profiles
-FOR EACH ROW EXECUTE FUNCTION update_modified_column();
-
-CREATE TRIGGER update_kyc_data_updated_at
-BEFORE UPDATE ON kyc_data
-FOR EACH ROW EXECUTE FUNCTION update_modified_column();
-
-CREATE TRIGGER update_workflows_updated_at
-BEFORE UPDATE ON workflows
-FOR EACH ROW EXECUTE FUNCTION update_modified_column();
-
-CREATE TRIGGER update_client_workflows_updated_at
-BEFORE UPDATE ON client_workflows
-FOR EACH ROW EXECUTE FUNCTION update_modified_column();
-
-CREATE TRIGGER update_form_responses_updated_at
-BEFORE UPDATE ON form_responses
-FOR EACH ROW EXECUTE FUNCTION update_modified_column();
+$$ LANGUAGE plpgsql;

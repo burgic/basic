@@ -7,12 +7,14 @@ interface AuthContextProps {
     user: User | null;
     session: AuthSession | null;
     loading: boolean;
+    userRole: string | null;
 }
 
 const initialState: AuthContextProps = {
     user: null,
     session: null,
-    loading: true
+    loading: true, 
+    userRole: null
 };
 
 export const AuthContext = createContext<AuthContextProps>(initialState);
@@ -30,6 +32,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [user, setUser] = useState<User | null>(null);
     const [session, setSession] = useState<AuthSession | null>(null);
     const [loading, setLoading] = useState(true);
+    const [userRole, setUserRole] = useState<string | null>(null);
+
+    const fetchUserRole = async (userId: string) => {
+        // First check if user has role in metadata
+        if (user?.user_metadata?.role) {
+            setUserRole(user.user_metadata.role);
+            return;
+        }
+
+        try {
+            // Attempt to get role from profiles table
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('id', userId)
+                .single();
+                
+            if (error) throw error;
+            
+            if (data?.role) {
+                setUserRole(data.role);
+            }
+        } catch (error) {
+            console.error('Error fetching user role:', error);
+            setUserRole(null);
+        }
+    };
 
     useEffect(() => {
         // Test Supabase connection
@@ -69,6 +98,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 if (currentSession) {
                     setSession(currentSession);
                     setUser(currentSession.user);
+
+                    // Fetch user role when we have a user
+                    await fetchUserRole(currentSession.user.id);
+
                 }
             } catch (error) {
                 console.error('Session retrieval error:', error);
@@ -85,6 +118,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             
             setSession(newSession);
             setUser(newSession?.user ?? null);
+
+            // Update user role when session changes
+            if (newSession?.user) {
+                await fetchUserRole(newSession.user.id);
+            } else {
+                setUserRole(null);
+            }
+
             setLoading(false);
         });
 
@@ -96,7 +137,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const contextValue = {
         user,
         session,
-        loading
+        loading, 
+        userRole
     };
 
     if (loading) {
