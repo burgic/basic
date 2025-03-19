@@ -1,5 +1,5 @@
 // src/context/AuthContext.tsx
-import React, { createContext, useEffect, useState } from 'react';
+import React, { createContext, useEffect, useState, useRef } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { AuthSession, User } from '@supabase/supabase-js';
 
@@ -31,6 +31,8 @@ export const useAuth = () => {
 
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    const roleCache = useRef(new Map());
+    
     const [user, setUser] = useState<User | null>(null);
     const [session, setSession] = useState<AuthSession | null>(null);
     const [loading, setLoading] = useState(true);
