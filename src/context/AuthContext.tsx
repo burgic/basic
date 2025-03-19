@@ -17,6 +17,8 @@ const initialState: AuthContextProps = {
     userRole: null
 };
 
+const roleCache = React.useRef(new Map());
+
 export const AuthContext = createContext<AuthContextProps>(initialState);
 
 export const useAuth = () => {
@@ -33,47 +35,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [session, setSession] = useState<AuthSession | null>(null);
     const [loading, setLoading] = useState(true);
     const [userRole, setUserRole] = useState<string | null>(null);
+    const [initialAuthCheckComplete, setInitialAuthCheckComplete] = useState(false);
 
     useEffect(() => {
-        // Try to recover session from storage
         const initializeAuth = async () => {
-            try {
-                // Get current session
-                const { data: { session: currentSession }, error } = await supabase.auth.getSession();
-                
-                console.log('Retrieved session:', {
-                    hasSession: !!currentSession,
-                    error: error?.message
-                });
-
-                if (currentSession) {
-                    setSession(currentSession);
-                    setUser(currentSession.user);
-                    
-                    // Try to get role from user metadata first
-                    const metadataRole = currentSession.user?.user_metadata?.role;
-                    if (metadataRole) {
-                        setUserRole(metadataRole);
-                    } else {
-                        // Fallback to profile table
-                        const { data: profileData } = await supabase
-                            .from('profiles')
-                            .select('role')
-                            .eq('id', currentSession.user.id)
-                            .single();
-                        
-                        if (profileData) {
-                            setUserRole(profileData.role);
-                        }
-                    }
-                }
-            } catch (error) {
-                console.error('Session retrieval error:', error);
-            } finally {
-                setLoading(false);  // Always set loading to false, even if there's an error
+          try {
+            const { data } = await supabase.auth.getSession();
+            if (data.session) {
+              setSession(data.session);
+              setUser(data.session.user);
+              
+              // Set role from metadata if available (fast path)
+              if (data.session.user.user_metadata?.role) {
+                setUserRole(data.session.user.user_metadata.role);
+              }
             }
+          } catch (error) {
+            console.error('Session error:', error);
+          } finally {
+            setInitialAuthCheckComplete(true);
+            setLoading(false);
+          }
         };
-
+        
         initializeAuth();
 
         // Listen for auth changes
@@ -116,13 +100,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
     }, []);
 
+    useEffect(() => {
+        const fetchRole = async () => {
+            if (user && !userRole && initialAuthCheckComplete) {
+                // Check cache first
+                if (roleCache.current.has(user.id)) {
+                    setUserRole(roleCache.current.get(user.id));
+                    return;
+                }
+                
+                try {
+                    const { data } = await supabase
+                        .from('profiles')
+                        .select('role')
+                        .eq('id', user.id)
+                        .single();
+                    
+                    const fetchedRole = data?.role;
+                    
+                    if (fetchedRole) {
+                        // Store in cache
+                        roleCache.current.set(user.id, fetchedRole);
+                        setUserRole(fetchedRole);
+                    }
+                } catch (error) {
+                    console.error('Role fetch error:', error);
+                }
+            }
+        };
+        
+        fetchRole();
+    }, [user, userRole, initialAuthCheckComplete]);
+    
+    
+
     // Create the context value
-    const contextValue = {
+    const contextValue = React.useMemo(() => ({
         user,
         session,
         loading,
         userRole
-    };
+    }), [user, session, loading, userRole]);
 
 
     return (

@@ -1,5 +1,5 @@
 // src/App.tsx
-import React, { useEffect} from 'react';
+import React, { useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -10,6 +10,8 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import { supabase } from './services/supabaseClient';
 import './styles.css';
+
+
 
 const App: React.FC = () => {
 
@@ -36,6 +38,9 @@ const App: React.FC = () => {
     testSupabaseConnection();
   }, []);
 
+  const Dashboard = lazy(() => import('./pages/Dashboard'));
+  const Login = lazy(() => import('./pages/Login'));
+
   return (
     <AuthProvider>
       <Router>
@@ -45,6 +50,7 @@ const App: React.FC = () => {
             <Routes>
               {/* Public routes */}
               <Route path="/" element={<Login />} />
+              
               <Route path="/register" element={<Register />} />
               
               {/* Protected routes */}
@@ -53,7 +59,9 @@ const App: React.FC = () => {
                 path="/dashboard" 
                 element={
                   <ProtectedRoute>
+                    <Suspense fallback={<div>Loading...</div>}>
                     <Dashboard />
+                    </Suspense>
                   </ProtectedRoute>
                 } 
               />
@@ -61,18 +69,22 @@ const App: React.FC = () => {
               <Route 
                 path="/client/client-dashboard" 
                 element={
+                  <Suspense fallback={<div>Loading...</div>}>
                   <ProtectedRoute requiredRole="client">
                     <Dashboard />
                   </ProtectedRoute>
+                  </Suspense>
                 } 
               />
 
               <Route 
                 path="/adviser/adviser-dashboard" 
                 element={
+                  <Suspense fallback={<div>Loading...</div>}>
                   <ProtectedRoute requiredRole="adviser">
                     <Dashboard />
                   </ProtectedRoute>
+                  </Suspense>
                 } 
               />
               

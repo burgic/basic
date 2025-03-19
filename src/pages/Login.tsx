@@ -25,15 +25,34 @@ const Login: React.FC = () => {
     setError(null);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) throw error;
       
-      // Auth context will handle the session state
-      navigate('/analyzer');
+      // Get the user role
+    let userRole = data.user?.user_metadata?.role;
+    
+    // If role isn't in metadata, check profiles table
+    if (!userRole) {
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', data.user?.id)
+        .single();
+      
+      userRole = profileData?.role;
+    }
+    
+    // Navigate based on role
+    if (userRole === 'adviser') {
+      navigate('/adviser/adviser-dashboard');
+    } else {
+      navigate('/dashboard'); // or '/client/client-dashboard'
+    }
+
     } catch (error) {
       console.error('Error logging in:', error);
       setError(error instanceof Error ? error.message : 'An error occurred during login');
