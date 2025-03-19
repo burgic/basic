@@ -34,55 +34,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [loading, setLoading] = useState(true);
     const [userRole, setUserRole] = useState<string | null>(null);
 
-    const fetchUserRole = async (userId: string) => {
-        // First check if user has role in metadata
-        if (user?.user_metadata?.role) {
-            setUserRole(user.user_metadata.role);
-            return;
-        }
-
-        try {
-            // Attempt to get role from profiles table
-            const { data, error } = await supabase
-                .from('profiles')
-                .select('role')
-                .eq('id', userId)
-                .single();
-                
-            if (error) throw error;
-            
-            if (data?.role) {
-                setUserRole(data.role);
-            }
-        } catch (error) {
-            console.error('Error fetching user role:', error);
-            setUserRole(null);
-        }
-    };
-
-    useEffect(() => {
-        // Test Supabase connection
-        async function testSupabaseConnection() {
-          try {
-            console.log("Testing Supabase connection...");
-            const { data, error } = await supabase.from('profiles').select('count');
-            
-            if (error) {
-              console.error("Connection test failed:", error);
-              return false;
-            }
-            
-            console.log("Connection successful:", data);
-            return true;
-          } catch (e) {
-            console.error("Connection test exception:", e);
-            return false;
-          }
-        }
-        
-        testSupabaseConnection();
-      }, []);
-
     useEffect(() => {
         // Try to recover session from storage
         const initializeAuth = async () => {
@@ -98,15 +49,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 if (currentSession) {
                     setSession(currentSession);
                     setUser(currentSession.user);
-
-                    // Fetch user role when we have a user
-                    await fetchUserRole(currentSession.user.id);
-
+                    
+                    // Try to get role from user metadata first
+                    const metadataRole = currentSession.user?.user_metadata?.role;
+                    if (metadataRole) {
+                        setUserRole(metadataRole);
+                    } else {
+                        // Fallback to profile table
+                        const { data: profileData } = await supabase
+                            .from('profiles')
+                            .select('role')
+                            .eq('id', currentSession.user.id)
+                            .single();
+                        
+                        if (profileData) {
+                            setUserRole(profileData.role);
+                        }
+                    }
                 }
             } catch (error) {
                 console.error('Session retrieval error:', error);
             } finally {
-                setLoading(false);
+                setLoading(false);  // Always set loading to false, even if there's an error
             }
         };
 
@@ -118,15 +82,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             
             setSession(newSession);
             setUser(newSession?.user ?? null);
-
-            // Update user role when session changes
+            
             if (newSession?.user) {
-                await fetchUserRole(newSession.user.id);
+                // Try to get role from user metadata first
+                const metadataRole = newSession.user?.user_metadata?.role;
+                if (metadataRole) {
+                    setUserRole(metadataRole);
+                } else {
+                    // Fallback to profile table
+                    try {
+                        const { data: profileData } = await supabase
+                            .from('profiles')
+                            .select('role')
+                            .eq('id', newSession.user.id)
+                            .single();
+                        
+                        if (profileData) {
+                            setUserRole(profileData.role);
+                        }
+                    } catch (error) {
+                        console.error('Error fetching user role:', error);
+                    }
+                }
             } else {
                 setUserRole(null);
             }
-
-            setLoading(false);
+            
+            setLoading(false);  // Always set loading to false after auth state change
         });
 
         return () => {
@@ -134,16 +116,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
     }, []);
 
+    // Create the context value
     const contextValue = {
         user,
         session,
-        loading, 
+        loading,
         userRole
     };
 
-    if (loading) {
-        return <div>Loading auth state...</div>;
-    }
 
     return (
         <AuthContext.Provider value={contextValue}>
