@@ -1,4 +1,4 @@
-// src/components/Client/Dashboard.tsx
+// src/components/Client/ClientDashboard.tsx
 
 import React, { useEffect, useState, useContext, useMemo } from 'react';
 import { supabase } from '../../services/supabaseClient';

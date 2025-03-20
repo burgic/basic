@@ -1,8 +1,10 @@
+/*
 // src/pages/Dashboard.tsx
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
 import { useAuth } from '../context/AuthContext';
+import { useQuery } from '@tanstack/react-query';
 
 interface AnalysisRecord {
   id: string;
@@ -18,37 +20,29 @@ interface AnalysisRecord {
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
-  const [analyses, setAnalyses] = useState<AnalysisRecord[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchAnalyses = async () => {
-      if (!user) return;
+  
+  // Proper useQuery implementation at component level
+  const { data: analyses = [], isLoading, error } = useQuery({
+    queryKey: ['analyses', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
       
-      try {
-        // Fetch recent analyses for the current user
-        const { data, error } = await supabase
-          .from('analyses')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(10);
-          
-        if (error) throw error;
-        
-        setAnalyses(data || []);
-      } catch (err) {
-        console.error('Error fetching analyses:', err);
-        setError('Failed to load your analysis history');
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchAnalyses();
-  }, [user]);
+      const { data, error } = await supabase
+        .from('analyses')
+        .select('id, created_at, filename, metrics (readingAge, fleschScore)')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
 
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 1000 * 60 * 5, // 5 minute cache
+    enabled: !!user // Only run when user exists
+  });
+
+  // Remove the old useEffect and useState hooks
+  // Keep the rest of the component the same
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-GB', {
       day: 'numeric',
@@ -70,13 +64,13 @@ const Dashboard: React.FC = () => {
         <div className="dashboard-panel">
           <h2>Recent Analyses</h2>
           
-          {loading ? (
+          {isLoading ? (
             <div className="loading-message">
               <div className="spinner"></div>
               <p>Loading your analyses...</p>
             </div>
           ) : error ? (
-            <div className="error-message">{error}</div>
+            <div className="error-message">{(error as Error).message}</div>
           ) : analyses.length === 0 ? (
             <div className="empty-state">
               <p>You haven't run any analyses yet.</p>
@@ -141,3 +135,5 @@ const Dashboard: React.FC = () => {
 };
 
 export default Dashboard;
+
+*/

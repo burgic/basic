@@ -12,7 +12,7 @@ export const useSupabase = <T extends Record<string, any>>(tableName: string) =>
     setError(null);
 
     try {
-      let query = supabase.from(tableName).select('*');
+      let query = supabase.from(tableName).select('*').order('created_at', { ascending: false }).limit(10);;
       
       if (userId) {
         query = query.eq('client_id', userId);
